@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "create_em:block/andesite_energy_meter"
+    },
+    "facing=east": {
+      "model": "create_em:block/andesite_energy_meter",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "create_em:block/andesite_energy_meter",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "create_em:block/andesite_energy_meter",
+      "y": 270
+    }
+  }
+}

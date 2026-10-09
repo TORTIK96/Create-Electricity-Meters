@@ -1,0 +1,39 @@
+# Create: Electricity Meters
+
+Аддон для [Create](https://modrinth.com/mod/create) и [Create: New Age](https://modrinth.com/mod/create-new-age) на NeoForge 1.21.1: счётчики электроэнергии для учёта и продажи FE между игроками.
+
+## Что уже есть
+
+| Блок | Корпус | Индикация | Лимит по умолчанию |
+|---|---|---|---|
+| `create_em:andesite_energy_meter` — бытовой | `create:block/andesite_casing` | красная стрелка крутится на 360°, скорость по логарифму от FE/t | 500 FE/t |
+| `create_em:brass_energy_meter` — промышленный | `create:block/brass_casing` | 4 никси-лампы показывают текущие FE/t | 8192 FE/t |
+
+- **Вход только сверху** (синяя метка). Сюда ставится коннектор Create: New Age или любой провод FE.
+- **Выходы сзади и снизу** (оранжевые метки). Счётчик сам толкает энергию в соседние блоки.
+- **Вытянуть энергию из счётчика нельзя** ни с какой стороны.
+- Учитывается только то, что потребитель **реально принял**.
+- ПКМ — показания: кВт·ч, FE, текущий поток и лимит.
+- Лимиты и курс FE → кВт·ч — в серверном конфиге `create_em-server.toml`.
+
+Текстуры корпусов не копируются, а берутся из Create, поэтому Create — обязательная зависимость.
+
+## Структура
+
+```
+tor_tik96/create_em/
+├── Create_em.java              главный класс, вкладка креатива
+├── Config.java                 серверный конфиг
+├── registry/EMRegistry.java    блоки, предметы, BlockEntity, capability
+└── meter/
+    ├── MeterTier.java          ANDESITE / BRASS
+    ├── EnergyMeterBlock.java   блок, формы, ПКМ
+    ├── EnergyMeterBlockEntity.java  буфер, учёт, синхронизация
+    └── client/
+        ├── EnergyMeterRenderer.java  стрелка и никси-цифры
+        └── EMClient.java             регистрация рендера и модели стрелки
+```
+
+## Дальше
+
+План и принятые решения — в [docs/DESIGN.md](docs/DESIGN.md).

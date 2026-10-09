@@ -77,3 +77,19 @@ side = "BOTH"
 # stop your mod loading on the server for example.
 #[features."${mod_id}"]
 #openGLVersion="[3.2,)"
+
+# Модели корпусов используют текстуры create:block/andesite_casing и create:block/brass_casing
+[[dependencies."${mod_id}"]]
+modId = "create"
+type = "required"
+versionRange = "[6.0.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Источник энергии и провода; счётчики работают с любой FE, поэтому зависимость необязательная
+[[dependencies."${mod_id}"]]
+modId = "create_new_age"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"

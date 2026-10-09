@@ -1,5 +1,6 @@
 {
-  "itemGroup.create_em": "Example Mod Tab",
-  "block.create_em.example_block": "Example Block",
-  "item.create_em.example_item": "Example Item"
+  "itemGroup.create_em": "Create: Electricity Meters",
+  "block.create_em.andesite_energy_meter": "Andesite Energy Meter",
+  "block.create_em.brass_energy_meter": "Brass Energy Meter",
+  "create_em.meter.readout": "Total: %s kWh (%s FE) \u00b7 Now: %s FE/t \u00b7 Limit: %s FE/t"
 }

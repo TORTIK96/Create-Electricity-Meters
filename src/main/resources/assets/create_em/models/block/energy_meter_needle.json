@@ -1,0 +1,78 @@
+{
+  "textures": {
+    "particle": "create_em:block/energy_meter_needle",
+    "n": "create_em:block/energy_meter_needle"
+  },
+  "ambientocclusion": false,
+  "elements": [
+    {
+      "name": "needle",
+      "from": [
+        7.65,
+        8.6,
+        1.2
+      ],
+      "to": [
+        8.35,
+        11.2,
+        1.6
+      ],
+      "faces": {
+        "north": {
+          "texture": "#n",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#n",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#n",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#n",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#n",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#n",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

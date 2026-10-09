@@ -1,0 +1,6 @@
+{
+  "itemGroup.create_em": "Create: Счётчики электроэнергии",
+  "block.create_em.andesite_energy_meter": "Андезитовый счётчик электроэнергии",
+  "block.create_em.brass_energy_meter": "Латунный счётчик электроэнергии",
+  "create_em.meter.readout": "Всего: %s кВт·ч (%s FE) · Сейчас: %s FE/t · Лимит: %s FE/t"
+}
