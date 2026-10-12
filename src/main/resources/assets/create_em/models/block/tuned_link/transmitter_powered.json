@@ -371,5 +371,6 @@
         0.625
       ]
     }
-  }
+  },
+  "render_type": "minecraft:cutout_mipped"
 }
