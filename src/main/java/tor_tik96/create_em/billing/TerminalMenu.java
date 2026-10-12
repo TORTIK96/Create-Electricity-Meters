@@ -24,17 +24,17 @@ import static tor_tik96.create_em.billing.TerminalBlockEntity.*;
  * абонент — свой лицевой счёт и кнопку оплаты. Кто есть кто — решает сервер.
  */
 public class TerminalMenu extends AbstractContainerMenu {
-    public static final int BTN_PAY = 0, BTN_PRICE_DOWN = 1, BTN_PRICE_UP = 2, BTN_PER_DOWN = 3, BTN_PER_UP = 4,
+    public static final int BTN_PAY = 0, BTN_PRICE_DOWN = 1, BTN_PRICE_UP = 2, BTN_PER_DOWN = 3, BTN_PER_UP = 4, BTN_BILL = 5,
             BTN_X10 = 10; // id + 10 — шаг 10 (Shift)
 
     // данные
     private static final int OWNER = 0, PRICE = 1, PER = 2, BAL_LO = 3, BAL_HI = 4, SINCE_LO = 5, SINCE_HI = 6,
-            UNBILLED_LO = 7, UNBILLED_HI = 8, STAGE = 9, ACCOUNTS = 10, DEBT_LO = 11, DEBT_HI = 12, COUNT = 13;
+            UNBILLED_LO = 7, UNBILLED_HI = 8, STAGE = 9, ACCOUNTS = 10, DEBT_LO = 11, DEBT_HI = 12, NEXT_BILL_SEC = 13, COUNT = 14;
 
     // координаты (общие с экраном)
-    public static final int W = 216, H = 182;
-    public static final int SAMPLE_X = 8, SAMPLE_Y = 20, PAY_X = 8, PAY_Y = 58, CASH_X = 156, CASH_Y = 18,
-            INV_X = 27, INV_Y = 100, HOTBAR_Y = 158;
+    public static final int W = 252, H = 213;
+    public static final int SAMPLE_X = 10, SAMPLE_Y = 28, PAY_X = 10, PAY_Y = 62, CASH_X = 85, CASH_Y = 99,
+            INV_X = 45, INV_Y = 131, HOTBAR_Y = 189;
 
     @Nullable private final TerminalBlockEntity terminal;
     private final Container container;
@@ -64,7 +64,7 @@ public class TerminalMenu extends AbstractContainerMenu {
         });
         addSlot(new Slot(container, SLOT_PAY, PAY_X, PAY_Y));
         for (int i = 0; i < CASH_COUNT; i++) {
-            addSlot(new Slot(container, CASH_FIRST + i, CASH_X + (i % 3) * 18, CASH_Y + (i / 3) * 18) {
+            addSlot(new Slot(container, CASH_FIRST + i, CASH_X + i * 18, CASH_Y) {
                 @Override public boolean mayPlace(ItemStack s) { return false; }
                 @Override public boolean mayPickup(Player p) { return isOwner(); }
                 @Override public boolean isActive() { return isOwner(); }
@@ -108,6 +108,9 @@ public class TerminalMenu extends AbstractContainerMenu {
                     case ACCOUNTS -> count;
                     case DEBT_LO -> lo(debt);
                     case DEBT_HI -> hi(debt);
+                    // секунды реального времени до плановой квитанции (20 тиков = 1 с), не больше 32767
+                    case NEXT_BILL_SEC -> bd.getNextBillingAt() < 0 ? 0
+                            : (int) Math.min(32767, Math.max(0, (bd.getNextBillingAt() - now) / 20));
                     default -> 0;
                 };
             }
@@ -130,6 +133,7 @@ public class TerminalMenu extends AbstractContainerMenu {
     public BillingStage getStage() { return BillingStage.values()[Math.max(0, Math.min(3, data.get(STAGE)))]; }
     public int getAccounts() { return data.get(ACCOUNTS); }
     public int getTotalDebt() { return joined(DEBT_LO, DEBT_HI); }
+    public int getNextBillSeconds() { return data.get(NEXT_BILL_SEC) & 0xFFFF; }
 
     @Override
     public boolean clickMenuButton(Player p, int id) {
@@ -140,7 +144,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 
         if (id == BTN_PAY) return pay(p, bd);
 
-        if (!terminal.getOwner().equals(p.getUUID())) return false; // тариф меняет только поставщик
+        if (!terminal.getOwner().equals(p.getUUID())) return false; // тариф и счета — только поставщик
+        if (id == BTN_BILL) {
+            int n = bd.billNow(server, terminal.getOwner());
+            p.displayClientMessage(Component.translatable("create_em.bill.manual", n), true);
+            return true;
+        }
         int step = id >= BTN_X10 ? 10 : 1;
         int base = id % BTN_X10;
         BillingData.Tariff t = bd.tariff(terminal.getOwner());

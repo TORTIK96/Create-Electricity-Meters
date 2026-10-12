@@ -120,17 +120,30 @@ public class BillingData extends SavedData {
         long period = Config.BILLING_PERIOD_DAYS.get() * DAY;
         if (nextBillingAt < 0) { nextBillingAt = now + period; setDirty(); }
         if (now >= nextBillingAt) {
-            bill(server, now);
+            bill(server, now, null);
             nextBillingAt = now + period;
             setDirty();
         }
         notifyStages(server, now);
     }
 
-    /** Выставить квитанции всем счетам. */
-    private void bill(MinecraftServer server, long now) {
+    /** Когда будет следующая плановая квитанция (игровое время), -1 — ещё не назначена. */
+    public long getNextBillingAt() { return nextBillingAt; }
+
+    /**
+     * Выставить квитанции вручную: всем абонентам поставщика (supplier != null) или вообще всем.
+     * Плановый период при этом не сдвигается. Возвращает число выставленных квитанций.
+     */
+    public int billNow(MinecraftServer server, @Nullable UUID supplier) {
+        return bill(server, server.overworld().getGameTime(), supplier);
+    }
+
+    /** Выставить квитанции; supplier == null — всем счетам. */
+    private int bill(MinecraftServer server, long now, @Nullable UUID onlySupplier) {
         long fePerKwh = Config.FE_PER_KWH.get();
+        int issued = 0;
         for (Account a : accounts.values()) {
+            if (onlySupplier != null && !onlySupplier.equals(a.supplier)) continue;
             Tariff t = tariff(a.supplier);
             double kwh = a.unbilledFe / (double) fePerKwh;
             long cost;
@@ -145,6 +158,7 @@ public class BillingData extends SavedData {
                 kwh = billedFe / (double) fePerKwh;
             }
             if (kwh <= 0 && cost <= 0) continue;
+            issued++;
             a.lastBillKwh = kwh;
             a.lastBillCost = cost;
             a.balance -= cost;
@@ -156,6 +170,7 @@ public class BillingData extends SavedData {
                         String.format("%.2f", kwh), cost, a.balance).withStyle(a.balance < 0 ? ChatFormatting.GOLD : ChatFormatting.GRAY));
         }
         setDirty();
+        return issued;
     }
 
     /** Сообщить абоненту и поставщику, когда стадия долга меняется. */
