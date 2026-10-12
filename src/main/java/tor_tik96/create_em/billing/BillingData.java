@@ -33,10 +33,10 @@ public class BillingData extends SavedData {
 
     public static final int CURRENCY_SLOTS = 6;
 
-    /** Тариф поставщика: price кредитов за perKwh кВт·ч. price = 0 — энергия бесплатна. */
+    /** Тариф поставщика: price кредитов за perFe FE. price = 0 — энергия бесплатна. */
     public static final class Tariff {
-        public int price = 0;
-        public int perKwh = 1;
+        public long price = 0;
+        public long perFe = 1_000_000;
     }
 
     /** Настройки поставщика: валюта и хранилище оплаченных предметов. */
@@ -63,7 +63,7 @@ public class BillingData extends SavedData {
         public long feSincePayment;     // потреблено с последней оплаты
         public long paidAt = -1;        // игровое время последней оплаты
         public long debtSince = -1;     // с какого момента долг; -1 — долга нет
-        public double lastBillKwh;      // последняя квитанция
+        public double lastBillKwh;      // последняя квитанция (FE; имя поля историческое)
         public long lastBillCost;
         public boolean disabled;        // отключён поставщиком удалённо
         public int powerCap;            // потолок мощности от поставщика, FE/t; 0 — без ограничения
@@ -94,10 +94,18 @@ public class BillingData extends SavedData {
 
     public Tariff tariff(UUID supplier) { return tariffs.computeIfAbsent(supplier, k -> new Tariff()); }
 
-    public void setTariff(UUID supplier, int price, int perKwh) {
+    public void setTariff(UUID supplier, long price, long perFe) {
         Tariff t = tariff(supplier);
         t.price = Math.max(0, price);
-        t.perKwh = Math.max(1, perKwh);
+        t.perFe = Math.max(1, perFe);
+        setDirty();
+    }
+
+    /** Поставщик вручную задаёт баланс абонента. Долг отсчитывается заново от этого момента. */
+    public void setBalance(Account a, long balance, long now) {
+        a.balance = balance;
+        if (balance >= 0) a.debtSince = -1;
+        else if (a.debtSince < 0) a.debtSince = now;
         setDirty();
     }
 
@@ -231,21 +239,21 @@ public class BillingData extends SavedData {
     }
 
     private boolean billOne(MinecraftServer server, long now, Account a) {
-        long fePerKwh = Config.FE_PER_KWH.get();
         Tariff t = tariff(a.supplier);
-        double kwh = a.unbilledFe / (double) fePerKwh;
+        long billedFe;
         long cost;
         if (t.price <= 0) {                 // бесплатно — просто обнуляем
             cost = 0;
+            billedFe = a.unbilledFe;
             a.unbilledFe = 0;
         } else {
-            cost = (long) Math.floor(kwh * t.price / t.perKwh);
+            cost = (long) Math.floor(a.unbilledFe / (double) t.perFe * t.price);
             // в квитанцию идёт только то, что набрало целый кредит; остаток ждёт следующего периода
-            long billedFe = (long) Math.floor(cost * (double) t.perKwh * fePerKwh / t.price);
-            a.unbilledFe = Math.max(0, a.unbilledFe - billedFe);
-            kwh = billedFe / (double) fePerKwh;
+            billedFe = Math.min(a.unbilledFe, (long) Math.floor(cost * (double) t.perFe / t.price));
+            a.unbilledFe -= billedFe;
         }
-        if (kwh <= 0 && cost <= 0) return false;
+        if (billedFe <= 0 && cost <= 0) return false;
+        double kwh = billedFe;
         a.lastBillKwh = kwh;
         a.lastBillCost = cost;
         a.balance -= cost;
@@ -255,7 +263,7 @@ public class BillingData extends SavedData {
         ServerPlayer p = server.getPlayerList().getPlayer(a.consumer);
         if (p != null)
             p.sendSystemMessage(Component.translatable("create_em.bill.notice",
-                    String.format("%.2f", kwh), cost, a.balance).withStyle(a.balance < 0 ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+                    tor_tik96.create_em.EMFormat.fe(billedFe), cost, a.balance).withStyle(a.balance < 0 ? ChatFormatting.GOLD : ChatFormatting.GRAY));
         return true;
     }
 
@@ -285,8 +293,8 @@ public class BillingData extends SavedData {
         tariffs.forEach((s, t) -> {
             CompoundTag c = new CompoundTag();
             c.putUUID("Supplier", s);
-            c.putInt("Price", t.price);
-            c.putInt("PerKwh", t.perKwh);
+            c.putLong("Price", t.price);
+            c.putLong("PerFe", t.perFe);
             ts.add(c);
         });
         tag.put("Tariffs", ts);
@@ -343,8 +351,10 @@ public class BillingData extends SavedData {
         for (Tag t0 : tag.getList("Tariffs", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) t0;
             Tariff t = new Tariff();
-            t.price = c.getInt("Price");
-            t.perKwh = Math.max(1, c.getInt("PerKwh"));
+            t.price = c.getLong("Price");
+            // старые сохранения: тариф был за кВт·ч
+            t.perFe = c.contains("PerFe") ? Math.max(1, c.getLong("PerFe"))
+                    : Math.max(1, c.getInt("PerKwh")) * Config.FE_PER_KWH.get();
             d.tariffs.put(c.getUUID("Supplier"), t);
         }
         for (Tag t0 : tag.getList("Accounts", Tag.TAG_COMPOUND)) {

@@ -2,23 +2,23 @@ package tor_tik96.create_em.meter.client;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import tor_tik96.create_em.client.EMButton;
 import tor_tik96.create_em.client.EMGui;
+import tor_tik96.create_em.client.EMScreen;
 import tor_tik96.create_em.meter.MeterLimitMenu;
 import tor_tik96.create_em.meter.MeterTier;
 
 /**
- * Меню лимита счётчика: экран с текущим лимитом и шкалой коридора, кнопки шага.
- * Тема (латунь/андезит) и подписи шагов берутся из данных меню каждый тик —
- * они приходят с сервера уже после открытия экрана.
+ * Меню лимита счётчика: экран с текущим лимитом и шкалой коридора, поле ввода лимита
+ * (с понятными сокращениями 2k, 8M), кнопки «Минимум» и «Максимум».
  */
-public class MeterLimitScreen extends AbstractContainerScreen<MeterLimitMenu> {
+public class MeterLimitScreen extends EMScreen<MeterLimitMenu> {
     private static final int W = 200, H = 144;
 
-    private EMButton minusLarge, minusSmall, plusSmall, plusLarge, min, max, rearm;
+    private EMButton min, max, rearm;
+    private NumberField limitField;
 
     public MeterLimitScreen(MeterLimitMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -26,28 +26,23 @@ public class MeterLimitScreen extends AbstractContainerScreen<MeterLimitMenu> {
         imageHeight = H;
     }
 
-    private EMGui.Theme theme() { return menu.getTier() == MeterTier.BRASS ? EMGui.Theme.BRASS : EMGui.Theme.ANDESITE; }
+    @Override
+    protected EMGui.Theme theme() { return menu.getTier() == MeterTier.BRASS ? EMGui.Theme.BRASS : EMGui.Theme.ANDESITE; }
 
     @Override
     protected void init() {
         super.init();
         int x = leftPos, y = topPos;
-        minusLarge = btn(x + 6, y + 97, 45, MeterLimitMenu.BTN_MINUS_LARGE);
-        minusSmall = btn(x + 53, y + 97, 45, MeterLimitMenu.BTN_MINUS_SMALL);
-        plusSmall = btn(x + 100, y + 97, 45, MeterLimitMenu.BTN_PLUS_SMALL);
-        plusLarge = btn(x + 147, y + 97, 47, MeterLimitMenu.BTN_PLUS_LARGE);
-        min = btn(x + 6, y + 119, 93, MeterLimitMenu.BTN_MIN);
-        max = btn(x + 101, y + 119, 93, MeterLimitMenu.BTN_MAX);
-        min.setMessage(Component.translatable("create_em.limit.min"));
-        max.setMessage(Component.translatable("create_em.limit.max"));
-        rearm = btn(x + 6, y + 75, 188, MeterLimitMenu.BTN_REARM);
-        rearm.setMessage(Component.translatable("create_em.limit.rearm"));
+        limitField = field(x + 6, y + 99, W - 12, MeterLimitMenu.F_LIMIT, () -> menu.getLimit(), () -> null,
+                menu::canEdit, Component.translatable("create_em.limit.hint"));
+        min = btn(x + 6, y + 119, 93, MeterLimitMenu.BTN_MIN, Component.translatable("create_em.limit.min"));
+        max = btn(x + 101, y + 119, 93, MeterLimitMenu.BTN_MAX, Component.translatable("create_em.limit.max"));
+        rearm = btn(x + 6, y + 75, W - 12, MeterLimitMenu.BTN_REARM, Component.translatable("create_em.limit.rearm"));
         rearm.visible = false;
-        refresh();
     }
 
-    private EMButton btn(int x, int y, int w, int id) {
-        return addRenderableWidget(new EMButton(x, y, w, 18, Component.empty(), this::theme, () -> {
+    private EMButton btn(int x, int y, int w, int id, Component label) {
+        return addRenderableWidget(new EMButton(x, y, w, 18, label, this::theme, () -> {
             if (minecraft != null && minecraft.gameMode != null)
                 minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
         }));
@@ -56,19 +51,12 @@ public class MeterLimitScreen extends AbstractContainerScreen<MeterLimitMenu> {
     @Override
     protected void containerTick() {
         super.containerTick();
-        refresh();
-    }
-
-    private void refresh() {
-        MeterTier t = menu.getTier();
-        minusLarge.setMessage(Component.literal("−" + t.largeStep));
-        minusSmall.setMessage(Component.literal("−" + t.smallStep));
-        plusSmall.setMessage(Component.literal("+" + t.smallStep));
-        plusLarge.setMessage(Component.literal("+" + t.largeStep));
         boolean edit = menu.canEdit();
-        for (EMButton b : new EMButton[]{minusLarge, minusSmall, plusSmall, plusLarge, min, max}) b.active = edit;
+        min.active = edit;
+        max.active = edit;
         rearm.visible = menu.isTripped();
         rearm.active = menu.canRearm();
+        limitField.box.setTextColor(theme().screenText);
     }
 
     @Override
@@ -76,13 +64,12 @@ public class MeterLimitScreen extends AbstractContainerScreen<MeterLimitMenu> {
         EMGui.Theme t = theme();
         EMGui.panel(g, t, leftPos, topPos, W, H);
         EMGui.inset(g, t, leftPos + 6, topPos + 17, W - 12, 54);
-
-        // шкала коридора
         int lo = menu.getMin(), hi = Math.max(lo + 1, menu.getMax());
         float k = Math.max(0, Math.min(1, (menu.getLimit() - lo) / (float) (hi - lo)));
         int bx0 = leftPos + 14, bx1 = leftPos + W - 14, by = topPos + 58;
         g.fill(bx0, by, bx1, by + 4, 0xFF0B0907);
         g.fill(bx0, by, bx0 + Math.round((bx1 - bx0) * k), by + 4, t == EMGui.Theme.BRASS ? 0xFFF39A2F : 0xFF58B244);
+        renderFieldBacks(g);
     }
 
     @Override

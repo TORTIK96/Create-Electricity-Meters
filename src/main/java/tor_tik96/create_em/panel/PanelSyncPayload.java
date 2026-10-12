@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.UUID;
 
 /** Сервер → клиент: список абонентов и хранилище для открытой панели поставщика. */
-public record PanelSyncPayload(int containerId, List<AccountView> accounts, List<VaultView> vault) implements CustomPacketPayload {
+public record PanelSyncPayload(int containerId, List<AccountView> accounts, List<VaultView> vault,
+                               long price, long perFe, int[] values, int nextBillSec) implements CustomPacketPayload {
     public static final Type<PanelSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "panel_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, PanelSyncPayload> CODEC = StreamCodec.ofMember(PanelSyncPayload::write, PanelSyncPayload::read);
 
@@ -42,6 +43,11 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
             ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, v.sample());
             buf.writeLong(v.count());
         }
+        buf.writeLong(price);
+        buf.writeLong(perFe);
+        buf.writeVarInt(values.length);
+        for (int v : values) buf.writeVarInt(v);
+        buf.writeVarInt(nextBillSec);
     }
 
     private static PanelSyncPayload read(RegistryFriendlyByteBuf buf) {
@@ -54,14 +60,17 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
         int m = buf.readVarInt();
         List<VaultView> vault = new ArrayList<>(m);
         for (int i = 0; i < m; i++) vault.add(new VaultView(ItemStack.OPTIONAL_STREAM_CODEC.decode(buf), buf.readLong()));
-        return new PanelSyncPayload(id, acc, vault);
+        long price = buf.readLong(), perFe = buf.readLong();
+        int[] values = new int[buf.readVarInt()];
+        for (int i = 0; i < values.length; i++) values[i] = buf.readVarInt();
+        return new PanelSyncPayload(id, acc, vault, price, perFe, values, buf.readVarInt());
     }
 
     /** Клиент: отдать данные открытой панели, если это она. */
     public static void handle(PanelSyncPayload p, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.player().containerMenu instanceof SupplierPanelMenu m && m.containerId == p.containerId())
-                m.setClientData(p.accounts(), p.vault());
+                m.setClientData(p);
         });
     }
 }

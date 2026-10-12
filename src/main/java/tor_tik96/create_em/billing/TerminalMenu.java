@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import tor_tik96.create_em.Config;
 import tor_tik96.create_em.registry.EMRegistry;
 
 import java.util.UUID;
@@ -25,8 +24,9 @@ import static tor_tik96.create_em.billing.TerminalBlockEntity.SLOT_PAY;
 public class TerminalMenu extends AbstractContainerMenu {
     public static final int BTN_PAY = 0;
 
-    private static final int BAL_LO = 0, BAL_HI = 1, SINCE_LO = 2, SINCE_HI = 3, UNB_LO = 4, UNB_HI = 5, STAGE = 6,
-            PRICE = 7, PER = 8, NEXT = 9, OWNER = 10, VAL0 = 11, COUNT = VAL0 + CURRENCY_SLOTS * 2;
+    // длинные числа идут по сети четырьмя short-слотами
+    private static final int L_BAL = 0, L_SINCE = 4, L_UNB = 8, L_PRICE = 12, L_PER = 16,
+            STAGE = 20, NEXT = 21, OWNER = 22, VAL0 = 23, COUNT = VAL0 + CURRENCY_SLOTS * 2;
 
     // раскладка (общая с экраном)
     public static final int W = 256, H = 234;
@@ -88,21 +88,19 @@ public class TerminalMenu extends AbstractContainerMenu {
                     return (i - VAL0) % 2 == 0 ? v & 0xFFFF : (v >>> 16) & 0xFFFF;
                 }
                 BillingData.Account a = bd.findAccount(owner, player.getUUID());
-                long fePerKwh = Config.FE_PER_KWH.get();
                 long now = be.getLevel().getGameTime();
-                long bal = a == null ? 0 : a.balance;
-                long since = a == null ? 0 : a.feSincePayment * 100 / fePerKwh;
-                long unb = a == null ? 0 : a.unbilledFe * 100 / fePerKwh;
+                if (i < STAGE) {
+                    long v = switch (i / 4) {
+                        case 0 -> a == null ? 0 : a.balance;
+                        case 1 -> a == null ? 0 : a.feSincePayment;
+                        case 2 -> a == null ? 0 : a.unbilledFe;
+                        case 3 -> bd.tariff(owner).price;
+                        default -> bd.tariff(owner).perFe;
+                    };
+                    return (int) ((v >>> ((i % 4) * 16)) & 0xFFFF);
+                }
                 return switch (i) {
-                    case BAL_LO -> lo(bal);
-                    case BAL_HI -> hi(bal);
-                    case SINCE_LO -> lo(since);
-                    case SINCE_HI -> hi(since);
-                    case UNB_LO -> lo(unb);
-                    case UNB_HI -> hi(unb);
                     case STAGE -> a == null ? 0 : a.stage(now).ordinal();
-                    case PRICE -> bd.tariff(owner).price;
-                    case PER -> bd.tariff(owner).perKwh;
                     case NEXT -> bd.getNextBillingAt() < 0 ? 0 : (int) Math.min(32767, Math.max(0, (bd.getNextBillingAt() - now) / 20));
                     case OWNER -> owner.equals(player.getUUID()) ? 1 : 0;
                     default -> 0;
@@ -113,17 +111,19 @@ public class TerminalMenu extends AbstractContainerMenu {
         };
     }
 
-    private static int clampInt(long v) { return (int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, v)); }
-    private static int lo(long v) { return clampInt(v) & 0xFFFF; }
-    private static int hi(long v) { return (clampInt(v) >>> 16) & 0xFFFF; }
+    private long longAt(int base) {
+        long v = 0;
+        for (int k = 0; k < 4; k++) v |= (long) (data.get(base + k) & 0xFFFF) << (k * 16);
+        return v;
+    }
     private int joined(int l, int h) { return (data.get(l) & 0xFFFF) | ((data.get(h) & 0xFFFF) << 16); }
 
-    public int getBalance() { return joined(BAL_LO, BAL_HI); }
-    public double getSinceKwh() { return joined(SINCE_LO, SINCE_HI) / 100.0; }
-    public double getUnbilledKwh() { return joined(UNB_LO, UNB_HI) / 100.0; }
+    public long getBalance() { return longAt(L_BAL); }
+    public long getSinceFe() { return longAt(L_SINCE); }
+    public long getUnbilledFe() { return longAt(L_UNB); }
     public BillingStage getStage() { return BillingStage.values()[Math.max(0, Math.min(3, data.get(STAGE)))]; }
-    public int getPrice() { return data.get(PRICE); }
-    public int getPerKwh() { return Math.max(1, data.get(PER)); }
+    public long getPrice() { return longAt(L_PRICE); }
+    public long getPerFe() { return Math.max(1, longAt(L_PER)); }
     public int getNextBillSeconds() { return data.get(NEXT) & 0xFFFF; }
     public boolean isOwner() { return data.get(OWNER) == 1; }
     public int getValue(int slot) { return joined(VAL0 + slot * 2, VAL0 + slot * 2 + 1); }

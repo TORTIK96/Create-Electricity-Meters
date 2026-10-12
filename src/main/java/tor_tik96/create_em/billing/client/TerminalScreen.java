@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import tor_tik96.create_em.EMFormat;
 import tor_tik96.create_em.billing.BillingStage;
 import tor_tik96.create_em.billing.TerminalMenu;
 import tor_tik96.create_em.client.EMButton;
@@ -54,15 +55,16 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         EMGui.text(g, font, Component.translatable("create_em.terminal.payment"), 8, PAY_Y - 11, 72, label, false, 0);
         EMGui.text(g, font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 162, label, false, 0);
 
-        int bal = menu.getBalance();
+        long bal = menu.getBalance();
         BillingStage st = menu.getStage();
         ChatFormatting sc = switch (st) { case NORMAL -> ChatFormatting.GREEN; case WARNING, LIMITED -> ChatFormatting.GOLD; case CUT -> ChatFormatting.RED; };
         int ns = menu.getNextBillSeconds();
         Component[] lines = {
-                Component.translatable("create_em.terminal.tariff", menu.getPrice(), menu.getPerKwh()),
+                menu.getPrice() <= 0 ? Component.translatable("create_em.terminal.free")
+                        : Component.translatable("create_em.terminal.tariff", menu.getPrice(), EMFormat.fe(menu.getPerFe())),
                 Component.translatable("create_em.terminal.balance", bal).withStyle(bal < 0 ? ChatFormatting.RED : ChatFormatting.RESET),
-                Component.translatable("create_em.terminal.since", String.format("%.2f", menu.getSinceKwh())),
-                Component.translatable("create_em.terminal.unbilled", String.format("%.2f", menu.getUnbilledKwh())),
+                Component.translatable("create_em.terminal.since", EMFormat.fe(menu.getSinceFe())),
+                Component.translatable("create_em.terminal.unbilled", EMFormat.fe(menu.getUnbilledFe())),
                 Component.translatable("create_em.terminal.stage").append(Component.translatable(st.key()).withStyle(sc)),
                 Component.translatable("create_em.terminal.next_bill", String.format("%d:%02d", ns / 60, ns % 60))};
         for (int i = 0; i < lines.length; i++)

@@ -15,7 +15,8 @@ import tor_tik96.create_em.registry.EMRegistry;
  * <p>
  * Данные идут по сети как short, поэтому числа больше 32767 передаются двумя половинами.
  */
-public class MeterLimitMenu extends AbstractContainerMenu {
+public class MeterLimitMenu extends AbstractContainerMenu implements tor_tik96.create_em.panel.ValuePayload.Receiver {
+    public static final int F_LIMIT = 1;
     public static final int BTN_MINUS_LARGE = 0, BTN_MINUS_SMALL = 1, BTN_PLUS_SMALL = 2, BTN_PLUS_LARGE = 3,
             BTN_MIN = 4, BTN_MAX = 5, BTN_REARM = 6;
 
@@ -93,6 +94,13 @@ public class MeterLimitMenu extends AbstractContainerMenu {
         };
         meter.setLimit(next);
         return true;
+    }
+
+    /** Лимит из поля ввода; права те же, что у кнопок. */
+    @Override
+    public void receiveValue(net.minecraft.server.level.ServerPlayer player, int field, java.util.UUID target, long value) {
+        if (field == F_LIMIT && meter != null && meter.canEditLimit(player))
+            meter.setLimit((int) Math.max(0, Math.min(Integer.MAX_VALUE, value)));
     }
 
     @Override
