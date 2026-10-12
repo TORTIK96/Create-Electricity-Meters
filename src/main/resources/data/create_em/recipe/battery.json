@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "create:copper_sheet"
+    },
+    "Z": {
+      "item": "create:zinc_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    },
+    "A": {
+      "item": "create:andesite_casing"
+    }
+  },
+  "pattern": [
+    "CZC",
+    "ZRZ",
+    "CAC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_em:battery"
+  }
+}

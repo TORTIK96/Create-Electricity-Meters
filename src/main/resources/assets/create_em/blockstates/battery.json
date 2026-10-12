@@ -1,0 +1,79 @@
+{
+  "variants": {
+    "charge=0,facing=north": {
+      "model": "create_em:block/battery_0"
+    },
+    "charge=0,facing=east": {
+      "model": "create_em:block/battery_0",
+      "y": 90
+    },
+    "charge=0,facing=south": {
+      "model": "create_em:block/battery_0",
+      "y": 180
+    },
+    "charge=0,facing=west": {
+      "model": "create_em:block/battery_0",
+      "y": 270
+    },
+    "charge=1,facing=north": {
+      "model": "create_em:block/battery_1"
+    },
+    "charge=1,facing=east": {
+      "model": "create_em:block/battery_1",
+      "y": 90
+    },
+    "charge=1,facing=south": {
+      "model": "create_em:block/battery_1",
+      "y": 180
+    },
+    "charge=1,facing=west": {
+      "model": "create_em:block/battery_1",
+      "y": 270
+    },
+    "charge=2,facing=north": {
+      "model": "create_em:block/battery_2"
+    },
+    "charge=2,facing=east": {
+      "model": "create_em:block/battery_2",
+      "y": 90
+    },
+    "charge=2,facing=south": {
+      "model": "create_em:block/battery_2",
+      "y": 180
+    },
+    "charge=2,facing=west": {
+      "model": "create_em:block/battery_2",
+      "y": 270
+    },
+    "charge=3,facing=north": {
+      "model": "create_em:block/battery_3"
+    },
+    "charge=3,facing=east": {
+      "model": "create_em:block/battery_3",
+      "y": 90
+    },
+    "charge=3,facing=south": {
+      "model": "create_em:block/battery_3",
+      "y": 180
+    },
+    "charge=3,facing=west": {
+      "model": "create_em:block/battery_3",
+      "y": 270
+    },
+    "charge=4,facing=north": {
+      "model": "create_em:block/battery_4"
+    },
+    "charge=4,facing=east": {
+      "model": "create_em:block/battery_4",
+      "y": 90
+    },
+    "charge=4,facing=south": {
+      "model": "create_em:block/battery_4",
+      "y": 180
+    },
+    "charge=4,facing=west": {
+      "model": "create_em:block/battery_4",
+      "y": 270
+    }
+  }
+}

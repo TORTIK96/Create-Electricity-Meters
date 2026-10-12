@@ -36,6 +36,8 @@ public class Create_em {
                         output.accept(EMRegistry.LINE_WIRE.get());
                         output.accept(EMRegistry.SEAL.get());
                         output.accept(EMRegistry.TERMINAL_ITEM.get());
+                        output.accept(EMRegistry.BATTERY_ITEM.get());
+                        output.accept(EMRegistry.ATS_ITEM.get());
                         output.accept(EMRegistry.CATALYST_ITEM.get());
                         output.accept(EMRegistry.TUNED_LINK_ITEM.get());
                     })

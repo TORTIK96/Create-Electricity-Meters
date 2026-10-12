@@ -46,6 +46,12 @@ public final class EMRegistry {
             COMPONENTS.registerComponentType("bound_to",
                     b -> b.persistent(BlockPos.CODEC).networkSynchronized(BlockPos.STREAM_CODEC));
 
+    /** Заряд аккумулятора в предмете. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> STORED_ENERGY =
+            COMPONENTS.registerComponentType("stored_energy",
+                    b -> b.persistent(com.mojang.serialization.Codec.INT)
+                            .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+
     // ---------- счётчики ----------
     public static final DeferredBlock<EnergyMeterBlock> ANDESITE_METER = BLOCKS.register("andesite_energy_meter",
             () -> new EnergyMeterBlock(MeterTier.ANDESITE, BlockBehaviour.Properties.of()
@@ -82,6 +88,19 @@ public final class EMRegistry {
     public static final DeferredBlock<tor_tik96.create_em.link.TunedLinkBlock> TUNED_LINK = BLOCKS.register("tuned_link",
             () -> new tor_tik96.create_em.link.TunedLinkBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.TERRACOTTA_YELLOW).strength(1f).sound(SoundType.WOOD).noOcclusion()));
+
+    public static final DeferredBlock<tor_tik96.create_em.power.BatteryBlock> BATTERY = BLOCKS.register("battery",
+            () -> new tor_tik96.create_em.power.BatteryBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE).strength(3f).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<tor_tik96.create_em.power.AtsBlock> ATS = BLOCKS.register("transfer_switch",
+            () -> new tor_tik96.create_em.power.AtsBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
+
+    public static final DeferredItem<tor_tik96.create_em.power.BatteryItem> BATTERY_ITEM =
+            ITEMS.register("battery", () -> new tor_tik96.create_em.power.BatteryItem(BATTERY.get(), new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<BlockItem> ATS_ITEM =
+            ITEMS.registerSimpleBlockItem("transfer_switch", ATS, new Item.Properties());
 
     public static final DeferredItem<BlockItem> CATALYST_ITEM =
             ITEMS.registerSimpleBlockItem("electric_catalyst", CATALYST, new Item.Properties());
@@ -140,6 +159,16 @@ public final class EMRegistry {
             BE_TYPES.register("tuned_link", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.link.TunedLinkBlockEntity::new, TUNED_LINK.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.power.BatteryBlockEntity>> BATTERY_BE =
+            BE_TYPES.register("battery", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.power.BatteryBlockEntity::new, BATTERY.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.power.AtsBlockEntity>> ATS_BE =
+            BE_TYPES.register("transfer_switch", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.power.AtsBlockEntity::new, ATS.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -165,6 +194,9 @@ public final class EMRegistry {
         // электрокатализатор принимает обычную FE с любой стороны
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CATALYST_BE.get(),
                 (be, side) -> be.getEnergy());
+        // аккумулятор и АВР: у каждой грани своя клемма
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, BATTERY_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ATS_BE.get(), (be, side) -> be.port(side));
     }
 
     private EMRegistry() {}

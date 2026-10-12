@@ -1,0 +1,94 @@
+{
+  "variants": {
+    "alarm=false,facing=north,source=none": {
+      "model": "create_em:block/transfer_switch_none"
+    },
+    "alarm=false,facing=east,source=none": {
+      "model": "create_em:block/transfer_switch_none",
+      "y": 90
+    },
+    "alarm=false,facing=south,source=none": {
+      "model": "create_em:block/transfer_switch_none",
+      "y": 180
+    },
+    "alarm=false,facing=west,source=none": {
+      "model": "create_em:block/transfer_switch_none",
+      "y": 270
+    },
+    "alarm=true,facing=north,source=none": {
+      "model": "create_em:block/transfer_switch_none_alarm"
+    },
+    "alarm=true,facing=east,source=none": {
+      "model": "create_em:block/transfer_switch_none_alarm",
+      "y": 90
+    },
+    "alarm=true,facing=south,source=none": {
+      "model": "create_em:block/transfer_switch_none_alarm",
+      "y": 180
+    },
+    "alarm=true,facing=west,source=none": {
+      "model": "create_em:block/transfer_switch_none_alarm",
+      "y": 270
+    },
+    "alarm=false,facing=north,source=main": {
+      "model": "create_em:block/transfer_switch_main"
+    },
+    "alarm=false,facing=east,source=main": {
+      "model": "create_em:block/transfer_switch_main",
+      "y": 90
+    },
+    "alarm=false,facing=south,source=main": {
+      "model": "create_em:block/transfer_switch_main",
+      "y": 180
+    },
+    "alarm=false,facing=west,source=main": {
+      "model": "create_em:block/transfer_switch_main",
+      "y": 270
+    },
+    "alarm=true,facing=north,source=main": {
+      "model": "create_em:block/transfer_switch_main_alarm"
+    },
+    "alarm=true,facing=east,source=main": {
+      "model": "create_em:block/transfer_switch_main_alarm",
+      "y": 90
+    },
+    "alarm=true,facing=south,source=main": {
+      "model": "create_em:block/transfer_switch_main_alarm",
+      "y": 180
+    },
+    "alarm=true,facing=west,source=main": {
+      "model": "create_em:block/transfer_switch_main_alarm",
+      "y": 270
+    },
+    "alarm=false,facing=north,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve"
+    },
+    "alarm=false,facing=east,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve",
+      "y": 90
+    },
+    "alarm=false,facing=south,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve",
+      "y": 180
+    },
+    "alarm=false,facing=west,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve",
+      "y": 270
+    },
+    "alarm=true,facing=north,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve_alarm"
+    },
+    "alarm=true,facing=east,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve_alarm",
+      "y": 90
+    },
+    "alarm=true,facing=south,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve_alarm",
+      "y": 180
+    },
+    "alarm=true,facing=west,source=reserve": {
+      "model": "create_em:block/transfer_switch_reserve_alarm",
+      "y": 270
+    }
+  }
+}

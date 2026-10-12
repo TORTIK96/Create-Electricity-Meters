@@ -21,7 +21,7 @@ import org.joml.Matrix4f;
 public class EMIcons extends AllIcons {
     public static final ResourceLocation ATLAS =
             ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "textures/gui/icons.png");
-    private static final int ATLAS_W = 96, ATLAS_H = 16;
+    private static final int ATLAS_W = 144, ATLAS_H = 16;
 
     public static final EMIcons REDSTONE = new EMIcons(0);
     public static final EMIcons OFF = new EMIcons(1);
@@ -29,6 +29,9 @@ public class EMIcons extends AllIcons {
     public static final EMIcons SMOKING = new EMIcons(3);
     public static final EMIcons BLASTING = new EMIcons(4);
     public static final EMIcons HAUNTING = new EMIcons(5);
+    public static final EMIcons AUTO = new EMIcons(6);
+    public static final EMIcons INPUT_MAIN = new EMIcons(7);
+    public static final EMIcons INPUT_RESERVE = new EMIcons(8);
 
     private final int u;
 

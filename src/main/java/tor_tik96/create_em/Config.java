@@ -71,7 +71,33 @@ public final class Config {
             .comment("Электрокатализатор: расход в режиме призрачного огня, FE/t")
             .defineInRange("catalystHauntingFe", 48, 0, Integer.MAX_VALUE);
 
+    // ---------- аккумулятор и АВР ----------
+    public static final ModConfigSpec.IntValue BATTERY_CAPACITY = BUILDER
+            .comment("Аккумулятор: ёмкость, FE")
+            .defineInRange("batteryCapacity", 2_000_000, 1000, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue BATTERY_MAX_IO = BUILDER
+            .comment("Аккумулятор: наибольший приём и отдача, FE/t")
+            .defineInRange("batteryMaxIo", 4096, 1, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue ATS_MAX_TRANSFER = BUILDER
+            .comment("АВР: сколько FE/t пропускает")
+            .defineInRange("atsMaxTransfer", 16384, 1, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue ATS_RETURN_DELAY = BUILDER
+            .comment("АВР: через сколько тиков стабильного основного ввода вернуться с резерва (20 = 1 с)")
+            .defineInRange("atsReturnDelay", 60, 0, 72000);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     private Config() {}
+
+    /** Значение конфига или запасное, если конфиг ещё не загружен (подсказки предметов в меню и т.п.). */
+    public static int safe(ModConfigSpec.IntValue v, int fallback) {
+        try {
+            return v.get();
+        } catch (IllegalStateException e) {
+            return fallback;
+        }
+    }
 }
