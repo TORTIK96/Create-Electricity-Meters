@@ -48,7 +48,8 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
 
     private ScrollOptionBehaviour<AtsMode> mode;
 
-    private int buffer;
+    /** Защита от замыкания, если вход и выход оказались в одной сети проводов. */
+    private boolean busy;
     private long lastMain = Long.MIN_VALUE / 2, lastReserve = Long.MIN_VALUE / 2;
     /** С какого тика основной ввод непрерывно есть; -1 — нет. */
     private long mainSince = -1;
@@ -60,9 +61,9 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
     @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> mainCache, reserveCache;
     private final List<BlockCapabilityCache<IEnergyStorage, Direction>> outCaches = new ArrayList<>();
 
-    private final EnergyPort mainPort = EnergyPort.input((a, sim) -> offer(true, a, sim), () -> buffer, AtsBlockEntity::capacity);
-    private final EnergyPort reservePort = EnergyPort.input((a, sim) -> offer(false, a, sim), () -> buffer, AtsBlockEntity::capacity);
-    private final EnergyPort outPort = EnergyPort.output(this::take, () -> buffer, AtsBlockEntity::capacity);
+    private final EnergyPort mainPort = EnergyPort.input((a, sim) -> offer(true, a, sim), () -> 0, AtsBlockEntity::capacity);
+    private final EnergyPort reservePort = EnergyPort.input((a, sim) -> offer(false, a, sim), () -> 0, AtsBlockEntity::capacity);
+    private final EnergyPort outPort = EnergyPort.output(this::take, () -> 0, AtsBlockEntity::capacity);
 
     public AtsBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.ATS_BE.get(), pos, state);
@@ -111,26 +112,47 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         return level == null ? 0 : level.getGameTime();
     }
 
+    /**
+     * АВР ничего не хранит: что пришло на активный ввод, в том же вызове уходит на выход.
+     * Пропал ввод — нагрузка сразу это замечает, а запаса, который «кормил бы» её после отключения, нет.
+     */
     private int offer(boolean main, int amount, boolean simulate) {
         if (main) lastMain = now();
         else lastReserve = now();
-        if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE)) return 0;
-        int accepted = Math.max(0, Math.min(amount, capacity() - buffer));
-        if (!simulate && accepted > 0) {
-            buffer += accepted;
-            setChanged();
+        if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE) || busy) return 0;
+        IEnergyStorage target = outTarget();
+        if (target == null || !target.canReceive()) return 0;
+        busy = true;
+        try {
+            int moved = target.receiveEnergy(Math.min(amount, maxTransfer()), simulate);
+            if (!simulate) windowFe += moved;
+            return moved;
+        } finally {
+            busy = false;
         }
-        return accepted;
     }
 
+    /** Потребитель сам забирает с выхода — забираем с активного ввода. */
     private int take(int amount, boolean simulate) {
-        int given = Math.max(0, Math.min(amount, buffer));
-        if (!simulate && given > 0) {
-            buffer -= given;
-            windowFe += given;
-            setChanged();
+        if (busy) return 0;
+        BlockCapabilityCache<IEnergyStorage, Direction> c = source == AtsSource.MAIN ? mainCache
+                : source == AtsSource.RESERVE ? reserveCache : null;
+        IEnergyStorage src = c == null ? null : c.getCapability();
+        if (src == null || !src.canExtract()) return 0;
+        busy = true;
+        try {
+            int moved = src.extractEnergy(Math.min(amount, maxTransfer()), simulate);
+            if (!simulate) windowFe += moved;
+            return moved;
+        } finally {
+            busy = false;
         }
-        return given;
+    }
+
+    @Nullable
+    private IEnergyStorage outTarget() {
+        if (outCaches.isEmpty() && level instanceof ServerLevel sl) initCaches(sl);
+        return outCaches.isEmpty() ? null : outCaches.get(0).getCapability();
     }
 
     @Override
@@ -167,19 +189,6 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
             setChanged();
         }
 
-        // отдаём нагрузке
-        int budget = maxTransfer();
-        for (BlockCapabilityCache<IEnergyStorage, Direction> c : outCaches) {
-            if (buffer <= 0 || budget <= 0) break;
-            IEnergyStorage target = c.getCapability();
-            if (target == null || !target.canReceive()) continue;
-            int moved = target.receiveEnergy(Math.min(buffer, budget), false);
-            if (moved > 0) {
-                take(moved, false);
-                budget -= moved;
-            }
-        }
-
         if (++windowTicks >= WINDOW) {
             float f = windowFe / (float) WINDOW;
             boolean changed = f != flow || windowFe > 0;
@@ -196,14 +205,27 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         }
     }
 
+    /** Источник, который сам не толкает: проверяем, есть ли в нём энергия, и, если ввод активен, переносим сами. */
     private void probe(@Nullable BlockCapabilityCache<IEnergyStorage, Direction> cache, boolean main) {
-        if (cache == null) return;
+        if (cache == null || busy) return;
         IEnergyStorage src = cache.getCapability();
         if (src == null || !src.canExtract()) return;
         int can = src.extractEnergy(maxTransfer(), true);
         if (can <= 0) return;
-        int accepted = offer(main, can, true);
-        if (accepted > 0) offer(main, src.extractEnergy(accepted, false), false);
+        if (main) lastMain = now();
+        else lastReserve = now();
+        if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE)) return;
+        IEnergyStorage target = outTarget();
+        if (target == null || !target.canReceive()) return;
+        busy = true;
+        try {
+            int fits = target.receiveEnergy(can, true);
+            if (fits <= 0) return;
+            int taken = src.extractEnergy(fits, false);
+            windowFe += target.receiveEnergy(taken, false);
+        } finally {
+            busy = false;
+        }
     }
 
     private void initCaches(ServerLevel sl) {
@@ -236,7 +258,6 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        tag.putInt("Buffer", buffer);
         tag.putString("Source", source.getSerializedName());
         if (clientPacket) {
             tag.putFloat("Flow", flow);
@@ -248,7 +269,6 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        buffer = Math.max(0, tag.getInt("Buffer"));
         source = switch (tag.getString("Source")) {
             case "main" -> AtsSource.MAIN;
             case "reserve" -> AtsSource.RESERVE;

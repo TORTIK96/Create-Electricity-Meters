@@ -27,13 +27,19 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
     /** Усреднение показаний, тиков. Полсекунды — цифры живые, но не дрожат. */
     private static final int WINDOW = 10;
 
-    private int buffer;
     private int windowFe, windowTicks;
     private float flow;
-    @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> outCache;
+    /** Защита от замыкания, если вход и выход оказались в одной сети проводов. */
+    private boolean busy;
+    @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> inCache, outCache;
 
-    private final EnergyPort input = EnergyPort.input(this::receive, () -> buffer, MiniMeterBlockEntity::capacity);
-    private final EnergyPort output = EnergyPort.output(this::extract, () -> buffer, MiniMeterBlockEntity::capacity);
+    /**
+     * Счётчик ничего не хранит: что пришло на вход, тут же передаётся на выход в том же вызове,
+     * а потребитель, который сам забирает с выхода, на самом деле забирает со входа.
+     * Поэтому без питания на входе через счётчик не проходит ничего, и показания честные.
+     */
+    private final EnergyPort input = EnergyPort.input(this::passForward, () -> 0, MiniMeterBlockEntity::capacity);
+    private final EnergyPort output = EnergyPort.output(this::passBackward, () -> 0, MiniMeterBlockEntity::capacity);
 
     public MiniMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.MINI_METER_BE.get(), pos, state);
@@ -59,40 +65,63 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         return flow;
     }
 
-    private int receive(int amount, boolean simulate) {
-        int accepted = Math.max(0, Math.min(amount, capacity() - buffer));
-        if (!simulate && accepted > 0) {
-            buffer += accepted;
-            setChanged();
+    @Nullable
+    private IEnergyStorage neighbor(boolean out) {
+        if (!(level instanceof ServerLevel sl)) return null;
+        if (outCache == null || inCache == null) {
+            Direction o = MiniMeterBlock.output(getBlockState()), i = MiniMeterBlock.input(getBlockState());
+            outCache = BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, sl, worldPosition.relative(o), o.getOpposite());
+            inCache = BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, sl, worldPosition.relative(i), i.getOpposite());
         }
-        return accepted;
+        return (out ? outCache : inCache).getCapability();
     }
 
-    /** Всё, что ушло через выход (толкнули мы или забрал потребитель), — это и есть потребление. */
-    private int extract(int amount, boolean simulate) {
-        int given = Math.max(0, Math.min(amount, buffer));
-        if (!simulate && given > 0) {
-            buffer -= given;
-            windowFe += given;
-            setChanged();
+    /** Источник толкает во вход — сразу толкаем потребителю на выходе. */
+    private int passForward(int amount, boolean simulate) {
+        if (busy) return 0;
+        IEnergyStorage target = neighbor(true);
+        if (target == null || !target.canReceive()) return 0;
+        busy = true;
+        try {
+            int moved = target.receiveEnergy(Math.min(amount, capacity()), simulate);
+            if (!simulate) windowFe += moved;
+            return moved;
+        } finally {
+            busy = false;
         }
-        return given;
+    }
+
+    /** Потребитель забирает с выхода — забираем у источника на входе. */
+    private int passBackward(int amount, boolean simulate) {
+        if (busy) return 0;
+        IEnergyStorage source = neighbor(false);
+        if (source == null || !source.canExtract()) return 0;
+        busy = true;
+        try {
+            int moved = source.extractEnergy(Math.min(amount, capacity()), simulate);
+            if (!simulate) windowFe += moved;
+            return moved;
+        } finally {
+            busy = false;
+        }
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (!(level instanceof ServerLevel sl)) return;
-        if (outCache == null) {
-            Direction out = MiniMeterBlock.output(getBlockState());
-            outCache = BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, sl,
-                    worldPosition.relative(out), out.getOpposite());
-        }
+        if (!(level instanceof ServerLevel)) return;
 
-        IEnergyStorage target = outCache.getCapability();
-        if (target != null && target.canReceive() && buffer > 0) {
-            int moved = target.receiveEnergy(buffer, false);
-            if (moved > 0) extract(moved, false);
+        // источник, который сам не толкает (например, аккумулятор другого мода): тянем со входа сами
+        IEnergyStorage source = neighbor(false), target = neighbor(true);
+        if (source != null && target != null && source.canExtract() && target.canReceive() && !busy) {
+            int can = source.extractEnergy(capacity(), true);
+            if (can > 0) {
+                int fits = target.receiveEnergy(can, true);
+                if (fits > 0) {
+                    int taken = source.extractEnergy(fits, false);
+                    windowFe += target.receiveEnergy(taken, false);
+                }
+            }
         }
 
         if (++windowTicks >= WINDOW) {
@@ -104,7 +133,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         }
     }
 
-    /** Повернули ключом — выход теперь в другую сторону. */
+    /** Повернули ключом — вход и выход поменялись местами. */
     @Override
     @SuppressWarnings("deprecation")
     public void setBlockState(BlockState state) {
@@ -112,6 +141,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super.setBlockState(state);
         if (turned) {
             outCache = null;
+            inCache = null;
             if (level != null) level.invalidateCapabilities(worldPosition);
         }
     }
@@ -119,14 +149,12 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
-        tag.putInt("Buffer", buffer);
         tag.putFloat("Flow", flow);
     }
 
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
-        buffer = Math.max(0, tag.getInt("Buffer"));
         flow = tag.getFloat("Flow");
     }
 
