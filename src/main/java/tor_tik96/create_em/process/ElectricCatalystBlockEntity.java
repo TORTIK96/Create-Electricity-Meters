@@ -1,6 +1,10 @@
 package tor_tik96.create_em.process;
 
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
 import com.simibubi.create.content.kinetics.fan.EncasedFanBlockEntity;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -42,7 +46,14 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         mode = new ScrollOptionBehaviour<>(CatalystMode.class,
-                Component.translatable("create_em.catalyst.mode"), this, new CenteredSideValueBoxTransform());
+                Component.translatable("create_em.catalyst.mode"), this, new CenteredSideValueBoxTransform()) {
+            @Override
+            public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
+                return new ValueSettingsBoard(label, max, 1,
+                        List.of(Component.translatable("create_em.catalyst.mode_row")),
+                        new ValueSettingsFormatter.ScrollOptionSettingsFormatter(CatalystMode.values()));
+            }
+        };
         behaviours.add(mode);
     }
 

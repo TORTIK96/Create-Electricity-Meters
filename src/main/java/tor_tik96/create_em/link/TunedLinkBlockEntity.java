@@ -2,6 +2,12 @@ package tor_tik96.create_em.link;
 
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.redstone.link.LinkBehaviour;
+import com.simibubi.create.content.redstone.link.RedstoneLinkFrequencySlot;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
@@ -56,22 +62,43 @@ public class TunedLinkBlockEntity extends SmartBlockEntity implements IHaveGoggl
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
-        strength = new ScrollValueBehaviour(Component.translatable("create_em.tuned_link.strength"), this,
-                new TunedLinkSlots.Strength()).between(0, 15);
+        strength = new StrengthBehaviour(this);
         strength.value = 15;
         strength.withCallback(v -> refresh());
         behaviours.add(strength);
-    }
 
-    @Override
-    public void addBehavioursDeferred(List<BlockEntityBehaviour> behaviours) {
-        link = LinkBehaviour.transmitter(this, ValueBoxTransform.Dual.makeSlots(TunedLinkSlots.Frequency::new),
+        // Частоту создаём сразу, а не в addBehavioursDeferred: тот вызывается только при чтении NBT,
+        // а у только что поставленного блока NBT нет — слоты частоты не появились бы.
+        link = LinkBehaviour.transmitter(this, ValueBoxTransform.Dual.makeSlots(RedstoneLinkFrequencySlot::new),
                 this::getTransmitted);
         behaviours.add(link);
     }
 
+    /** Ползунок силы: подписи на русском вместо «Value». */
+    private static class StrengthBehaviour extends ScrollValueBehaviour {
+        StrengthBehaviour(SmartBlockEntity be) {
+            super(Component.translatable("create_em.tuned_link.strength"), be, new TunedLinkSlots.Strength());
+            between(0, 15);
+        }
+
+        @Override
+        public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
+            return new ValueSettingsBoard(label, 15, 5,
+                    List.of(Component.translatable("create_em.tuned_link.strength_row")),
+                    new ValueSettingsFormatter(ValueSettingsBehaviour.ValueSettings::format));
+        }
+    }
+
     public int getTransmitted() {
         return transmitted;
+    }
+
+    public boolean selector() {
+        return isSelector();
+    }
+
+    public ScrollValueBehaviour getStrengthBehaviour() {
+        return strength;
     }
 
     public int getStrength() {

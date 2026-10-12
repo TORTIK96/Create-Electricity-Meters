@@ -19,12 +19,15 @@ public class EMButton extends AbstractButton {
         this.action = action;
     }
 
-    @Override public void onPress() { action.run(); }
+    @Override public void onPress() {
+        action.run();
+        setFocused(false); // иначе после клика кнопка остаётся «подсвеченной» как при наведении
+    }
 
     @Override
     protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float pt) {
         EMGui.Theme t = theme.get();
-        int state = !active ? 2 : isHoveredOrFocused() ? 1 : 0;
+        int state = !active ? 2 : isHovered() ? 1 : 0; // только мышь, фокус не подсвечиваем
         EMGui.button(g, t, getX(), getY(), width, height, state);
         var font = Minecraft.getInstance().font;
         int color = active ? t.buttonText : t.disabledText;

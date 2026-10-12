@@ -171,7 +171,7 @@
   "block.create_em.tuned_link.tooltip.behaviour2": "A _pulse_ from a button latches it on. Other _selectors on the same frequency_ turn off, like a program switch.",
   "block.create_em.tuned_link.tooltip.control1": "R-Click with Wrench",
   "block.create_em.tuned_link.tooltip.action1": "Toggles _normal_ / _selector_ mode.",
-  "block.create_em.tuned_link.tooltip.control2": "R-Click the right window",
+  "block.create_em.tuned_link.tooltip.control2": "R-Click the digit window",
   "block.create_em.tuned_link.tooltip.action2": "Set the _signal strength_.",
   "block.create_em.andesite_energy_meter.tooltip.summary": "Household _meter_. Takes energy only from a _service line_ and counts what the consumer _actually received_.",
   "block.create_em.andesite_energy_meter.tooltip.condition1": "When cut off for debt",
@@ -198,5 +198,7 @@
   "item.create_em.seal.tooltip.behaviour1": "The seal is _broken_ and the supplier is notified.",
   "item.create_em.seal.tooltip.control1": "R-Click a meter",
   "item.create_em.seal.tooltip.action1": "Seals it. Shift on your own meter _removes the seal_.",
-  "block.create_em.billing_terminal.tooltip.summary": "_Pay desk_ for electricity. Accepts the _currency_ of any supplier you have an account with."
+  "block.create_em.billing_terminal.tooltip.summary": "_Pay desk_ for electricity. Accepts the _currency_ of any supplier you have an account with.",
+  "create_em.tuned_link.strength_row": "Strength",
+  "create_em.catalyst.mode_row": "Mode"
 }

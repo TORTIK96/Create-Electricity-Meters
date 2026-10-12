@@ -47,12 +47,13 @@ public class TunedLinkBlock extends Block implements IBE<TunedLinkBlockEntity>, 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
     static {
-        SHAPES.put(Direction.UP, box(1, 0, 1, 15, 3, 15));
-        SHAPES.put(Direction.DOWN, box(1, 13, 1, 15, 16, 15));
-        SHAPES.put(Direction.SOUTH, box(1, 1, 0, 15, 15, 3));
-        SHAPES.put(Direction.NORTH, box(1, 1, 13, 15, 15, 16));
-        SHAPES.put(Direction.EAST, box(0, 1, 1, 3, 15, 15));
-        SHAPES.put(Direction.WEST, box(13, 1, 1, 16, 15, 15));
+        // как у редстоун-связи Create
+        SHAPES.put(Direction.UP, box(2, 0, 2, 14, 3, 14));
+        SHAPES.put(Direction.DOWN, box(2, 13, 2, 14, 16, 14));
+        SHAPES.put(Direction.SOUTH, box(3, 1, 0, 13, 15, 3));
+        SHAPES.put(Direction.NORTH, box(3, 1, 13, 13, 15, 16));
+        SHAPES.put(Direction.EAST, box(0, 1, 3, 3, 15, 13));
+        SHAPES.put(Direction.WEST, box(13, 1, 3, 16, 15, 13));
     }
 
     public TunedLinkBlock(Properties properties) {
@@ -81,7 +82,7 @@ public class TunedLinkBlock extends Block implements IBE<TunedLinkBlockEntity>, 
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction facing = state.getValue(FACING);
         BlockPos support = pos.relative(facing.getOpposite());
-        return !level.getBlockState(support).getCollisionShape(level, support).isEmpty();
+        return !level.getBlockState(support).canBeReplaced();
     }
 
     @Override

@@ -171,7 +171,7 @@
   "block.create_em.tuned_link.tooltip.behaviour2": "_Импульс_ с кнопки включает передатчик, и он держит сигнал. Остальные _селекторы той же частоты_ гаснут — получается переключатель программ.",
   "block.create_em.tuned_link.tooltip.control1": "ПКМ гаечным ключом",
   "block.create_em.tuned_link.tooltip.action1": "Переключает режим: _обычный_ / _селектор_.",
-  "block.create_em.tuned_link.tooltip.control2": "ПКМ по окошку справа",
+  "block.create_em.tuned_link.tooltip.control2": "ПКМ по окошку с цифрами",
   "block.create_em.tuned_link.tooltip.action2": "Выставить _силу сигнала_.",
   "block.create_em.andesite_energy_meter.tooltip.summary": "Бытовой _счётчик_. Берёт энергию только с _сервисной линии_ и честно считает, сколько _реально принял_ потребитель.",
   "block.create_em.andesite_energy_meter.tooltip.condition1": "При отключении за долг",
@@ -198,5 +198,7 @@
   "item.create_em.seal.tooltip.behaviour1": "Пломба _срывается_, поставщик получает сообщение.",
   "item.create_em.seal.tooltip.control1": "ПКМ по счётчику",
   "item.create_em.seal.tooltip.action1": "Опломбировать. С Shift по своему счётчику — _снять пломбу_.",
-  "block.create_em.billing_terminal.tooltip.summary": "_Касса_ для оплаты электроэнергии. Принимает _валюту_ любого поставщика, с которым у вас есть счёт."
+  "block.create_em.billing_terminal.tooltip.summary": "_Касса_ для оплаты электроэнергии. Принимает _валюту_ любого поставщика, с которым у вас есть счёт.",
+  "create_em.tuned_link.strength_row": "Сила",
+  "create_em.catalyst.mode_row": "Режим"
 }

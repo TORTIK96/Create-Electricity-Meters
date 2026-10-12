@@ -10,40 +10,19 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Слоты на лицевой панели передатчика. Повторяют раскладку редстоун-связи Create
- * (та же глубина и поворот), но сдвинуты: частота — левая колонка, сила сигнала — справа.
+ * Окошко силы сигнала на корпусе. Частота — стандартные слоты Create
+ * ({@link RedstoneLinkFrequencySlot}), потому что модель — модель связи Create.
+ * Окошко стоит на свободной стороне корпуса, напротив антенны:
+ * <ul>
+ *   <li>на стене — справа от слотов частоты (x = 11.5);</li>
+ *   <li>на полу/потолке — по другую сторону от антенны (x = 4).</li>
+ * </ul>
+ * Поворот наследуем у слота Create, поэтому цифры и рамка смотрят так же, как у частоты.
  */
-public final class TunedLinkSlots {
-    /** Центр колонки частоты и окошка силы по горизонтали, в пикселях. */
-    static final float FREQ_X = 5.5f, STRENGTH_X = 11f;
+public class TunedLinkSlots {
+    /** Высота поверхности окошка над корпусом связи (корпус — 3 px, окошко — ещё 0.25). */
+    static final float SURFACE = 3.27f;
 
-    /** Положение точки на лицевой панели: x, y — по панели (как при FACING=SOUTH), в пикселях. */
-    static Vec3 onFace(BlockState state, float x, float y, RotateHorizontally rot) {
-        Direction facing = state.getValue(TunedLinkBlock.FACING);
-        if (facing.getAxis().isHorizontal())
-            return rot.apply(state, VecHelper.voxelSpace(x, y, 3.01f));
-        // на полу/потолке ось «вверх по панели» уходит в z, как у Create
-        Vec3 loc = VecHelper.voxelSpace(x, 3.01f, y);
-        return VecHelper.rotateCentered(loc, facing == Direction.DOWN ? 180 : 0, Axis.X);
-    }
-
-    interface RotateHorizontally {
-        Vec3 apply(BlockState state, Vec3 v);
-    }
-
-    /** Частота: два слота друг над другом. */
-    public static class Frequency extends RedstoneLinkFrequencySlot {
-        public Frequency(boolean first) {
-            super(first);
-        }
-
-        @Override
-        public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
-            return onFace(state, FREQ_X, first ? 10.5f : 5.5f, this::rotateHorizontally);
-        }
-    }
-
-    /** Сила сигнала: одно окошко справа по центру. */
     public static class Strength extends RedstoneLinkFrequencySlot {
         public Strength() {
             super(true);
@@ -51,7 +30,16 @@ public final class TunedLinkSlots {
 
         @Override
         public Vec3 getLocalOffset(LevelAccessor level, BlockPos pos, BlockState state) {
-            return onFace(state, STRENGTH_X, 8f, this::rotateHorizontally);
+            Direction facing = state.getValue(TunedLinkBlock.FACING);
+            if (facing.getAxis().isHorizontal())
+                return rotateHorizontally(state, VecHelper.voxelSpace(11.5f, 8f, SURFACE));
+            Vec3 loc = VecHelper.voxelSpace(4f, SURFACE, 8f);
+            return VecHelper.rotateCentered(loc, facing == Direction.DOWN ? 180 : 0, Axis.X);
+        }
+
+        @Override
+        public float getScale() {
+            return .35f;
         }
     }
 
