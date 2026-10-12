@@ -117,5 +117,17 @@
   "create_em.panel.tariff_free": "Энергия бесплатна · квитанция через %s",
   "create_em.terminal.free": "Тариф: бесплатно",
   "create_em.limit.hint": "лимит, FE/t",
-  "create_em.panel.notice_balance": "Поставщик установил ваш баланс: %s кр."
+  "create_em.panel.notice_balance": "Поставщик установил ваш баланс: %s кр.",
+  "create_em.panel.tab_terms": "Условия",
+  "create_em.panel.terms_period": "Расчётный период, игр. дней",
+  "create_em.panel.terms_limit_after": "Урезать мощность через, дней",
+  "create_em.panel.terms_percent": "Оставить мощности, %",
+  "create_em.panel.terms_cut_after": "Отключить через, дней",
+  "create_em.panel.terms_hint": "−1 — никогда, 0 — сразу при долге",
+  "create_em.panel.terms_every": "Квитанция каждые %s игр. дн. (≈ %s мин)",
+  "create_em.panel.terms_cut_now": "Долг: сразу отключение",
+  "create_em.panel.terms_limit_now": "Долг: сразу %s%% мощности",
+  "create_em.panel.terms_limit_in": "Долг %s дн.: остаётся %s%% мощности",
+  "create_em.panel.terms_cut_in": "Долг %s дн.: отключение",
+  "create_em.panel.terms_never_cut": "За долг не отключать"
 }

@@ -117,5 +117,17 @@
   "create_em.panel.tariff_free": "Free energy · next bill in %s",
   "create_em.terminal.free": "Tariff: free",
   "create_em.limit.hint": "limit, FE/t",
-  "create_em.panel.notice_balance": "Your supplier set your balance to %s cr"
+  "create_em.panel.notice_balance": "Your supplier set your balance to %s cr",
+  "create_em.panel.tab_terms": "Terms",
+  "create_em.panel.terms_period": "Billing period, game days",
+  "create_em.panel.terms_limit_after": "Limit power after, days",
+  "create_em.panel.terms_percent": "Power left when limited, %",
+  "create_em.panel.terms_cut_after": "Cut off after, days",
+  "create_em.panel.terms_hint": "-1 = never, 0 = as soon as there is debt",
+  "create_em.panel.terms_every": "Bill every %s game days (~%s min)",
+  "create_em.panel.terms_cut_now": "Debt: cut off at once",
+  "create_em.panel.terms_limit_now": "Debt: power drops to %s%% at once",
+  "create_em.panel.terms_limit_in": "Debt %s days: power drops to %s%%",
+  "create_em.panel.terms_cut_in": "Debt %s days: cut off",
+  "create_em.panel.terms_never_cut": "Never cut off for debt"
 }

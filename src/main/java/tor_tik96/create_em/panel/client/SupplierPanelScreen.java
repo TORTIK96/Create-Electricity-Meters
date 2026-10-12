@@ -31,6 +31,8 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
     private static final int ROW = 18, LIST_X = 6, LIST_Y = 26, LIST_W = 112, LIST_H = 200, LIST_ROWS = (LIST_H - 4) / ROW;
     private static final int DET_X = 122, DET_W = W - 6 - 122;
     private static final int CELL = 20, VAULT_COLS = 12, VAULT_X = 8, VAULT_Y = 28;
+    private static final int TAB_STEP = 61, TAB_VAULT = 3, TAB_TERMS = 2;
+    private static final int TERMS_FIELD_X = 172, TERMS_Y0 = 30, TERMS_ROW = 20;
 
     private final List<EMButton> tabs = new ArrayList<>();
     private final List<EMButton> accountButtons = new ArrayList<>();
@@ -52,10 +54,10 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
     protected void init() {
         super.init();
         tabs.clear(); accountButtons.clear();
-        String[] names = {"create_em.panel.tab_accounts", "create_em.panel.tab_currency", "create_em.panel.tab_vault"};
-        for (int i = 0; i < 3; i++) {
+        String[] names = {"create_em.panel.tab_accounts", "create_em.panel.tab_currency", "create_em.panel.tab_terms", "create_em.panel.tab_vault"};
+        for (int i = 0; i < names.length; i++) {
             int tab = i;
-            tabs.add(addRenderableWidget(new EMButton(leftPos + 6 + i * 82, topPos + 5, 80, 16, Component.translatable(names[i]), () -> T,
+            tabs.add(addRenderableWidget(new EMButton(leftPos + 6 + i * TAB_STEP, topPos + 5, TAB_STEP - 2, 16, Component.translatable(names[i]), () -> T,
                     () -> { menu.tab = tab; refresh(); })));
         }
         int x = leftPos + DET_X, y = topPos;
@@ -76,6 +78,12 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
             field(cx + 30, cy, 68, F_VALUE0 + i, () -> menu.getValue(slot), () -> null,
                     () -> menu.tab == 1 && menu.slots.get(slot).hasItem(), Component.literal("1"));
         }
+        // условия: период и санкции
+        int[] termFields = {F_PERIOD, F_LIMIT_AFTER, F_LIMIT_PERCENT, F_CUT_AFTER};
+        java.util.function.LongSupplier[] termValues = {menu::getPeriodDays, menu::getLimitAfterDays, menu::getLimitPercent, menu::getCutAfterDays};
+        for (int i = 0; i < termFields.length; i++)
+            field(leftPos + TERMS_FIELD_X, y + TERMS_Y0 + i * TERMS_ROW - 3, W - 6 - TERMS_FIELD_X, termFields[i], termValues[i], () -> null,
+                    () -> menu.tab == TAB_TERMS, Component.empty());
         refresh();
     }
 
@@ -119,7 +127,7 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
             }
             return true;
         }
-        if (menu.tab == 2 && rx >= VAULT_X && ry >= VAULT_Y) {
+        if (menu.tab == TAB_VAULT && rx >= VAULT_X && ry >= VAULT_Y) {
             int col = (rx - VAULT_X) / CELL, row = (ry - VAULT_Y) / CELL;
             int i = row * VAULT_COLS + col;
             if (col < VAULT_COLS && i < menu.getVault().size()) { click(VAULT_BASE + i); return true; }
@@ -142,7 +150,7 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
     protected void renderBg(GuiGraphics g, float pt, int mx, int my) {
         int x = leftPos, y = topPos;
         EMGui.panel(g, T, x, y, W, H);
-        g.fill(x + 8 + menu.tab * 82, y + 22, x + 84 + menu.tab * 82, y + 23, 0xFF3A2411);
+        g.fill(x + 8 + menu.tab * TAB_STEP, y + 22, x + 2 + (menu.tab + 1) * TAB_STEP, y + 23, 0xFF3A2411);
         switch (menu.tab) {
             case 0 -> {
                 EMGui.inset(g, T, x + LIST_X, y + LIST_Y, LIST_W, LIST_H);
@@ -153,7 +161,8 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
                         g.fill(x + LIST_X + 1, y + LIST_Y + 2 + r * ROW, x + LIST_X + LIST_W - 1, y + LIST_Y + 2 + (r + 1) * ROW, 0xFF4A2E14);
             }
             case 1 -> { for (Slot s : menu.slots) if (s.isActive()) EMGui.slot(g, T, x + s.x, y + s.y); }
-            case 2 -> {
+            case TAB_TERMS -> EMGui.inset(g, T, x + 6, y + 120, W - 12, H - 126);
+            case TAB_VAULT -> {
                 EMGui.inset(g, T, x + 6, y + 26, W - 12, H - 32);
                 List<VaultView> v = menu.getVault();
                 for (int i = 0; i < v.size(); i++) {
@@ -191,12 +200,35 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
                 }
                 EMGui.text(g, font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 162, label, false, 0);
             }
-            case 2 -> {
+            case TAB_TERMS -> labelsTerms(g, scr, label);
+            case TAB_VAULT -> {
                 if (menu.getVault().isEmpty())
                     EMGui.text(g, font, Component.translatable("create_em.panel.vault_empty"), 12, 32, W - 24, scr, false, 0);
                 EMGui.text(g, font, Component.translatable("create_em.panel.vault_hint"), 8, H - 16, W - 16, scr, false, 2);
             }
         }
+    }
+
+    /** Условия: подписи к полям и итог человеческим языком. */
+    private void labelsTerms(GuiGraphics g, int scr, int label) {
+        String[] keys = {"create_em.panel.terms_period", "create_em.panel.terms_limit_after", "create_em.panel.terms_percent", "create_em.panel.terms_cut_after"};
+        for (int i = 0; i < keys.length; i++)
+            EMGui.text(g, font, Component.translatable(keys[i]), 8, TERMS_Y0 + i * TERMS_ROW, TERMS_FIELD_X - 12, label, false, 0);
+        EMGui.text(g, font, Component.translatable("create_em.panel.terms_hint"), 8, 108, W - 16, 0xFF6B4A24, false, 0);
+
+        int p = menu.getPeriodDays(), la = menu.getLimitAfterDays(), pct = menu.getLimitPercent(), cut = menu.getCutAfterDays();
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.translatable("create_em.panel.terms_every", p, p * 20));
+        if (cut == 0) lines.add(Component.translatable("create_em.panel.terms_cut_now"));
+        else {
+            if (la >= 0 && (cut < 0 || la < cut))
+                lines.add(la == 0 ? Component.translatable("create_em.panel.terms_limit_now", pct)
+                        : Component.translatable("create_em.panel.terms_limit_in", la, pct));
+            lines.add(cut < 0 ? Component.translatable("create_em.panel.terms_never_cut")
+                    : Component.translatable("create_em.panel.terms_cut_in", cut));
+        }
+        lines.add(tariffLine());
+        for (int i = 0; i < lines.size(); i++) EMGui.text(g, font, lines.get(i), 12, 125 + i * 13, W - 24, scr, false, 0);
     }
 
     /** «1 кр. = 1M FE · квитанция через 47:12». */
@@ -257,7 +289,7 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
     public void render(GuiGraphics g, int mx, int my, float pt) {
         super.render(g, mx, my, pt);
         renderTooltip(g, mx, my);
-        if (menu.tab == 2) {
+        if (menu.tab == TAB_VAULT) {
             int rx = mx - leftPos - VAULT_X, ry = my - topPos - VAULT_Y;
             if (rx >= 0 && ry >= 0 && rx / CELL < VAULT_COLS) {
                 int i = (ry / CELL) * VAULT_COLS + rx / CELL;

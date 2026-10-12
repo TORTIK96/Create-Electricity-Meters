@@ -80,6 +80,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     /** Поставщик отключил счётчик из панели / ограничил мощность (0 — без ограничения). */
     private boolean remoteOff;
     private int powerCap;
+    /** Сколько процентов лимита оставляет поставщик при урезании за долг. */
+    private int limitPercent = 20;
 
     public EnergyMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.METER_BE.get(), pos, state);
@@ -113,7 +115,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         int budget = getLimit();                     // лимит счётчика на тик
         if (powerCap > 0) budget = Math.min(budget, powerCap);
         if (tripped || remoteOff || stage == BillingStage.CUT) budget = 0;
-        else if (stage == BillingStage.LIMITED) budget = budget * Config.LIMITED_PERCENT.get() / 100;
+        else if (stage == BillingStage.LIMITED) budget = budget * limitPercent / 100;
         int sent = push(backCache, budget);
         sent += push(bottomCache, budget - sent);
 
@@ -173,7 +175,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         BillingData bd = BillingData.get(level.getServer());
         bd.report(supplier, owner, ownerName, fe);
         BillingData.Account a = bd.account(supplier, owner);
-        BillingStage newStage = a.stage(level.getGameTime());
+        BillingStage newStage = bd.stage(a, level.getGameTime());
+        limitPercent = bd.supplier(supplier).limitPercent;
         boolean changed = newStage != stage || a.balance != acctBalance || a.paidAt != acctPaidAt
                 || a.disabled != remoteOff || a.powerCap != powerCap;
         remoteOff = a.disabled;
@@ -250,6 +253,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         sealId = seal.id();
         supplier = seal.supplier();
         supplierName = seal.supplierName();
+        BillingData.get(level.getServer()).setSupplierName(supplier, supplierName);
         applySealState();
     }
 

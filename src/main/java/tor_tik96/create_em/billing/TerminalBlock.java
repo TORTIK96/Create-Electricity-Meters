@@ -50,7 +50,10 @@ public class TerminalBlock extends HorizontalDirectionalBlock implements EntityB
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!level.isClientSide && placer instanceof Player p && level.getBlockEntity(pos) instanceof TerminalBlockEntity be)
+        {
             be.setOwner(p.getUUID(), p.getGameProfile().getName());
+            BillingData.get(level.getServer()).setSupplierName(p.getUUID(), p.getGameProfile().getName());
+        }
     }
 
     @Override

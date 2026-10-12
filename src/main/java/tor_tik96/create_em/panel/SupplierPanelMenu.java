@@ -37,7 +37,8 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
     public static final int BTN_TOGGLE = 1, BTN_BILL_ONE = 6, BTN_BILL_ALL = 7,
             SELECT_BASE = 1000, VAULT_BASE = 2000;
     // поля ввода
-    public static final int F_BALANCE = 1, F_CAP = 2, F_PRICE = 3, F_PER_FE = 4, F_VALUE0 = 10;
+    public static final int F_BALANCE = 1, F_CAP = 2, F_PRICE = 3, F_PER_FE = 4,
+            F_PERIOD = 5, F_LIMIT_AFTER = 6, F_LIMIT_PERCENT = 7, F_CUT_AFTER = 8, F_VALUE0 = 10;
 
     // раскладка (общая с экраном)
     public static final int W = 256, H = 232;
@@ -52,7 +53,7 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
     @Nullable private UUID selected;                      // сервер: выбранный абонент
 
     // клиент
-    public int tab = 1;                                    // 0 — абоненты, 1 — валюта, 2 — касса
+    public int tab = 1;                                    // 0 — абоненты, 1 — валюта, 2 — условия, 3 — касса
     @Nullable private PanelSyncPayload clientData;
 
     /** Клиент. */
@@ -63,7 +64,9 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
     /** Сервер. */
     public static SupplierPanelMenu server(int id, Inventory inv, TransformerBlockEntity be) {
         UUID owner = be.getOwner();
-        BillingData.Supplier sup = BillingData.get(inv.player.getServer()).supplier(owner);
+        BillingData bd = BillingData.get(inv.player.getServer());
+        bd.setSupplierName(owner, inv.player.getGameProfile().getName());
+        BillingData.Supplier sup = bd.supplier(owner);
         SimpleContainer ghosts = new SimpleContainer(CURRENCY_SLOTS);
         for (int i = 0; i < CURRENCY_SLOTS; i++) ghosts.setItem(i, sup.currency[i].copy());
         return new SupplierPanelMenu(id, inv, owner, be, ghosts);
@@ -183,7 +186,13 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
             return;
         }
         BillingData.Tariff t = bd.tariff(supplier);
+        BillingData.Supplier sup = bd.supplier(supplier);
+        int iv = (int) Math.max(-1, Math.min(Integer.MAX_VALUE, value));
         switch (field) {
+            case F_PERIOD -> bd.setTerms(supplier, iv, sup.limitAfterDays, sup.limitPercent, sup.cutAfterDays, now);
+            case F_LIMIT_AFTER -> bd.setTerms(supplier, sup.periodDays, iv, sup.limitPercent, sup.cutAfterDays, now);
+            case F_LIMIT_PERCENT -> bd.setTerms(supplier, sup.periodDays, sup.limitAfterDays, iv, sup.cutAfterDays, now);
+            case F_CUT_AFTER -> bd.setTerms(supplier, sup.periodDays, sup.limitAfterDays, sup.limitPercent, iv, now);
             case F_PRICE -> bd.setTariff(supplier, value, t.perFe);
             case F_PER_FE -> bd.setTariff(supplier, t.price, value);
             case F_BALANCE, F_CAP -> {
@@ -212,14 +221,14 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
         long now = sp.getServer().overworld().getGameTime();
         List<PanelSyncPayload.AccountView> acc = new ArrayList<>();
         for (BillingData.Account a : bd.accountsOf(supplier))
-            acc.add(new PanelSyncPayload.AccountView(a.consumer, a.consumerName, a.balance, a.stage(now).ordinal(),
+            acc.add(new PanelSyncPayload.AccountView(a.consumer, a.consumerName, a.balance, bd.stage(a, now).ordinal(),
                     a.disabled, a.powerCap, a.feSincePayment, a.unbilledFe));
         BillingData.Supplier sup = bd.supplier(supplier);
         List<PanelSyncPayload.VaultView> v = new ArrayList<>();
         for (BillingData.VaultEntry e : sup.vault) v.add(new PanelSyncPayload.VaultView(e.sample, e.count));
         BillingData.Tariff t = bd.tariff(supplier);
-        int next = bd.getNextBillingAt() < 0 ? 0 : (int) Math.max(0, (bd.getNextBillingAt() - now) / 20);
-        PacketDistributor.sendToPlayer(sp, new PanelSyncPayload(containerId, acc, v, t.price, t.perFe, sup.value.clone(), next));
+        PacketDistributor.sendToPlayer(sp, new PanelSyncPayload(containerId, acc, v, t.price, t.perFe, sup.value.clone(),
+                bd.secondsToBill(supplier, now), sup.periodDays, sup.limitAfterDays, sup.limitPercent, sup.cutAfterDays));
     }
 
     // ---------- клиент ----------
@@ -231,6 +240,10 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
     public long getPerFe() { return clientData == null ? 1 : clientData.perFe(); }
     public int getNextBillSeconds() { return clientData == null ? 0 : clientData.nextBillSec(); }
     public boolean hasData() { return clientData != null; }
+    public int getPeriodDays() { return clientData == null ? 1 : clientData.periodDays(); }
+    public int getLimitAfterDays() { return clientData == null ? -1 : clientData.limitAfterDays(); }
+    public int getLimitPercent() { return clientData == null ? 0 : clientData.limitPercent(); }
+    public int getCutAfterDays() { return clientData == null ? -1 : clientData.cutAfterDays(); }
 
     @Override
     public boolean stillValid(Player p) {

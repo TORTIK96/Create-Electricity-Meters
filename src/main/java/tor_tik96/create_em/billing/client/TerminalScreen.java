@@ -18,7 +18,11 @@ import static tor_tik96.create_em.billing.TerminalMenu.*;
 /** Терминал абонента в латунной теме: оплата слева, лицевой счёт на экране, ниже — принимаемая валюта. */
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final EMGui.Theme T = EMGui.Theme.BRASS;
-    private static final int SX = 86, SY = 16, SW = W - 6 - 86, SH = 78;
+    private static final int SX = 86, SY = 22, SW = W - 6 - 86, SH = 76;
+
+    private final java.util.List<EMButton> tabButtons = new java.util.ArrayList<>();
+    private java.util.List<String> shownTabs = java.util.List.of();
+    private int shownSelected = -1;
 
     public TerminalScreen(TerminalMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -37,6 +41,35 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         }));
     }
 
+    /** Вкладки поставщиков: пересобираются, когда с сервера пришёл новый список. */
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (menu.getTabNames().equals(shownTabs) && menu.getTabSelected() == shownSelected) return;
+        shownTabs = menu.getTabNames();
+        shownSelected = menu.getTabSelected();
+        tabButtons.forEach(this::removeWidget);
+        tabButtons.clear();
+        int n = Math.max(1, shownTabs.size());
+        int w = Math.min(80, (W - 12 - (n - 1) * 2) / n);
+        for (int i = 0; i < shownTabs.size(); i++) {
+            int idx = i;
+            EMButton b = new EMButton(leftPos + 6 + i * (w + 2), topPos + 4, w, 15, Component.literal(shownTabs.get(i)), () -> T, () -> {
+                if (minecraft != null && minecraft.gameMode != null)
+                    minecraft.gameMode.handleInventoryButtonClick(menu.containerId, SELECT_BASE + idx);
+            });
+            b.active = i != shownSelected;
+            tabButtons.add(addRenderableWidget(b));
+        }
+    }
+
+    @Override
+    public void resize(net.minecraft.client.Minecraft mc, int width, int height) {
+        super.resize(mc, width, height);
+        shownTabs = java.util.List.of(); // пересоздать вкладки после пересборки экрана
+        tabButtons.clear();
+    }
+
     @Override
     protected void renderBg(GuiGraphics g, float pt, int mx, int my) {
         EMGui.panel(g, T, leftPos, topPos, W, H);
@@ -51,7 +84,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     @Override
     protected void renderLabels(GuiGraphics g, int mx, int my) {
         int label = T.labelColor(), scr = T.screenText;
-        EMGui.text(g, font, title, 8, 6, W - 16, label, false, 0);
+        if (menu.getTabNames().isEmpty()) EMGui.text(g, font, title, 8, 7, W - 16, label, false, 0);
         EMGui.text(g, font, Component.translatable("create_em.terminal.payment"), 8, PAY_Y - 11, 72, label, false, 0);
         EMGui.text(g, font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 162, label, false, 0);
 

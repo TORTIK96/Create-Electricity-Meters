@@ -14,7 +14,8 @@ import java.util.UUID;
 
 /** Сервер → клиент: список абонентов и хранилище для открытой панели поставщика. */
 public record PanelSyncPayload(int containerId, List<AccountView> accounts, List<VaultView> vault,
-                               long price, long perFe, int[] values, int nextBillSec) implements CustomPacketPayload {
+                               long price, long perFe, int[] values, int nextBillSec,
+                               int periodDays, int limitAfterDays, int limitPercent, int cutAfterDays) implements CustomPacketPayload {
     public static final Type<PanelSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "panel_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, PanelSyncPayload> CODEC = StreamCodec.ofMember(PanelSyncPayload::write, PanelSyncPayload::read);
 
@@ -48,6 +49,10 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
         buf.writeVarInt(values.length);
         for (int v : values) buf.writeVarInt(v);
         buf.writeVarInt(nextBillSec);
+        buf.writeVarInt(periodDays);
+        buf.writeVarInt(limitAfterDays);
+        buf.writeVarInt(limitPercent);
+        buf.writeVarInt(cutAfterDays);
     }
 
     private static PanelSyncPayload read(RegistryFriendlyByteBuf buf) {
@@ -63,7 +68,9 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
         long price = buf.readLong(), perFe = buf.readLong();
         int[] values = new int[buf.readVarInt()];
         for (int i = 0; i < values.length; i++) values[i] = buf.readVarInt();
-        return new PanelSyncPayload(id, acc, vault, price, perFe, values, buf.readVarInt());
+        int next = buf.readVarInt();
+        return new PanelSyncPayload(id, acc, vault, price, perFe, values, next,
+                buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
     }
 
     /** Клиент: отдать данные открытой панели, если это она. */

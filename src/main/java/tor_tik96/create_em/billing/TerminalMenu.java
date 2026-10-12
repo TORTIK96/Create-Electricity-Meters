@@ -11,46 +11,69 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import tor_tik96.create_em.registry.EMRegistry;
 
+import java.util.List;
 import java.util.UUID;
 
 import static tor_tik96.create_em.billing.BillingData.CURRENCY_SLOTS;
 import static tor_tik96.create_em.billing.TerminalBlockEntity.SLOT_PAY;
 
 /**
- * Терминал абонента: кладёшь любую валюту поставщика, жмёшь «Оплатить» —
+ * Терминал абонента. Вкладки сверху — все поставщики, у которых у игрока есть счёт
+ * (поставщик терминала всегда первый). На выбранной вкладке — его тариф, счёт и валюта.
+ * Кладёшь любую валюту этого поставщика, жмёшь «Оплатить» —
  * предметы пересчитываются в кредиты по его курсу и уходят в общее хранилище поставщика
  * (в самом терминале ничего не копится). Настройки валюты и тарифа — в умном трансформаторе.
  */
 public class TerminalMenu extends AbstractContainerMenu {
-    public static final int BTN_PAY = 0;
+    public static final int BTN_PAY = 0, SELECT_BASE = 100;
 
     // длинные числа идут по сети четырьмя short-слотами
     private static final int L_BAL = 0, L_SINCE = 4, L_UNB = 8, L_PRICE = 12, L_PER = 16,
             STAGE = 20, NEXT = 21, OWNER = 22, VAL0 = 23, COUNT = VAL0 + CURRENCY_SLOTS * 2;
 
     // раскладка (общая с экраном)
-    public static final int W = 256, H = 234;
-    public static final int PAY_X = 10, PAY_Y = 30, CUR_X = 10, CUR_STEP = 37, CUR_Y = 110,
-            INV_X = 47, INV_Y = 152, HOTBAR_Y = 210;
+    public static final int W = 256, H = 236;
+    public static final int PAY_X = 10, PAY_Y = 34, CUR_X = 10, CUR_STEP = 37, CUR_Y = 114,
+            INV_X = 47, INV_Y = 154, HOTBAR_Y = 212;
 
     @Nullable private final TerminalBlockEntity terminal;
     private final Container pay;
     private final Container accepted;   // показ принимаемой валюты (только для глаз)
     private final ContainerData data;
+    private final Player player;
+    /** Сервер: поставщики игрока и выбранный (массив — чтобы ContainerData видел изменения). */
+    private final List<UUID> suppliers = new java.util.ArrayList<>();
+    private final UUID[] selected;
+    private boolean tabsSent;
+
+    // клиент
+    private List<String> tabNames = List.of();
+    private int tabSelected;
 
     /** Клиент. */
     public TerminalMenu(int id, Inventory inv) {
-        this(id, inv, null, new SimpleContainer(TerminalBlockEntity.SIZE), new SimpleContainer(CURRENCY_SLOTS), new SimpleContainerData(COUNT));
+        this(id, inv, null, new SimpleContainer(TerminalBlockEntity.SIZE), new SimpleContainer(CURRENCY_SLOTS),
+                new SimpleContainerData(COUNT), new UUID[1]);
     }
 
     /** Сервер. */
     public TerminalMenu(int id, Inventory inv, TerminalBlockEntity be) {
-        this(id, inv, be, be.getContainer(), acceptedOf(be), serverData(be, inv.player));
+        this(id, inv, be, be.getContainer(), new SimpleContainer(CURRENCY_SLOTS), null, new UUID[]{be.getOwner()});
     }
 
-    private TerminalMenu(int id, Inventory inv, @Nullable TerminalBlockEntity be, Container pay, Container accepted, ContainerData data) {
+    private TerminalMenu(int id, Inventory inv, @Nullable TerminalBlockEntity be, Container pay, Container accepted,
+                         @Nullable ContainerData clientData, UUID[] selected) {
         super(EMRegistry.TERMINAL_MENU.get(), id);
         this.terminal = be;
+        this.player = inv.player;
+        this.selected = selected;
+        ContainerData data = clientData != null ? clientData : serverData(be, inv.player, selected);
+        if (be != null && be.getLevel() != null && be.getLevel().getServer() != null) {
+            BillingData bd = BillingData.get(be.getLevel().getServer());
+            if (be.getOwner() != null) suppliers.add(be.getOwner());
+            for (UUID s : bd.suppliersOf(inv.player.getUUID())) if (!suppliers.contains(s)) suppliers.add(s);
+            fillAccepted(accepted, bd, selected[0]);
+        }
         this.pay = pay;
         this.accepted = accepted;
         this.data = data;
@@ -68,19 +91,15 @@ public class TerminalMenu extends AbstractContainerMenu {
             addSlot(new Slot(inv, c, INV_X + c * 18, HOTBAR_Y));
     }
 
-    private static Container acceptedOf(TerminalBlockEntity be) {
-        SimpleContainer c = new SimpleContainer(CURRENCY_SLOTS);
-        if (be.getOwner() != null && be.getLevel() != null && be.getLevel().getServer() != null) {
-            BillingData.Supplier s = BillingData.get(be.getLevel().getServer()).supplier(be.getOwner());
-            for (int i = 0; i < CURRENCY_SLOTS; i++) c.setItem(i, s.currency[i].copy());
-        }
-        return c;
+    private static void fillAccepted(Container c, BillingData bd, @Nullable UUID supplier) {
+        for (int i = 0; i < CURRENCY_SLOTS; i++)
+            c.setItem(i, supplier == null ? ItemStack.EMPTY : bd.supplier(supplier).currency[i].copy());
     }
 
-    private static ContainerData serverData(TerminalBlockEntity be, Player player) {
+    private static ContainerData serverData(TerminalBlockEntity be, Player player, UUID[] selected) {
         return new ContainerData() {
             @Override public int get(int i) {
-                UUID owner = be.getOwner();
+                UUID owner = selected[0];
                 if (owner == null || be.getLevel() == null || be.getLevel().getServer() == null) return 0;
                 BillingData bd = BillingData.get(be.getLevel().getServer());
                 if (i >= VAL0) {
@@ -100,8 +119,8 @@ public class TerminalMenu extends AbstractContainerMenu {
                     return (int) ((v >>> ((i % 4) * 16)) & 0xFFFF);
                 }
                 return switch (i) {
-                    case STAGE -> a == null ? 0 : a.stage(now).ordinal();
-                    case NEXT -> bd.getNextBillingAt() < 0 ? 0 : (int) Math.min(32767, Math.max(0, (bd.getNextBillingAt() - now) / 20));
+                    case STAGE -> a == null ? 0 : bd.stage(a, now).ordinal();
+                    case NEXT -> Math.min(32767, bd.secondsToBill(owner, now));
                     case OWNER -> owner.equals(player.getUUID()) ? 1 : 0;
                     default -> 0;
                 };
@@ -128,13 +147,38 @@ public class TerminalMenu extends AbstractContainerMenu {
     public boolean isOwner() { return data.get(OWNER) == 1; }
     public int getValue(int slot) { return joined(VAL0 + slot * 2, VAL0 + slot * 2 + 1); }
 
+    // ---------- вкладки ----------
+    public void setTabs(List<String> names, int sel) { tabNames = names; tabSelected = sel; }
+    public List<String> getTabNames() { return tabNames; }
+    public int getTabSelected() { return tabSelected; }
+
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        if (!tabsSent && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+            tabsSent = true;
+            BillingData bd = BillingData.get(sp.getServer());
+            List<String> names = new java.util.ArrayList<>();
+            for (UUID s : suppliers) names.add(bd.supplier(s).name.isEmpty() ? "?" : bd.supplier(s).name);
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp,
+                    new TerminalSyncPayload(containerId, names, Math.max(0, suppliers.indexOf(selected[0]))));
+        }
+    }
+
     @Override
     public boolean clickMenuButton(Player p, int id) {
-        if (id != BTN_PAY || terminal == null || terminal.getOwner() == null || terminal.getLevel() == null) return false;
+        if (terminal == null || terminal.getLevel() == null) return false;
         var server = terminal.getLevel().getServer();
         if (server == null) return false;
         BillingData bd = BillingData.get(server);
-        UUID owner = terminal.getOwner();
+        if (id >= SELECT_BASE && id < SELECT_BASE + suppliers.size()) {
+            selected[0] = suppliers.get(id - SELECT_BASE);
+            fillAccepted(accepted, bd, selected[0]);
+            tabsSent = false; // переслать выбранную вкладку
+            return true;
+        }
+        if (id != BTN_PAY || selected[0] == null) return false;
+        UUID owner = selected[0];
 
         ItemStack stack = pay.getItem(SLOT_PAY);
         if (stack.isEmpty()) return false;

@@ -39,8 +39,19 @@ public class BillingData extends SavedData {
         public long perFe = 1_000_000;
     }
 
-    /** Настройки поставщика: валюта и хранилище оплаченных предметов. */
+    /** Настройки поставщика: имя, условия оплаты и санкции, валюта, хранилище оплаченных предметов. */
     public static final class Supplier {
+        public String name = "";
+        /** Расчётный период, игровых дней. */
+        public int periodDays = Config.BILLING_PERIOD_DAYS.get();
+        /** Через сколько дней долга урезать мощность (-1 — никогда, 0 — сразу). */
+        public int limitAfterDays = Config.LIMIT_AFTER_DAYS.get();
+        /** Сколько процентов лимита остаётся при урезании. */
+        public int limitPercent = Config.LIMITED_PERCENT.get();
+        /** Через сколько дней долга отключать (-1 — никогда, 0 — сразу). */
+        public int cutAfterDays = Config.CUT_AFTER_DAYS.get();
+        /** Когда следующая плановая квитанция этого поставщика; -1 — ещё не назначена. */
+        public long nextBillingAt = -1;
         /** Образцы валюты (count = 1) и их цена в кредитах; пустой образец — слот не используется. */
         public final ItemStack[] currency = new ItemStack[CURRENCY_SLOTS];
         public final int[] value = new int[CURRENCY_SLOTS];
@@ -71,19 +82,24 @@ public class BillingData extends SavedData {
 
         Account(UUID supplier, UUID consumer) { this.supplier = supplier; this.consumer = consumer; }
 
-        public BillingStage stage(long now) {
-            if (debtSince < 0 || balance >= 0) return BillingStage.NORMAL;
-            long days = (now - debtSince) / DAY;
-            if (days >= Config.CUT_AFTER_DAYS.get()) return BillingStage.CUT;
-            if (days >= Config.LIMIT_AFTER_DAYS.get()) return BillingStage.LIMITED;
-            return BillingStage.WARNING;
-        }
+    }
+
+    /**
+     * Стадия счёта по условиям его поставщика: сколько дней висит долг и когда
+     * поставщик урезает мощность или отключает (-1 — никогда, 0 — сразу).
+     */
+    public BillingStage stage(Account a, long now) {
+        if (a.debtSince < 0 || a.balance >= 0) return BillingStage.NORMAL;
+        Supplier s = supplier(a.supplier);
+        long days = (now - a.debtSince) / DAY;
+        if (s.cutAfterDays >= 0 && days >= s.cutAfterDays) return BillingStage.CUT;
+        if (s.limitAfterDays >= 0 && days >= s.limitAfterDays) return BillingStage.LIMITED;
+        return BillingStage.WARNING;
     }
 
     private final Map<UUID, Tariff> tariffs = new HashMap<>();
     private final Map<String, Account> accounts = new HashMap<>();
     private final Map<UUID, Supplier> suppliers = new HashMap<>();
-    private long nextBillingAt = -1;
 
     public static BillingData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
@@ -203,21 +219,58 @@ public class BillingData extends SavedData {
 
     // ---------- расчётный период ----------
 
-    /** Вызывается раз в секунду из серверного тика. */
+    /** Вызывается раз в секунду из серверного тика. У каждого поставщика свой период. */
     void tick(MinecraftServer server) {
         long now = server.overworld().getGameTime();
-        long period = Config.BILLING_PERIOD_DAYS.get() * DAY;
-        if (nextBillingAt < 0) { nextBillingAt = now + period; setDirty(); }
-        if (now >= nextBillingAt) {
-            bill(server, now, null);
-            nextBillingAt = now + period;
-            setDirty();
+        Set<UUID> active = new HashSet<>();
+        for (Account a : accounts.values()) active.add(a.supplier);
+        for (UUID id : active) {
+            Supplier s = supplier(id);
+            long period = Math.max(1, s.periodDays) * DAY;
+            if (s.nextBillingAt < 0) { s.nextBillingAt = now + period; setDirty(); }
+            if (now >= s.nextBillingAt) {
+                bill(server, now, id);
+                s.nextBillingAt = now + period;
+                setDirty();
+            }
         }
         notifyStages(server, now);
     }
 
-    /** Когда будет следующая плановая квитанция (игровое время), -1 — ещё не назначена. */
-    public long getNextBillingAt() { return nextBillingAt; }
+    /** Когда следующая плановая квитанция поставщика (игровое время), -1 — ещё не назначена. */
+    public long getNextBillingAt(UUID supplier) { return supplier(supplier).nextBillingAt; }
+
+    /** Секунд реального времени до плановой квитанции поставщика. */
+    public int secondsToBill(UUID supplier, long now) {
+        long next = getNextBillingAt(supplier);
+        return next < 0 ? 0 : (int) Math.min(Integer.MAX_VALUE, Math.max(0, (next - now) / 20));
+    }
+
+    /** Поставщик меняет условия. Новый период начинает отсчёт заново. */
+    public void setTerms(UUID supplierId, int periodDays, int limitAfterDays, int limitPercent, int cutAfterDays, long now) {
+        Supplier s = supplier(supplierId);
+        int newPeriod = Math.max(1, Math.min(365, periodDays));
+        if (newPeriod != s.periodDays) s.nextBillingAt = now + newPeriod * DAY;
+        s.periodDays = newPeriod;
+        s.limitAfterDays = Math.max(-1, Math.min(365, limitAfterDays));
+        s.limitPercent = Math.max(0, Math.min(100, limitPercent));
+        s.cutAfterDays = Math.max(-1, Math.min(365, cutAfterDays));
+        setDirty();
+    }
+
+    /** Запомнить имя поставщика для вкладок терминала. */
+    public void setSupplierName(UUID supplierId, String name) {
+        Supplier s = supplier(supplierId);
+        if (!name.equals(s.name)) { s.name = name; setDirty(); }
+    }
+
+    /** Поставщики, у которых есть счёт у этого абонента. */
+    public List<UUID> suppliersOf(UUID consumer) {
+        List<UUID> out = new ArrayList<>();
+        for (Account a : accounts.values()) if (a.consumer.equals(consumer) && !out.contains(a.supplier)) out.add(a.supplier);
+        out.sort(Comparator.comparing((UUID id) -> supplier(id).name.toLowerCase()));
+        return out;
+    }
 
     /**
      * Выставить квитанции вручную: всем абонентам поставщика (supplier != null) или вообще всем.
@@ -270,7 +323,7 @@ public class BillingData extends SavedData {
     /** Сообщить абоненту и поставщику, когда стадия долга меняется. */
     private void notifyStages(MinecraftServer server, long now) {
         for (Account a : accounts.values()) {
-            BillingStage st = a.stage(now);
+            BillingStage st = stage(a, now);
             if (st.ordinal() == a.notifiedStage) continue;
             a.notifiedStage = st.ordinal();
             setDirty();
@@ -339,10 +392,16 @@ public class BillingData extends SavedData {
                 vault.add(e);
             }
             c.put("Vault", vault);
+            c.putString("Name", sup.name);
+            c.putInt("Period", sup.periodDays);
+            c.putInt("LimitAfter", sup.limitAfterDays);
+            c.putInt("LimitPercent", sup.limitPercent);
+            c.putInt("CutAfter", sup.cutAfterDays);
+            c.putLong("NextBilling", sup.nextBillingAt);
             ss.add(c);
         });
         tag.put("Suppliers", ss);
-        tag.putLong("NextBilling", nextBillingAt);
+
         return tag;
     }
 
@@ -376,6 +435,14 @@ public class BillingData extends SavedData {
         for (Tag t0 : tag.getList("Suppliers", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) t0;
             Supplier sup = d.supplier(c.getUUID("Supplier"));
+            sup.name = c.getString("Name");
+            if (c.contains("Period")) {
+                sup.periodDays = Math.max(1, c.getInt("Period"));
+                sup.limitAfterDays = c.getInt("LimitAfter");
+                sup.limitPercent = c.getInt("LimitPercent");
+                sup.cutAfterDays = c.getInt("CutAfter");
+            }
+            sup.nextBillingAt = c.contains("NextBilling") ? c.getLong("NextBilling") : -1;
             ListTag cur = c.getList("Currency", Tag.TAG_COMPOUND);
             for (int i = 0; i < Math.min(CURRENCY_SLOTS, cur.size()); i++) {
                 CompoundTag e = cur.getCompound(i);
@@ -388,7 +455,7 @@ public class BillingData extends SavedData {
                 if (!st.isEmpty()) sup.vault.add(new VaultEntry(st, e.getLong("Count")));
             }
         }
-        d.nextBillingAt = tag.contains("NextBilling") ? tag.getLong("NextBilling") : -1;
+
         return d;
     }
 }
