@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,sealed=false": {
       "model": "create_em:block/brass_energy_meter"
     },
-    "facing=east": {
+    "facing=north,sealed=true": {
+      "model": "create_em:block/brass_energy_meter_sealed"
+    },
+    "facing=east,sealed=false": {
       "model": "create_em:block/brass_energy_meter",
       "y": 90
     },
-    "facing=south": {
+    "facing=east,sealed=true": {
+      "model": "create_em:block/brass_energy_meter_sealed",
+      "y": 90
+    },
+    "facing=south,sealed=false": {
       "model": "create_em:block/brass_energy_meter",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,sealed=true": {
+      "model": "create_em:block/brass_energy_meter_sealed",
+      "y": 180
+    },
+    "facing=west,sealed=false": {
       "model": "create_em:block/brass_energy_meter",
+      "y": 270
+    },
+    "facing=west,sealed=true": {
+      "model": "create_em:block/brass_energy_meter_sealed",
       "y": 270
     }
   }

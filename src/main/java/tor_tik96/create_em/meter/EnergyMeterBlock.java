@@ -19,6 +19,8 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -35,13 +37,15 @@ import java.util.Map;
  * выходы FE — сзади (против циферблата) и снизу. Циферблат смотрит на игрока, который его поставил.
  */
 public class EnergyMeterBlock extends HorizontalDirectionalBlock implements EntityBlock {
+    /** Есть ли на счётчике действующая пломба (только для модели; правда — в SealRegistry). */
+    public static final BooleanProperty SEALED = BooleanProperty.create("sealed");
     private final MeterTier tier;
     private final Map<Direction, VoxelShape> shapes = new EnumMap<>(Direction.class);
 
     public EnergyMeterBlock(MeterTier tier, Properties props) {
         super(props);
         this.tier = tier;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SEALED, false));
         for (Direction d : Direction.Plane.HORIZONTAL) shapes.put(d, buildShape(tier, d));
     }
 
@@ -54,7 +58,7 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING); }
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, SEALED); }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
@@ -83,21 +87,42 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
         LineNetwork.onPlaced(level, pos, placer);
     }
 
+    /** Игрок ломает опломбированный счётчик — пломба сорвана, в журнал поставщика пишется его имя. */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be && be.isSealed())
+            be.breakSeal(player.getGameProfile().getName());
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
-        if (!state.is(newState.getBlock())) LineNetwork.onRemoved(level, pos);
+        if (!state.is(newState.getBlock())) {
+            // убрали не игроком (взрыв, контрапция, ключ Create...) — пломба тоже срывается
+            if (!level.isClientSide && level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be && be.isSealed())
+                be.breakSeal("");
+            LineNetwork.onRemoved(level, pos);
+        }
         super.onRemove(state, level, pos, newState, moved);
     }
 
-    /** Временно, пока нет расчётной системы: в креативе Shift-ПКМ пустой рукой отмечает оплату. */
+    /**
+     * ПКМ пустой рукой — меню лимита.
+     * Временно, пока нет расчётной системы: в креативе Shift-ПКМ отмечает оплату.
+     */
     @Override
     protected InteractionResult useWithoutItem(BlockState s, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!player.isCreative() || !player.isShiftKeyDown()) return InteractionResult.PASS;
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be) {
+        if (!(level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be)) return InteractionResult.PASS;
+        if (level.isClientSide) return InteractionResult.SUCCESS;
+
+        if (player.isCreative() && player.isShiftKeyDown()) {
             be.markPaid();
             player.displayClientMessage(Component.translatable("create_em.meter.marked_paid"), true);
+        } else {
+            player.openMenu(new SimpleMenuProvider((id, inv, p) -> new MeterLimitMenu(id, inv, be),
+                    Component.translatable(getDescriptionId())));
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.CONSUME;
     }
 
     // ---------- форма ----------

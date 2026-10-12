@@ -26,6 +26,8 @@ import com.simibubi.create.api.equipment.goggles.IHaveHoveringInformation;
 import tor_tik96.create_em.meter.client.ClientAccess;
 import tor_tik96.create_em.Config;
 import tor_tik96.create_em.registry.EMRegistry;
+import tor_tik96.create_em.seal.SealRegistry;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +60,15 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     private final LineLinks links = new LineLinks(this);
     @Nullable private UUID owner;
 
+    // ---- пломба (правда — в SealRegistry, здесь кеш) ----
+    @Nullable private UUID sealId;
+    @Nullable private UUID supplier;
+    private String supplierName = "";   // синхронизируется; пусто = пломбы нет
+    private int sealCheckTimer;
+
+    // ---- лимит ----
+    private int limit;                  // 0 = по умолчанию (максимум уровня)
+
     public EnergyMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.METER_BE.get(), pos, state);
     }
@@ -85,7 +96,9 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     void serverTick() {
         if (backCache == null) initCaches();
 
-        int budget = getTier().limitPerTick();       // лимит счётчика на тик
+        if (--sealCheckTimer <= 0) { sealCheckTimer = 40; validateSeal(); }
+
+        int budget = getLimit();                     // лимит счётчика на тик
         int sent = push(backCache, budget);
         sent += push(bottomCache, budget - sent);
 
@@ -96,8 +109,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (++windowTicks >= WINDOW) {
             float newFlow = windowFe / (float) WINDOW;
             // пока идёт энергия — синхронизируем раз в секунду, чтобы показания в подсказке шли вживую
-            boolean changed = windowFe > 0 || newFlow != flowPerTick || syncedLimit != getTier().limitPerTick();
-            syncedLimit = getTier().limitPerTick();
+            boolean changed = windowFe > 0 || newFlow != flowPerTick || syncedLimit != getLimit();
+            syncedLimit = getLimit();
             flowPerTick = newFlow;
             windowFe = 0;
             windowTicks = 0;
@@ -129,6 +142,89 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     public void setBlockState(BlockState state) {
         super.setBlockState(state);
         backCache = bottomCache = null; // поворот -> пересоздать кеши
+    }
+
+    // ---------------- лимит ----------------
+    /** Текущий лимит, FE/t, всегда в коридоре уровня (конфиг мог поменяться). Только сервер. */
+    public int getLimit() {
+        MeterTier t = getTier();
+        int v = limit <= 0 ? t.maxLimit() : limit;
+        return Math.max(t.minLimit(), Math.min(t.maxLimit(), v));
+    }
+
+    public void setLimit(int value) {
+        MeterTier t = getTier();
+        limit = Math.max(t.minLimit(), Math.min(t.maxLimit(), value));
+        syncedLimit = limit;
+        sync();
+    }
+
+    /** Опломбированный счётчик настраивает только поставщик; без пломбы — тот, кто поставил. */
+    public boolean canEditLimit(Player player) {
+        if (player.isCreative()) return true;
+        if (isSealed()) return isSupplier(player);
+        return owner == null || owner.equals(player.getUUID());
+    }
+
+    // ---------------- пломба ----------------
+    public boolean isSealed() {
+        return level != null && level.isClientSide ? !supplierName.isEmpty() : sealId != null;
+    }
+
+    /** Поставщик по действующей пломбе (сервер) или null. Трансформатор кормит счётчик, только если это его владелец. */
+    @Nullable public UUID getSealSupplier() { return supplier; }
+    public String getSupplierName() { return supplierName; }
+    public boolean isSupplier(Player p) { return supplier != null && supplier.equals(p.getUUID()); }
+
+    public void installSeal(Player player) {
+        if (level == null || level.getServer() == null) return;
+        SealRegistry.Seal seal = SealRegistry.get(level.getServer())
+                .install(player.getUUID(), player.getGameProfile().getName(), level, worldPosition);
+        sealId = seal.id();
+        supplier = seal.supplier();
+        supplierName = seal.supplierName();
+        applySealState();
+    }
+
+    public void revokeSeal(String by) {
+        if (sealId != null && level != null && level.getServer() != null)
+            SealRegistry.get(level.getServer()).revoke(sealId, level.getServer(), by);
+        clearSeal();
+    }
+
+    /** Срыв пломбы: by — имя игрока или пусто, если причина неизвестна (взрыв, контрапция...). */
+    public void breakSeal(String by) {
+        if (sealId != null && level != null && level.getServer() != null)
+            SealRegistry.get(level.getServer()).breakSeal(sealId, level.getServer(), by);
+        clearSeal();
+    }
+
+    /** Пломба могла пропасть, пока счётчик был выгружен, или её сняли через реестр. */
+    private void validateSeal() {
+        if (sealId == null || level == null || level.getServer() == null) return;
+        if (SealRegistry.get(level.getServer()).getValid(sealId, level, worldPosition) == null) clearSeal();
+    }
+
+    private void clearSeal() {
+        sealId = null;
+        supplier = null;
+        supplierName = "";
+        applySealState();
+    }
+
+    private void applySealState() {
+        setChanged();
+        if (level == null) return;
+        BlockState st = getBlockState();
+        if (st.hasProperty(EnergyMeterBlock.SEALED) && st.getValue(EnergyMeterBlock.SEALED) != isSealed())
+            level.setBlock(worldPosition, st.setValue(EnergyMeterBlock.SEALED, isSealed()), Block.UPDATE_ALL);
+        sync();
+    }
+
+    private void sync() {
+        setChanged();
+        if (level != null && !level.isClientSide)
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     // ---------------- клиент ----------------
@@ -190,6 +286,13 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (isPlayerSneaking) tooltip.add(line(2, fe(getSincePaymentFe())));
         tooltip.add(line(1, Component.translatable("create_em.tooltip.last_payment").withStyle(LABEL).append(lastPaymentText())));
 
+        tooltip.add(line(0, Component.translatable("create_em.tooltip.seal").withStyle(LABEL)));
+        if (!supplierName.isEmpty())
+            tooltip.add(line(1, Component.translatable("create_em.tooltip.supplier").withStyle(LABEL)
+                    .append(Component.literal(supplierName).withStyle(VALUE))));
+        else
+            tooltip.add(line(1, Component.translatable("create_em.tooltip.no_seal").withStyle(ChatFormatting.RED)));
+
         int limit = Math.max(1, syncedLimit);
         int loadPct = Math.round(flowPerTick * 100f / limit);
         ChatFormatting loadColor = loadPct >= 95 ? ChatFormatting.RED : loadPct >= 75 ? ChatFormatting.GOLD : ChatFormatting.GREEN;
@@ -235,6 +338,10 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putLong("PaidAt", paidAtTick);
         links.save(tag);
         if (owner != null) tag.putUUID("Owner", owner);
+        if (sealId != null) tag.putUUID("Seal", sealId);
+        if (supplier != null) tag.putUUID("Supplier", supplier);
+        tag.putString("SupplierName", supplierName);
+        tag.putInt("UserLimit", limit);
     }
 
     @Override
@@ -248,6 +355,10 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (tag.contains("Limit")) syncedLimit = tag.getInt("Limit"); // только в пакете синхронизации
         links.load(tag);
         if (tag.hasUUID("Owner")) owner = tag.getUUID("Owner");
+        sealId = tag.hasUUID("Seal") ? tag.getUUID("Seal") : null;
+        supplier = tag.hasUUID("Supplier") ? tag.getUUID("Supplier") : null;
+        supplierName = tag.getString("SupplierName");
+        if (tag.contains("UserLimit")) limit = tag.getInt("UserLimit");
     }
 
     @Override
@@ -257,7 +368,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putFloat("Flow", flowPerTick);
         tag.putLong("PaidFe", paidFe);
         tag.putLong("PaidAt", paidAtTick);
-        tag.putInt("Limit", getTier().limitPerTick());
+        tag.putInt("Limit", getLimit());
+        tag.putString("SupplierName", supplierName);
         links.save(tag);
         return tag;
     }

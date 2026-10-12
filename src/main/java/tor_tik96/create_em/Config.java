@@ -6,12 +6,20 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
+    public static final ModConfigSpec.IntValue ANDESITE_MIN_LIMIT = BUILDER
+            .comment("Наименьший лимит, который можно выставить андезитовому (бытовому) счётчику, FE/t")
+            .defineInRange("andesiteMinLimit", 50, 1, Integer.MAX_VALUE);
+
     public static final ModConfigSpec.IntValue ANDESITE_LIMIT = BUILDER
-            .comment("Максимальный поток андезитового (бытового) счётчика, FE/t")
+            .comment("Наибольший лимит андезитового счётчика (и лимит по умолчанию), FE/t")
             .defineInRange("andesiteLimit", 500, 1, Integer.MAX_VALUE);
 
+    public static final ModConfigSpec.IntValue BRASS_MIN_LIMIT = BUILDER
+            .comment("Наименьший лимит латунного (промышленного) счётчика, FE/t")
+            .defineInRange("brassMinLimit", 500, 1, Integer.MAX_VALUE);
+
     public static final ModConfigSpec.IntValue BRASS_LIMIT = BUILDER
-            .comment("Максимальный поток латунного (промышленного) счётчика, FE/t")
+            .comment("Наибольший лимит латунного счётчика (и лимит по умолчанию), FE/t")
             .defineInRange("brassLimit", 8192, 1, Integer.MAX_VALUE);
 
     public static final ModConfigSpec.LongValue FE_PER_KWH = BUILDER

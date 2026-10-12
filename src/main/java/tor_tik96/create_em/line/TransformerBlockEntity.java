@@ -42,7 +42,8 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
     private long windowFe;
     private int windowTicks;
     private float outPerTick;  // синхронизируется
-    private int meterCount;    // синхронизируется
+    private int meterCount;    // синхронизируется: всего счётчиков на линии
+    private int sealedCount;   // синхронизируется: из них с пломбой этого поставщика
     private int syncedMax;     // синхронизируется
 
     private final IEnergyStorage input = new IEnergyStorage() {
@@ -74,9 +75,14 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
 
         int sent = 0;
         int budget = Math.min(buffer, Config.TRANSFORMER_MAX_TRANSFER.get());
-        if (budget > 0 && !meters.isEmpty()) {
+        // энергию получают только счётчики, опломбированные владельцем этого трансформатора
+        List<EnergyMeterBlockEntity> sealed = new java.util.ArrayList<>();
+        for (EnergyMeterBlockEntity m : meters)
+            if (owner != null && !m.isRemoved() && owner.equals(m.getSealSupplier())) sealed.add(m);
+
+        if (budget > 0 && !sealed.isEmpty()) {
             // поровну, а недобор одних счётчиков достаётся остальным
-            List<EnergyMeterBlockEntity> open = new java.util.ArrayList<>(meters);
+            List<EnergyMeterBlockEntity> open = new java.util.ArrayList<>(sealed);
             while (budget > 0 && !open.isEmpty()) {
                 int share = Math.max(1, budget / open.size());
                 var it = open.iterator();
@@ -97,9 +103,10 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         if (++windowTicks >= WINDOW) {
             float newOut = windowFe / (float) WINDOW;
             int max = Config.TRANSFORMER_MAX_TRANSFER.get();
-            boolean changed = newOut != outPerTick || meterCount != meters.size() || syncedMax != max;
+            boolean changed = newOut != outPerTick || meterCount != meters.size() || sealedCount != sealed.size() || syncedMax != max;
             outPerTick = newOut;
             meterCount = meters.size();
+            sealedCount = sealed.size();
             syncedMax = max;
             windowFe = 0;
             windowTicks = 0;
@@ -122,6 +129,8 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
                 .append(Component.literal(String.format("%,.0f / %,d FE/t", outPerTick, syncedMax)).withStyle(ChatFormatting.AQUA))));
         tooltip.add(line(1, Component.translatable("create_em.tooltip.line_meters").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(String.valueOf(meterCount)).withStyle(ChatFormatting.AQUA))));
+        tooltip.add(line(1, Component.translatable("create_em.tooltip.line_sealed").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(String.valueOf(sealedCount)).withStyle(sealedCount < meterCount ? ChatFormatting.GOLD : ChatFormatting.AQUA))));
         tooltip.add(line(1, Component.translatable("create_em.tooltip.line_wires").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(links.size() + " / " + getMaxLinks()).withStyle(ChatFormatting.AQUA))));
         return true;
@@ -145,6 +154,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         if (tag.contains("Out")) {
             outPerTick = tag.getFloat("Out");
             meterCount = tag.getInt("Meters");
+            sealedCount = tag.getInt("Sealed");
             syncedMax = tag.getInt("Max");
         }
     }
@@ -155,6 +165,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         links.save(tag);
         tag.putFloat("Out", outPerTick);
         tag.putInt("Meters", meterCount);
+        tag.putInt("Sealed", sealedCount);
         tag.putInt("Max", Config.TRANSFORMER_MAX_TRANSFER.get());
         return tag;
     }

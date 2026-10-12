@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
@@ -21,13 +23,17 @@ import tor_tik96.create_em.Create_em;
 import tor_tik96.create_em.line.*;
 import tor_tik96.create_em.meter.EnergyMeterBlock;
 import tor_tik96.create_em.meter.EnergyMeterBlockEntity;
+import tor_tik96.create_em.meter.MeterLimitMenu;
 import tor_tik96.create_em.meter.MeterTier;
+import tor_tik96.create_em.seal.SealItem;
 
 public final class EMRegistry {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Create_em.MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Create_em.MODID);
     public static final DeferredRegister<BlockEntityType<?>> BE_TYPES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Create_em.MODID);
+    public static final DeferredRegister<MenuType<?>> MENUS =
+            DeferredRegister.create(Registries.MENU, Create_em.MODID);
     public static final DeferredRegister.DataComponents COMPONENTS =
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Create_em.MODID);
 
@@ -65,6 +71,12 @@ public final class EMRegistry {
             ITEMS.registerSimpleBlockItem("line_connector", LINE_CONNECTOR, new Item.Properties());
     public static final DeferredItem<LineWireItem> LINE_WIRE =
             ITEMS.register("line_wire", () -> new LineWireItem(new Item.Properties()));
+    public static final DeferredItem<SealItem> SEAL =
+            ITEMS.register("seal", () -> new SealItem(new Item.Properties()));
+
+    // ---------- меню ----------
+    public static final DeferredHolder<MenuType<?>, MenuType<MeterLimitMenu>> METER_LIMIT_MENU =
+            MENUS.register("meter_limit", () -> new MenuType<>(MeterLimitMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     // ---------- BlockEntity ----------
     @SuppressWarnings("DataFlowIssue")
@@ -87,6 +99,7 @@ public final class EMRegistry {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         BE_TYPES.register(modBus);
+        MENUS.register(modBus);
         modBus.addListener(EMRegistry::registerCaps);
     }
 
