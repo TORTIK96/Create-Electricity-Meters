@@ -27,6 +27,7 @@ public final class EMClient {
     @SubscribeEvent
     static void registerRenderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerBlockEntityRenderer(EMRegistry.METER_BE.get(), EnergyMeterRenderer::new);
+        e.registerBlockEntityRenderer(EMRegistry.MINI_METER_BE.get(), MiniMeterRenderer::new);
         e.registerBlockEntityRenderer(EMRegistry.TRANSFORMER_BE.get(), LineNodeRenderer::new);
         e.registerBlockEntityRenderer(EMRegistry.LINE_CONNECTOR_BE.get(), LineNodeRenderer::new);
         // предметы частоты на передатчике рисует рендерер Create

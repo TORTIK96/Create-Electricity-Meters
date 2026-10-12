@@ -233,5 +233,12 @@
   "block.create_em.transfer_switch.tooltip.condition2": "Когда ввод 1 вернулся",
   "block.create_em.transfer_switch.tooltip.behaviour2": "Ждёт _3 секунды_ стабильной работы и возвращается. Пока работает основной ввод, резерв _не расходуется_.",
   "block.create_em.transfer_switch.tooltip.control1": "ПКМ по панели",
-  "block.create_em.transfer_switch.tooltip.action1": "Режим: _Авто_, _только ввод 1_, _только резерв_, _отключено_."
+  "block.create_em.transfer_switch.tooltip.action1": "Режим: _Авто_, _только ввод 1_, _только резерв_, _отключено_.",
+  "block.create_em.mini_meter": "Мини-счётчик",
+  "create_em.mini_meter.tooltip.flow": "Потребление: ",
+  "block.create_em.mini_meter.tooltip.summary": "Проходной _ваттметр_. Ни к кому не привязан и для оплаты не считает — просто показывает на _никси-лампах_, сколько _FE/t_ сейчас уходит потребителю.",
+  "block.create_em.mini_meter.tooltip.condition1": "Подключение",
+  "block.create_em.mini_meter.tooltip.behaviour1": "Если смотреть на дисплей, _вход слева_, _выход справа_. Работает с любыми FE-проводами и блоками, в том числе с коннекторами _Create: New Age_.",
+  "block.create_em.mini_meter.tooltip.condition2": "Больше 9999 FE/t",
+  "block.create_em.mini_meter.tooltip.behaviour2": "На дисплее _мигает 9999_; точное значение видно в очках инженера."
 }

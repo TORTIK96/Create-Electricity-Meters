@@ -97,6 +97,12 @@ public final class EMRegistry {
             () -> new tor_tik96.create_em.power.AtsBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
 
+    public static final DeferredBlock<tor_tik96.create_em.meter.MiniMeterBlock> MINI_METER = BLOCKS.register("mini_meter",
+            () -> new tor_tik96.create_em.meter.MiniMeterBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(2f).sound(SoundType.COPPER).noOcclusion()));
+    public static final DeferredItem<BlockItem> MINI_METER_ITEM =
+            ITEMS.registerSimpleBlockItem("mini_meter", MINI_METER, new Item.Properties());
+
     public static final DeferredItem<tor_tik96.create_em.power.BatteryItem> BATTERY_ITEM =
             ITEMS.register("battery", () -> new tor_tik96.create_em.power.BatteryItem(BATTERY.get(), new Item.Properties().stacksTo(1)));
     public static final DeferredItem<BlockItem> ATS_ITEM =
@@ -169,6 +175,11 @@ public final class EMRegistry {
             BE_TYPES.register("transfer_switch", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.power.AtsBlockEntity::new, ATS.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.meter.MiniMeterBlockEntity>> MINI_METER_BE =
+            BE_TYPES.register("mini_meter", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.meter.MiniMeterBlockEntity::new, MINI_METER.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -197,6 +208,7 @@ public final class EMRegistry {
         // аккумулятор и АВР: у каждой грани своя клемма
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, BATTERY_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ATS_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, MINI_METER_BE.get(), (be, side) -> be.port(side));
     }
 
     private EMRegistry() {}

@@ -233,5 +233,12 @@
   "block.create_em.transfer_switch.tooltip.condition2": "When input 1 returns",
   "block.create_em.transfer_switch.tooltip.behaviour2": "Waits for _3 seconds_ of stable supply, then switches back. The reserve is _not used_ while the main input works.",
   "block.create_em.transfer_switch.tooltip.control1": "R-Click the panel",
-  "block.create_em.transfer_switch.tooltip.action1": "Mode: _Auto_, _input 1 only_, _reserve only_, _off_."
+  "block.create_em.transfer_switch.tooltip.action1": "Mode: _Auto_, _input 1 only_, _reserve only_, _off_.",
+  "block.create_em.mini_meter": "Mini Meter",
+  "create_em.mini_meter.tooltip.flow": "Consumption: ",
+  "block.create_em.mini_meter.tooltip.summary": "Inline _wattmeter_. Not bound to anyone and does not bill - it just shows on _nixie tubes_ how many _FE/t_ go to the consumer.",
+  "block.create_em.mini_meter.tooltip.condition1": "Connection",
+  "block.create_em.mini_meter.tooltip.behaviour1": "Looking at the display, _input is on the left_, _output on the right_. Works with any FE cables and blocks, including _Create: New Age_ connectors.",
+  "block.create_em.mini_meter.tooltip.condition2": "Above 9999 FE/t",
+  "block.create_em.mini_meter.tooltip.behaviour2": "The display _blinks 9999_; the exact value is shown in engineer's goggles."
 }

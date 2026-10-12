@@ -88,6 +88,10 @@ public final class Config {
             .comment("АВР: через сколько тиков стабильного основного ввода вернуться с резерва (20 = 1 с)")
             .defineInRange("atsReturnDelay", 60, 0, 72000);
 
+    public static final ModConfigSpec.IntValue MINI_METER_MAX_TRANSFER = BUILDER
+            .comment("Мини-счётчик: сколько FE/t пропускает")
+            .defineInRange("miniMeterMaxTransfer", 262144, 1, Integer.MAX_VALUE);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     private Config() {}

@@ -9,6 +9,7 @@
     "create_em:electric_catalyst",
     "create_em:tuned_link",
     "create_em:battery",
-    "create_em:transfer_switch"
+    "create_em:transfer_switch",
+    "create_em:mini_meter"
   ]
 }
