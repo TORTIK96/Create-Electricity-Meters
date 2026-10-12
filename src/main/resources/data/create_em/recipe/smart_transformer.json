@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "B": {
+      "item": "create:brass_sheet"
+    },
+    "T": {
+      "item": "create_em:line_transformer"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    }
+  },
+  "pattern": [
+    " E ",
+    "BTB",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_em:smart_transformer"
+  }
+}

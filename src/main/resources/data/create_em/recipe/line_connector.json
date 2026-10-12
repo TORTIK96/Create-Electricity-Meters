@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "N": {
+      "item": "create:copper_nugget"
+    },
+    "T": {
+      "item": "minecraft:white_terracotta"
+    },
+    "A": {
+      "item": "create:andesite_alloy"
+    }
+  },
+  "pattern": [
+    "N",
+    "T",
+    "A"
+  ],
+  "result": {
+    "count": 4,
+    "id": "create_em:line_connector"
+  }
+}
