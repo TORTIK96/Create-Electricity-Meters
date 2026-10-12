@@ -28,7 +28,10 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private static final int WINDOW = 10;
 
     private int windowFe, windowTicks;
-    private float flow;
+    /** Потребление (что реально потрачено) и проход (что принято) за окно, FE/t. */
+    private float flow, passed;
+    /** Запас потребителя в начале окна; -1 — ещё не замеряли. */
+    private long targetStoredAtStart = -1;
     /** Защита от замыкания, если вход и выход оказались в одной сети проводов. */
     private boolean busy;
     @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> inCache, outCache;
@@ -125,10 +128,18 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         }
 
         if (++windowTicks >= WINDOW) {
-            float f = windowFe / (float) WINDOW;
-            boolean changed = f != flow;
-            flow = f;
+            // потребление = принято − насколько вырос запас самого потребителя
+            // (двигатель или машина сначала заполняют свой буфер — это ещё не расход)
+            long storedNow = target == null ? -1 : target.getEnergyStored();
+            // убыль запаса не прибавляем: что потребитель тратит из своего буфера, через счётчик не проходило
+            long grew = (storedNow >= 0 && targetStoredAtStart >= 0) ? Math.max(0, storedNow - targetStoredAtStart) : 0;
+            float used = Math.max(0, windowFe - grew) / (float) WINDOW;
+            float pass = windowFe / (float) WINDOW;
+            boolean changed = used != flow || pass != passed;
+            flow = used;
+            passed = pass;
             windowFe = windowTicks = 0;
+            targetStoredAtStart = storedNow;
             if (changed) sendData();
         }
     }
@@ -150,12 +161,14 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putFloat("Flow", flow);
+        tag.putFloat("Passed", passed);
     }
 
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(tag, registries, clientPacket);
         flow = tag.getFloat("Flow");
+        passed = tag.getFloat("Passed");
     }
 
     @Override
@@ -163,6 +176,9 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         tooltip.add(line(0, Component.translatable(getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.WHITE)));
         tooltip.add(line(1, Component.translatable("create_em.mini_meter.tooltip.flow").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(EMFormat.fe(Math.round(flow)) + "/t").withStyle(ChatFormatting.AQUA))));
+        if (Math.round(passed) != Math.round(flow))
+            tooltip.add(line(1, Component.translatable("create_em.mini_meter.tooltip.passed").withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(EMFormat.fe(Math.round(passed)) + "/t").withStyle(ChatFormatting.DARK_AQUA))));
         return true;
     }
 

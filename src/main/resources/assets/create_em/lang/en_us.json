@@ -236,7 +236,7 @@
   "block.create_em.transfer_switch.tooltip.action1": "Mode: _Auto_, _input 1 only_, _reserve only_, _off_.",
   "block.create_em.mini_meter": "Mini Meter",
   "create_em.mini_meter.tooltip.flow": "Consumption: ",
-  "block.create_em.mini_meter.tooltip.summary": "Inline _wattmeter_. Not bound to anyone and does not bill - it just shows on _nixie tubes_ how many _FE/t_ go to the consumer.",
+  "block.create_em.mini_meter.tooltip.summary": "Inline _wattmeter_. Not bound to anyone and does not bill - its _nixie tubes_ show how many _FE/t_ the consumer _actually uses_ (what goes into its own buffer is not counted).",
   "block.create_em.mini_meter.tooltip.condition1": "Connection",
   "block.create_em.mini_meter.tooltip.behaviour1": "Looking at the display, _input is on the left_, _output on the right_. Works with any FE cables and blocks, including _Create: New Age_ connectors.",
   "block.create_em.mini_meter.tooltip.condition2": "Above 9999 FE/t",
@@ -279,5 +279,6 @@
   "block.create_em.electrifier.tooltip.condition2": "Radius",
   "block.create_em.electrifier.tooltip.behaviour2": "_3 blocks_ in every direction (config).",
   "block.create_em.electrifier.tooltip.control1": "R-Click a side",
-  "block.create_em.electrifier.tooltip.action1": "Targets: _all but players_, _animals_, _hostile_ or _everyone_."
+  "block.create_em.electrifier.tooltip.action1": "Targets: _all but players_, _animals_, _hostile_ or _everyone_.",
+  "create_em.mini_meter.tooltip.passed": "Passed through: "
 }

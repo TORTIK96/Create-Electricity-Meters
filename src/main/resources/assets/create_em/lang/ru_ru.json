@@ -236,7 +236,7 @@
   "block.create_em.transfer_switch.tooltip.action1": "Режим: _Авто_, _только ввод 1_, _только резерв_, _отключено_.",
   "block.create_em.mini_meter": "Мини-счётчик",
   "create_em.mini_meter.tooltip.flow": "Потребление: ",
-  "block.create_em.mini_meter.tooltip.summary": "Проходной _ваттметр_. Ни к кому не привязан и для оплаты не считает — просто показывает на _никси-лампах_, сколько _FE/t_ сейчас уходит потребителю.",
+  "block.create_em.mini_meter.tooltip.summary": "Проходной _ваттметр_. Ни к кому не привязан и для оплаты не считает — показывает на _никси-лампах_, сколько _FE/t_ потребитель _реально тратит_ (то, что ушло в его буфер, не считается).",
   "block.create_em.mini_meter.tooltip.condition1": "Подключение",
   "block.create_em.mini_meter.tooltip.behaviour1": "Если смотреть на дисплей, _вход слева_, _выход справа_. Работает с любыми FE-проводами и блоками, в том числе с коннекторами _Create: New Age_.",
   "block.create_em.mini_meter.tooltip.condition2": "Больше 9999 FE/t",
@@ -279,5 +279,6 @@
   "block.create_em.electrifier.tooltip.condition2": "Радиус",
   "block.create_em.electrifier.tooltip.behaviour2": "_3 блока_ во все стороны (конфиг).",
   "block.create_em.electrifier.tooltip.control1": "ПКМ по боку",
-  "block.create_em.electrifier.tooltip.action1": "Кого бить: _всех, кроме игроков_, _животных_, _враждебных_ или _всех_."
+  "block.create_em.electrifier.tooltip.action1": "Кого бить: _всех, кроме игроков_, _животных_, _враждебных_ или _всех_.",
+  "create_em.mini_meter.tooltip.passed": "Прошло через счётчик: "
 }
