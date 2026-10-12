@@ -2,5 +2,16 @@
   "itemGroup.create_em": "Create: Счётчики электроэнергии",
   "block.create_em.andesite_energy_meter": "Андезитовый счётчик электроэнергии",
   "block.create_em.brass_energy_meter": "Латунный счётчик электроэнергии",
-  "create_em.meter.readout": "Всего: %s кВт·ч (%s FE) · Сейчас: %s FE/t · Лимит: %s FE/t"
+  "create_em.tooltip.readings": "Показания",
+  "create_em.tooltip.total": "Всего: ",
+  "create_em.tooltip.since_payment": "С последней оплаты: ",
+  "create_em.tooltip.last_payment": "Последняя оплата: ",
+  "create_em.tooltip.never": "не было",
+  "create_em.tooltip.days_ago": "%s дн. назад",
+  "create_em.tooltip.power": "Мощность",
+  "create_em.tooltip.flow": "Сейчас: ",
+  "create_em.tooltip.limit": "Лимит: ",
+  "create_em.tooltip.load": "Нагрузка: ",
+  "create_em.unit.kwh": "%s кВт·ч",
+  "create_em.meter.marked_paid": "Оплата отмечена (креатив)"
 }

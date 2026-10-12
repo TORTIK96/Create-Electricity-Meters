@@ -74,12 +74,13 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
                 : (l, p, st, be) -> ((EnergyMeterBlockEntity) be).serverTick();
     }
 
+    /** Временно, пока нет расчётной системы: в креативе Shift-ПКМ пустой рукой отмечает оплату. */
     @Override
     protected InteractionResult useWithoutItem(BlockState s, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (!player.isCreative() || !player.isShiftKeyDown()) return InteractionResult.PASS;
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be) {
-            player.displayClientMessage(Component.translatable("create_em.meter.readout",
-                    String.format("%.3f", be.getTotalKwh()), String.format("%,d", be.getTotalFe()),
-                    String.format("%.1f", be.getFlowPerTick()), tier.limitPerTick()), true);
+            be.markPaid();
+            player.displayClientMessage(Component.translatable("create_em.meter.marked_paid"), true);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

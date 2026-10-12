@@ -2,5 +2,16 @@
   "itemGroup.create_em": "Create: Electricity Meters",
   "block.create_em.andesite_energy_meter": "Andesite Energy Meter",
   "block.create_em.brass_energy_meter": "Brass Energy Meter",
-  "create_em.meter.readout": "Total: %s kWh (%s FE) \u00b7 Now: %s FE/t \u00b7 Limit: %s FE/t"
+  "create_em.tooltip.readings": "Readings",
+  "create_em.tooltip.total": "Total: ",
+  "create_em.tooltip.since_payment": "Since last payment: ",
+  "create_em.tooltip.last_payment": "Last payment: ",
+  "create_em.tooltip.never": "never",
+  "create_em.tooltip.days_ago": "%s days ago",
+  "create_em.tooltip.power": "Power",
+  "create_em.tooltip.flow": "Now: ",
+  "create_em.tooltip.limit": "Limit: ",
+  "create_em.tooltip.load": "Load: ",
+  "create_em.unit.kwh": "%s kWh",
+  "create_em.meter.marked_paid": "Payment marked (creative)"
 }
