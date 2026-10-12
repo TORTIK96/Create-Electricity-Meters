@@ -77,6 +77,9 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     private BillingStage stage = BillingStage.NORMAL;
     /** Андезитовый счётчик при отключении за долг «выбивает»: сам не включится, нужно взвести. */
     private boolean tripped;
+    /** Поставщик отключил счётчик из панели / ограничил мощность (0 — без ограничения). */
+    private boolean remoteOff;
+    private int powerCap;
 
     public EnergyMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.METER_BE.get(), pos, state);
@@ -108,8 +111,9 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (--sealCheckTimer <= 0) { sealCheckTimer = 40; validateSeal(); }
 
         int budget = getLimit();                     // лимит счётчика на тик
-        if (tripped || stage == BillingStage.CUT) budget = 0;
-        else if (stage == BillingStage.LIMITED) budget = getLimit() * Config.LIMITED_PERCENT.get() / 100;
+        if (powerCap > 0) budget = Math.min(budget, powerCap);
+        if (tripped || remoteOff || stage == BillingStage.CUT) budget = 0;
+        else if (stage == BillingStage.LIMITED) budget = budget * Config.LIMITED_PERCENT.get() / 100;
         int sent = push(backCache, budget);
         sent += push(bottomCache, budget - sent);
 
@@ -160,15 +164,20 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     /** Раз в секунду: сообщить потребление на лицевой счёт и забрать оттуда баланс и стадию. */
     private boolean updateBilling(long fe) {
         if (level == null || level.getServer() == null || supplier == null || owner == null) {
-            boolean changed = stage != BillingStage.NORMAL;
+            boolean changed = stage != BillingStage.NORMAL || remoteOff || powerCap != 0;
             stage = BillingStage.NORMAL;
+            remoteOff = false;
+            powerCap = 0;
             return changed;
         }
         BillingData bd = BillingData.get(level.getServer());
         bd.report(supplier, owner, ownerName, fe);
         BillingData.Account a = bd.account(supplier, owner);
         BillingStage newStage = a.stage(level.getGameTime());
-        boolean changed = newStage != stage || a.balance != acctBalance || a.paidAt != acctPaidAt;
+        boolean changed = newStage != stage || a.balance != acctBalance || a.paidAt != acctPaidAt
+                || a.disabled != remoteOff || a.powerCap != powerCap;
+        remoteOff = a.disabled;
+        powerCap = a.powerCap;
         stage = newStage;
         acctSinceFe = a.feSincePayment;
         acctPaidAt = a.paidAt;
@@ -360,11 +369,14 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
             tooltip.add(line(1, Component.translatable("create_em.tooltip.no_seal").withStyle(ChatFormatting.RED)));
         if (!supplierName.isEmpty()) {
             tooltip.add(line(1, Component.translatable("create_em.tooltip.balance").withStyle(LABEL)
-                    .append(Component.translatable("create_em.unit.items", acctBalance).withStyle(acctBalance < 0 ? ChatFormatting.RED : VALUE))));
+                    .append(Component.translatable("create_em.unit.credits", acctBalance).withStyle(acctBalance < 0 ? ChatFormatting.RED : VALUE))));
             tooltip.add(line(1, Component.translatable("create_em.tooltip.stage").withStyle(LABEL)
                     .append(Component.translatable(stage.key()).withStyle(stageColor()))));
         }
         if (tripped) tooltip.add(line(1, Component.translatable("create_em.tooltip.tripped").withStyle(ChatFormatting.RED)));
+        if (remoteOff) tooltip.add(line(1, Component.translatable("create_em.tooltip.remote_off").withStyle(ChatFormatting.RED)));
+        if (powerCap > 0) tooltip.add(line(1, Component.translatable("create_em.tooltip.power_cap").withStyle(LABEL)
+                .append(Component.literal(String.format("%,d FE/t", powerCap)).withStyle(ChatFormatting.GOLD))));
 
         int limit = Math.max(1, syncedLimit);
         int loadPct = Math.round(flowPerTick * 100f / limit);
@@ -390,6 +402,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
             tooltip.add(line(indent, Component.translatable(stage.key()).withStyle(stageColor())));
         if (tripped)
             tooltip.add(line(indent, Component.translatable("create_em.tooltip.tripped").withStyle(ChatFormatting.RED)));
+        if (remoteOff)
+            tooltip.add(line(indent, Component.translatable("create_em.tooltip.remote_off").withStyle(ChatFormatting.RED)));
     }
 
     public static MutableComponent line(int indent, Component c) {
@@ -434,6 +448,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putLong("AcctPaidAt", acctPaidAt);
         tag.putLong("AcctBalance", acctBalance);
         tag.putInt("Stage", stage.ordinal());
+        tag.putBoolean("RemoteOff", remoteOff);
+        tag.putInt("PowerCap", powerCap);
     }
 
     @Override
@@ -457,6 +473,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         acctPaidAt = tag.contains("AcctPaidAt") ? tag.getLong("AcctPaidAt") : -1;
         acctBalance = tag.getLong("AcctBalance");
         stage = BillingStage.values()[Math.max(0, Math.min(3, tag.getInt("Stage")))];
+        remoteOff = tag.getBoolean("RemoteOff");
+        powerCap = tag.getInt("PowerCap");
     }
 
     @Override
@@ -473,6 +491,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putLong("AcctPaidAt", acctPaidAt);
         tag.putLong("AcctBalance", acctBalance);
         tag.putInt("Stage", stage.ordinal());
+        tag.putBoolean("RemoteOff", remoteOff);
+        tag.putInt("PowerCap", powerCap);
         links.save(tag);
         return tag;
     }

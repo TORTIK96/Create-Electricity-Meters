@@ -27,18 +27,40 @@ import tor_tik96.create_em.registry.EMRegistry;
  * Провод линии крепится к изолятору сверху.
  */
 public class TransformerBlock extends HorizontalDirectionalBlock implements EntityBlock {
-    public static final MapCodec<TransformerBlock> CODEC = simpleCodec(TransformerBlock::new);
+    /** Умный (латунный) трансформатор — ещё и панель поставщика. */
+    private final boolean smart;
 
     private static final VoxelShape SHAPE = Shapes.or(
             Block.box(1, 0, 1, 15, 13, 15),     // корпус
             Block.box(5.5, 13, 5.5, 10.5, 16, 10.5)); // изолятор
 
-    public TransformerBlock(Properties props) {
+    public TransformerBlock(Properties props, boolean smart) {
         super(props);
+        this.smart = smart;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
-    @Override protected MapCodec<? extends HorizontalDirectionalBlock> codec() { return CODEC; }
+    public boolean isSmart() { return smart; }
+
+    @Override protected MapCodec<? extends HorizontalDirectionalBlock> codec() { return simpleCodec(p -> new TransformerBlock(p, smart)); }
+
+    /** ПКМ по умному трансформатору — панель поставщика (только владельцу). */
+    @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState s, Level level, BlockPos pos,
+                                                                   net.minecraft.world.entity.player.Player player,
+                                                                   net.minecraft.world.phys.BlockHitResult hit) {
+        if (!smart || !(level.getBlockEntity(pos) instanceof TransformerBlockEntity be)) return net.minecraft.world.InteractionResult.PASS;
+        if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
+        if (be.getOwner() == null || !be.getOwner().equals(player.getUUID())) {
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable("create_em.panel.not_owner")
+                    .withStyle(net.minecraft.ChatFormatting.RED), true);
+            return net.minecraft.world.InteractionResult.CONSUME;
+        }
+        player.openMenu(new net.minecraft.world.SimpleMenuProvider(
+                (id, inv, p) -> tor_tik96.create_em.panel.SupplierPanelMenu.server(id, inv, be),
+                net.minecraft.network.chat.Component.translatable("create_em.panel.title")));
+        return net.minecraft.world.InteractionResult.CONSUME;
+    }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING); }

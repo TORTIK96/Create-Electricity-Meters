@@ -56,6 +56,14 @@ public final class EMGui {
     /** Текст в рамке ширины maxW: если не влезает — ужимается. align: 0 — влево, 1 — по центру, 2 — вправо. */
     public static void text(GuiGraphics g, Font font, Component c, int x, int y, int maxW, int color, boolean shadow, int align) {
         int w = font.width(c);
+        if (w * 0.85f > maxW) {
+            // сильно не влезает — обрезаем с многоточием, а не сжимаем до нечитаемого
+            String cut = font.plainSubstrByWidth(c.getString(), maxW - font.width("…")) + "…";
+            int col = c.getStyle().getColor() != null ? (0xFF000000 | c.getStyle().getColor().getValue()) : color;
+            int dx = align == 1 ? x + (maxW - font.width(cut)) / 2 : align == 2 ? x + maxW - font.width(cut) : x;
+            g.drawString(font, cut, dx, y, col, shadow);
+            return;
+        }
         float k = w > maxW ? maxW / (float) w : 1f;
         float drawW = w * k;
         float dx = align == 1 ? x + (maxW - drawW) / 2f : align == 2 ? x + maxW - drawW : x;

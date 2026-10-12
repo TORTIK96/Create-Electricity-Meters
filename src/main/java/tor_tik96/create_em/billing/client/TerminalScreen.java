@@ -2,7 +2,6 @@ package tor_tik96.create_em.billing.client;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -12,23 +11,13 @@ import tor_tik96.create_em.billing.TerminalMenu;
 import tor_tik96.create_em.client.EMButton;
 import tor_tik96.create_em.client.EMGui;
 
-import java.util.List;
-
+import static tor_tik96.create_em.billing.BillingData.CURRENCY_SLOTS;
 import static tor_tik96.create_em.billing.TerminalMenu.*;
 
-/**
- * Терминал в латунной теме. Слева — валюта и оплата, справа — экран.
- * Поставщик: тариф с кнопками прямо на экране, «Выставить счета», касса в ряд.
- * Абонент: экран на всю высоту с лицевым счётом.
- */
+/** Терминал абонента в латунной теме: оплата слева, лицевой счёт на экране, ниже — принимаемая валюта. */
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final EMGui.Theme T = EMGui.Theme.BRASS;
-    private static final int SCREEN_X = 84, SCREEN_Y = 16, SCREEN_W = W - 6 - 84;
-    private static final int OWNER_SCREEN_H = 58, USER_SCREEN_H = 97;
-    private static final int TEXT_X = SCREEN_X + 5, TEXT_W = SCREEN_W - 10;
-
-    private EMButton pay, bill;
-    private List<EMButton> tariffButtons;
+    private static final int SX = 86, SY = 16, SW = W - 6 - 86, SH = 78;
 
     public TerminalScreen(TerminalMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -41,85 +30,54 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     @Override
     protected void init() {
         super.init();
-        int x = leftPos, y = topPos;
-        pay = add(x + 8, y + PAY_Y + 20, 72, 16, Component.translatable("create_em.terminal.pay"), BTN_PAY, false);
-        bill = add(x + SCREEN_X, y + 78, SCREEN_W, 16, Component.translatable("create_em.terminal.bill_now"), BTN_BILL, false);
-        int bx = x + SCREEN_X + 86;
-        tariffButtons = List.of(
-                add(bx, y + SCREEN_Y + 4, 12, 12, Component.literal("−"), BTN_PRICE_DOWN, true),
-                add(bx + 62, y + SCREEN_Y + 4, 12, 12, Component.literal("+"), BTN_PRICE_UP, true),
-                add(bx, y + SCREEN_Y + 18, 12, 12, Component.literal("−"), BTN_PER_DOWN, true),
-                add(bx + 62, y + SCREEN_Y + 18, 12, 12, Component.literal("+"), BTN_PER_UP, true));
-        refresh();
-    }
-
-    /** shiftStep — с Shift шаг 10. */
-    private EMButton add(int x, int y, int w, int h, Component label, int id, boolean shiftStep) {
-        return addRenderableWidget(new EMButton(x, y, w, h, label, () -> T, () -> {
+        addRenderableWidget(new EMButton(leftPos + 8, topPos + PAY_Y + 22, 72, 16, Component.translatable("create_em.terminal.pay"), () -> T, () -> {
             if (minecraft != null && minecraft.gameMode != null)
-                minecraft.gameMode.handleInventoryButtonClick(menu.containerId,
-                        shiftStep && Screen.hasShiftDown() ? id + BTN_X10 : id);
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, BTN_PAY);
         }));
     }
 
     @Override
-    protected void containerTick() {
-        super.containerTick();
-        refresh();
-    }
-
-    private void refresh() {
-        boolean owner = menu.isOwner();
-        bill.visible = owner;
-        for (EMButton b : tariffButtons) b.visible = owner;
-    }
-
-    @Override
     protected void renderBg(GuiGraphics g, float pt, int mx, int my) {
-        int x = leftPos, y = topPos;
-        EMGui.panel(g, T, x, y, W, H);
-        EMGui.inset(g, T, x + SCREEN_X, y + SCREEN_Y, SCREEN_W, menu.isOwner() ? OWNER_SCREEN_H : USER_SCREEN_H);
-        for (Slot s : menu.slots)
-            if (s.isActive()) EMGui.slot(g, T, x + s.x, y + s.y);
+        EMGui.panel(g, T, leftPos, topPos, W, H);
+        EMGui.inset(g, T, leftPos + SX, topPos + SY, SW, SH);
+        for (Slot s : menu.slots) {
+            boolean acceptedSlot = s.index >= 1 && s.index <= CURRENCY_SLOTS;
+            if (acceptedSlot && !s.hasItem()) continue; // пустые ячейки валюты не рисуем
+            EMGui.slot(g, T, leftPos + s.x, topPos + s.y);
+        }
     }
 
     @Override
     protected void renderLabels(GuiGraphics g, int mx, int my) {
         int label = T.labelColor(), scr = T.screenText;
         EMGui.text(g, font, title, 8, 6, W - 16, label, false, 0);
+        EMGui.text(g, font, Component.translatable("create_em.terminal.payment"), 8, PAY_Y - 11, 72, label, false, 0);
         EMGui.text(g, font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 162, label, false, 0);
-        EMGui.text(g, font, Component.translatable("create_em.terminal.currency"), 8, SAMPLE_Y - 10, 72, label, false, 0);
-        EMGui.text(g, font, Component.translatable("create_em.terminal.payment"), 8, PAY_Y - 10, 72, label, false, 0);
 
-        int ty = SCREEN_Y + 6;
-        if (menu.isOwner()) {
-            EMGui.text(g, font, Component.translatable("create_em.terminal.price_label"), TEXT_X, ty, 80, scr, false, 0);
-            EMGui.text(g, font, Component.translatable("create_em.unit.items", menu.getPrice()), SCREEN_X + 99, ty, 48, scr, false, 1);
-            EMGui.text(g, font, Component.translatable("create_em.terminal.per_label"), TEXT_X, ty + 14, 80, scr, false, 0);
-            EMGui.text(g, font, Component.translatable("create_em.unit.kwh", menu.getPerKwh()), SCREEN_X + 99, ty + 14, 48, scr, false, 1);
-            EMGui.text(g, font, Component.translatable("create_em.terminal.owner_summary", menu.getAccounts(), menu.getTotalDebt()),
-                    TEXT_X, ty + 28, TEXT_W, scr, false, 0);
-            EMGui.text(g, font, nextBill(), TEXT_X, ty + 40, TEXT_W, scr, false, 0);
-            EMGui.text(g, font, Component.translatable("create_em.terminal.cashbox"), 8, CASH_Y + 5, 72, label, false, 0);
-        } else {
-            int bal = menu.getBalance();
-            BillingStage st = menu.getStage();
-            ChatFormatting sc = switch (st) { case NORMAL -> ChatFormatting.GREEN; case WARNING, LIMITED -> ChatFormatting.GOLD; case CUT -> ChatFormatting.RED; };
-            Component[] lines = {
-                    Component.translatable("create_em.terminal.tariff", menu.getPrice(), menu.getPerKwh()),
-                    Component.translatable("create_em.terminal.balance", bal).withStyle(bal < 0 ? ChatFormatting.RED : ChatFormatting.RESET),
-                    Component.translatable("create_em.terminal.since", String.format("%.2f", menu.getSinceKwh())),
-                    Component.translatable("create_em.terminal.unbilled", String.format("%.2f", menu.getUnbilledKwh())),
-                    Component.translatable("create_em.terminal.stage").append(Component.translatable(st.key()).withStyle(sc)),
-                    nextBill()};
-            for (int i = 0; i < lines.length; i++)
-                EMGui.text(g, font, lines[i], TEXT_X, ty + i * 14, TEXT_W, scr, false, 0);
+        int bal = menu.getBalance();
+        BillingStage st = menu.getStage();
+        ChatFormatting sc = switch (st) { case NORMAL -> ChatFormatting.GREEN; case WARNING, LIMITED -> ChatFormatting.GOLD; case CUT -> ChatFormatting.RED; };
+        int ns = menu.getNextBillSeconds();
+        Component[] lines = {
+                Component.translatable("create_em.terminal.tariff", menu.getPrice(), menu.getPerKwh()),
+                Component.translatable("create_em.terminal.balance", bal).withStyle(bal < 0 ? ChatFormatting.RED : ChatFormatting.RESET),
+                Component.translatable("create_em.terminal.since", String.format("%.2f", menu.getSinceKwh())),
+                Component.translatable("create_em.terminal.unbilled", String.format("%.2f", menu.getUnbilledKwh())),
+                Component.translatable("create_em.terminal.stage").append(Component.translatable(st.key()).withStyle(sc)),
+                Component.translatable("create_em.terminal.next_bill", String.format("%d:%02d", ns / 60, ns % 60))};
+        for (int i = 0; i < lines.length; i++)
+            EMGui.text(g, font, lines[i], SX + 5, SY + 5 + i * 12, SW - 10, scr, false, 0);
+
+        boolean any = false;
+        for (int i = 0; i < CURRENCY_SLOTS; i++) {
+            Slot s = menu.slots.get(1 + i);
+            if (!s.hasItem()) continue;
+            any = true;
+            EMGui.text(g, font, Component.translatable("create_em.unit.credits", menu.getValue(i)),
+                    s.x - 9, s.y + 20, 34, label, false, 1);
         }
-    }
-
-    private Component nextBill() {
-        int s = menu.getNextBillSeconds();
-        return Component.translatable("create_em.terminal.next_bill", String.format("%d:%02d", s / 60, s % 60));
+        EMGui.text(g, font, Component.translatable(any ? "create_em.terminal.accepts" : "create_em.terminal.no_currency"),
+                8, CUR_Y - 11, W - 16, label, false, 0);
     }
 
     @Override

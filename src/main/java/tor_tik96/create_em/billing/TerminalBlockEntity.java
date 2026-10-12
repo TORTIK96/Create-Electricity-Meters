@@ -12,7 +12,10 @@ import tor_tik96.create_em.registry.EMRegistry;
 
 import java.util.UUID;
 
-/** Слоты: 0 — образец валюты, 1 — оплата, 2..10 — касса (выручка поставщика). */
+/**
+ * Используется только слот 1 — оплата. Слоты 0 и 2..10 остались от старой кассы:
+ * при загрузке их содержимое переносится в хранилище поставщика.
+ */
 public class TerminalBlockEntity extends BlockEntity {
     public static final int SLOT_SAMPLE = 0, SLOT_PAY = 1, CASH_FIRST = 2, CASH_COUNT = 9, SIZE = 11;
 
@@ -27,6 +30,21 @@ public class TerminalBlockEntity extends BlockEntity {
     }
 
     public SimpleContainer getContainer() { return container; }
+
+    /** Перенести содержимое старой кассы и образец валюты в хранилище поставщика. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level == null || level.isClientSide || owner == null || level.getServer() == null) return;
+        var bd = tor_tik96.create_em.billing.BillingData.get(level.getServer());
+        boolean moved = false;
+        for (int i = 0; i < SIZE; i++) {
+            if (i == SLOT_PAY || container.getItem(i).isEmpty()) continue;
+            bd.addToVault(owner, container.removeItemNoUpdate(i));
+            moved = true;
+        }
+        if (moved) setChanged();
+    }
     @Nullable public UUID getOwner() { return owner; }
     public String getOwnerName() { return ownerName; }
 

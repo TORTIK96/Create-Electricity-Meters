@@ -30,6 +30,7 @@ public final class EMClient {
     static void registerScreens(RegisterMenuScreensEvent e) {
         e.register(EMRegistry.METER_LIMIT_MENU.get(), MeterLimitScreen::new);
         e.register(EMRegistry.TERMINAL_MENU.get(), TerminalScreen::new);
+        e.register(EMRegistry.SUPPLIER_PANEL_MENU.get(), tor_tik96.create_em.panel.client.SupplierPanelScreen::new);
     }
 
     private EMClient() {}

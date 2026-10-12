@@ -4,6 +4,7 @@
     "create_em:brass_energy_meter",
     "create_em:line_transformer",
     "create_em:line_connector",
-    "create_em:billing_terminal"
+    "create_em:billing_terminal",
+    "create_em:smart_transformer"
   ]
 }

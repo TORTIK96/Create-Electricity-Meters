@@ -58,7 +58,12 @@ public final class EMRegistry {
     // ---------- сервисная линия ----------
     public static final DeferredBlock<TransformerBlock> TRANSFORMER = BLOCKS.register("line_transformer",
             () -> new TransformerBlock(BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.STONE).strength(3f).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops().noOcclusion()));
+                    .mapColor(MapColor.STONE).strength(3f).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops().noOcclusion(), false));
+
+    /** Умный трансформатор: то же самое + панель поставщика. */
+    public static final DeferredBlock<TransformerBlock> SMART_TRANSFORMER = BLOCKS.register("smart_transformer",
+            () -> new TransformerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops().noOcclusion(), true));
 
     public static final DeferredBlock<LineConnectorBlock> LINE_CONNECTOR = BLOCKS.register("line_connector",
             () -> new LineConnectorBlock(BlockBehaviour.Properties.of()
@@ -75,6 +80,8 @@ public final class EMRegistry {
             ITEMS.registerSimpleBlockItem("brass_energy_meter", BRASS_METER, new Item.Properties());
     public static final DeferredItem<BlockItem> TRANSFORMER_ITEM =
             ITEMS.registerSimpleBlockItem("line_transformer", TRANSFORMER, new Item.Properties());
+    public static final DeferredItem<BlockItem> SMART_TRANSFORMER_ITEM =
+            ITEMS.registerSimpleBlockItem("smart_transformer", SMART_TRANSFORMER, new Item.Properties());
     public static final DeferredItem<BlockItem> LINE_CONNECTOR_ITEM =
             ITEMS.registerSimpleBlockItem("line_connector", LINE_CONNECTOR, new Item.Properties());
     public static final DeferredItem<BlockItem> TERMINAL_ITEM =
@@ -97,7 +104,7 @@ public final class EMRegistry {
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TransformerBlockEntity>> TRANSFORMER_BE =
             BE_TYPES.register("line_transformer", () -> BlockEntityType.Builder
-                    .of(TransformerBlockEntity::new, TRANSFORMER.get()).build(null));
+                    .of(TransformerBlockEntity::new, TRANSFORMER.get(), SMART_TRANSFORMER.get()).build(null));
 
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LineConnectorBlockEntity>> LINE_CONNECTOR_BE =
@@ -111,6 +118,9 @@ public final class EMRegistry {
 
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<tor_tik96.create_em.panel.SupplierPanelMenu>> SUPPLIER_PANEL_MENU =
+            MENUS.register("supplier_panel", () -> new MenuType<>(tor_tik96.create_em.panel.SupplierPanelMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static void init(IEventBus modBus) {
         COMPONENTS.register(modBus);
