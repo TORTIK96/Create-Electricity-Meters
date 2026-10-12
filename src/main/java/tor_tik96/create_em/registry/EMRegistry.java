@@ -74,6 +74,20 @@ public final class EMRegistry {
             () -> new TerminalBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
 
+    // ---------- автоматика ----------
+    public static final DeferredBlock<tor_tik96.create_em.process.ElectricCatalystBlock> CATALYST = BLOCKS.register("electric_catalyst",
+            () -> new tor_tik96.create_em.process.ElectricCatalystBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<tor_tik96.create_em.link.TunedLinkBlock> TUNED_LINK = BLOCKS.register("tuned_link",
+            () -> new tor_tik96.create_em.link.TunedLinkBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(1f).sound(SoundType.WOOD).noOcclusion()));
+
+    public static final DeferredItem<BlockItem> CATALYST_ITEM =
+            ITEMS.registerSimpleBlockItem("electric_catalyst", CATALYST, new Item.Properties());
+    public static final DeferredItem<BlockItem> TUNED_LINK_ITEM =
+            ITEMS.registerSimpleBlockItem("tuned_link", TUNED_LINK, new Item.Properties());
+
     public static final DeferredItem<BlockItem> ANDESITE_METER_ITEM =
             ITEMS.registerSimpleBlockItem("andesite_energy_meter", ANDESITE_METER, new Item.Properties());
     public static final DeferredItem<BlockItem> BRASS_METER_ITEM =
@@ -116,6 +130,16 @@ public final class EMRegistry {
             BE_TYPES.register("billing_terminal", () -> BlockEntityType.Builder
                     .of(TerminalBlockEntity::new, TERMINAL.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.process.ElectricCatalystBlockEntity>> CATALYST_BE =
+            BE_TYPES.register("electric_catalyst", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.process.ElectricCatalystBlockEntity::new, CATALYST.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.link.TunedLinkBlockEntity>> TUNED_LINK_BE =
+            BE_TYPES.register("tuned_link", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.link.TunedLinkBlockEntity::new, TUNED_LINK.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -138,6 +162,9 @@ public final class EMRegistry {
     private static void registerCaps(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, TRANSFORMER_BE.get(),
                 (be, side) -> side == Direction.UP ? null : be.getInput());
+        // электрокатализатор принимает обычную FE с любой стороны
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CATALYST_BE.get(),
+                (be, side) -> be.getEnergy());
     }
 
     private EMRegistry() {}

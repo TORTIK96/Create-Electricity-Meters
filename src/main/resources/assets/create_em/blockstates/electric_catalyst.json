@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "process=none": {
+      "model": "create_em:block/electric_catalyst_none"
+    },
+    "process=splashing": {
+      "model": "create_em:block/electric_catalyst_splashing"
+    },
+    "process=smoking": {
+      "model": "create_em:block/electric_catalyst_smoking"
+    },
+    "process=blasting": {
+      "model": "create_em:block/electric_catalyst_blasting"
+    },
+    "process=haunting": {
+      "model": "create_em:block/electric_catalyst_haunting"
+    }
+  }
+}

@@ -50,6 +50,27 @@ public final class Config {
             .comment("По умолчанию для новых поставщиков: сколько процентов лимита остаётся при урезании за долг")
             .defineInRange("limitedPercent", 20, 0, 100);
 
+    // ---------- электрокатализатор ----------
+    public static final ModConfigSpec.IntValue CATALYST_CAPACITY = BUILDER
+            .comment("Электрокатализатор: ёмкость буфера, FE")
+            .defineInRange("catalystCapacity", 20000, 100, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue CATALYST_SPLASHING = BUILDER
+            .comment("Электрокатализатор: расход в режиме промывки, FE/t")
+            .defineInRange("catalystSplashingFe", 16, 0, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue CATALYST_SMOKING = BUILDER
+            .comment("Электрокатализатор: расход в режиме копчения, FE/t")
+            .defineInRange("catalystSmokingFe", 32, 0, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue CATALYST_BLASTING = BUILDER
+            .comment("Электрокатализатор: расход в режиме плавки, FE/t")
+            .defineInRange("catalystBlastingFe", 64, 0, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue CATALYST_HAUNTING = BUILDER
+            .comment("Электрокатализатор: расход в режиме призрачного огня, FE/t")
+            .defineInRange("catalystHauntingFe", 48, 0, Integer.MAX_VALUE);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     private Config() {}

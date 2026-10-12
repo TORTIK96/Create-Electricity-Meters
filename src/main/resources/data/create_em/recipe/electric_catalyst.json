@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "minecraft:campfire"
+    },
+    "B": {
+      "item": "minecraft:soul_campfire"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "W": {
+      "item": "minecraft:water_bucket"
+    },
+    "C": {
+      "item": "create:brass_casing"
+    },
+    "L": {
+      "item": "minecraft:lava_bucket"
+    },
+    "S": {
+      "item": "create:brass_sheet"
+    }
+  },
+  "pattern": [
+    "AEB",
+    "WCL",
+    "SSS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_em:electric_catalyst"
+  }
+}

@@ -5,6 +5,8 @@
     "create_em:line_transformer",
     "create_em:line_connector",
     "create_em:billing_terminal",
-    "create_em:smart_transformer"
+    "create_em:smart_transformer",
+    "create_em:electric_catalyst",
+    "create_em:tuned_link"
   ]
 }
