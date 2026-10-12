@@ -1,0 +1,74 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "cable": "create_em:block/power_cable",
+    "end": "create_em:block/power_cable_end",
+    "particle": "create_em:block/power_cable"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        5,
+        0
+      ],
+      "to": [
+        11,
+        11,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#end",
+          "cullface": "north"
+        },
+        "east": {
+          "uv": [
+            0,
+            5,
+            5,
+            11
+          ],
+          "texture": "#cable",
+          "rotation": 90
+        },
+        "west": {
+          "uv": [
+            0,
+            5,
+            5,
+            11
+          ],
+          "texture": "#cable",
+          "rotation": 90
+        },
+        "up": {
+          "uv": [
+            0,
+            5,
+            5,
+            11
+          ],
+          "texture": "#cable",
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            5,
+            5,
+            11
+          ],
+          "texture": "#cable",
+          "rotation": 90
+        }
+      }
+    }
+  ]
+}

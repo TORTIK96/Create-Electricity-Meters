@@ -92,6 +92,35 @@ public final class Config {
             .comment("Мини-счётчик: сколько FE/t пропускает")
             .defineInRange("miniMeterMaxTransfer", 262144, 1, Integer.MAX_VALUE);
 
+    // ---------- конденсатор, кабель, электризатор ----------
+    public static final ModConfigSpec.IntValue CAPACITOR_CAPACITY = BUILDER
+            .comment("Конденсатор: ёмкость, FE")
+            .defineInRange("capacitorCapacity", 500_000, 100, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue CAPACITOR_CHARGE_RATE = BUILDER
+            .comment("Конденсатор: скорость зарядки, FE/t (разряд — без ограничения)")
+            .defineInRange("capacitorChargeRate", 4096, 1, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue CABLE_MAX_TRANSFER = BUILDER
+            .comment("Силовой кабель: сколько FE за тик может пройти через одну сеть кабелей")
+            .defineInRange("powerCableMaxTransfer", Integer.MAX_VALUE, 1, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue ELECTRIFIER_FE_PER_DAMAGE = BUILDER
+            .comment("Электризатор: сколько FE нужно на 1 единицу урона (полсердца)")
+            .defineInRange("electrifierFePerDamage", 200, 1, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue ELECTRIFIER_MAX_DAMAGE = BUILDER
+            .comment("Электризатор: наибольший урон за один разряд")
+            .defineInRange("electrifierMaxDamage", 100, 1, 10000);
+
+    public static final ModConfigSpec.IntValue ELECTRIFIER_RADIUS = BUILDER
+            .comment("Электризатор: радиус поражения, блоков")
+            .defineInRange("electrifierRadius", 3, 1, 16);
+
+    public static final ModConfigSpec.IntValue ELECTRIFIER_MAX_INPUT = BUILDER
+            .comment("Электризатор: наибольший приём, FE/t")
+            .defineInRange("electrifierMaxInput", 10_000_000, 1, Integer.MAX_VALUE);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     private Config() {}

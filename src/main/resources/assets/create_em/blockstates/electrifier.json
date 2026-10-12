@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "zap=false": {
+      "model": "create_em:block/electrifier"
+    },
+    "zap=true": {
+      "model": "create_em:block/electrifier_zap"
+    }
+  }
+}

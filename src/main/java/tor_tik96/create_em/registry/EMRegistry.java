@@ -103,6 +103,23 @@ public final class EMRegistry {
     public static final DeferredItem<BlockItem> MINI_METER_ITEM =
             ITEMS.registerSimpleBlockItem("mini_meter", MINI_METER, new Item.Properties());
 
+    public static final DeferredBlock<tor_tik96.create_em.power.CapacitorBlock> CAPACITOR = BLOCKS.register("capacitor",
+            () -> new tor_tik96.create_em.power.CapacitorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_ORANGE).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<tor_tik96.create_em.power.PowerCableBlock> POWER_CABLE = BLOCKS.register("power_cable",
+            () -> new tor_tik96.create_em.power.PowerCableBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_BLACK).strength(0.8f).sound(SoundType.WOOL).noOcclusion()));
+    public static final DeferredBlock<tor_tik96.create_em.power.ElectrifierBlock> ELECTRIFIER = BLOCKS.register("electrifier",
+            () -> new tor_tik96.create_em.power.ElectrifierBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_ORANGE).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
+
+    public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
+            ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
+    public static final DeferredItem<BlockItem> POWER_CABLE_ITEM =
+            ITEMS.registerSimpleBlockItem("power_cable", POWER_CABLE, new Item.Properties());
+    public static final DeferredItem<BlockItem> ELECTRIFIER_ITEM =
+            ITEMS.registerSimpleBlockItem("electrifier", ELECTRIFIER, new Item.Properties());
+
     public static final DeferredItem<tor_tik96.create_em.power.BatteryItem> BATTERY_ITEM =
             ITEMS.register("battery", () -> new tor_tik96.create_em.power.BatteryItem(BATTERY.get(), new Item.Properties().stacksTo(1)));
     public static final DeferredItem<BlockItem> ATS_ITEM =
@@ -180,6 +197,21 @@ public final class EMRegistry {
             BE_TYPES.register("mini_meter", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.meter.MiniMeterBlockEntity::new, MINI_METER.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.power.CapacitorBlockEntity>> CAPACITOR_BE =
+            BE_TYPES.register("capacitor", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.power.CapacitorBlockEntity::new, CAPACITOR.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.power.PowerCableBlockEntity>> POWER_CABLE_BE =
+            BE_TYPES.register("power_cable", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.power.PowerCableBlockEntity::new, POWER_CABLE.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.power.ElectrifierBlockEntity>> ELECTRIFIER_BE =
+            BE_TYPES.register("electrifier", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.power.ElectrifierBlockEntity::new, ELECTRIFIER.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -209,6 +241,9 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, BATTERY_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ATS_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, MINI_METER_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CAPACITOR_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
     }
 
     private EMRegistry() {}

@@ -1,0 +1,154 @@
+{
+  "variants": {
+    "charge=0,discharging=false,facing=north": {
+      "model": "create_em:block/capacitor_0"
+    },
+    "charge=0,discharging=false,facing=east": {
+      "model": "create_em:block/capacitor_0",
+      "y": 90
+    },
+    "charge=0,discharging=false,facing=south": {
+      "model": "create_em:block/capacitor_0",
+      "y": 180
+    },
+    "charge=0,discharging=false,facing=west": {
+      "model": "create_em:block/capacitor_0",
+      "y": 270
+    },
+    "charge=0,discharging=true,facing=north": {
+      "model": "create_em:block/capacitor_0_dis"
+    },
+    "charge=0,discharging=true,facing=east": {
+      "model": "create_em:block/capacitor_0_dis",
+      "y": 90
+    },
+    "charge=0,discharging=true,facing=south": {
+      "model": "create_em:block/capacitor_0_dis",
+      "y": 180
+    },
+    "charge=0,discharging=true,facing=west": {
+      "model": "create_em:block/capacitor_0_dis",
+      "y": 270
+    },
+    "charge=1,discharging=false,facing=north": {
+      "model": "create_em:block/capacitor_1"
+    },
+    "charge=1,discharging=false,facing=east": {
+      "model": "create_em:block/capacitor_1",
+      "y": 90
+    },
+    "charge=1,discharging=false,facing=south": {
+      "model": "create_em:block/capacitor_1",
+      "y": 180
+    },
+    "charge=1,discharging=false,facing=west": {
+      "model": "create_em:block/capacitor_1",
+      "y": 270
+    },
+    "charge=1,discharging=true,facing=north": {
+      "model": "create_em:block/capacitor_1_dis"
+    },
+    "charge=1,discharging=true,facing=east": {
+      "model": "create_em:block/capacitor_1_dis",
+      "y": 90
+    },
+    "charge=1,discharging=true,facing=south": {
+      "model": "create_em:block/capacitor_1_dis",
+      "y": 180
+    },
+    "charge=1,discharging=true,facing=west": {
+      "model": "create_em:block/capacitor_1_dis",
+      "y": 270
+    },
+    "charge=2,discharging=false,facing=north": {
+      "model": "create_em:block/capacitor_2"
+    },
+    "charge=2,discharging=false,facing=east": {
+      "model": "create_em:block/capacitor_2",
+      "y": 90
+    },
+    "charge=2,discharging=false,facing=south": {
+      "model": "create_em:block/capacitor_2",
+      "y": 180
+    },
+    "charge=2,discharging=false,facing=west": {
+      "model": "create_em:block/capacitor_2",
+      "y": 270
+    },
+    "charge=2,discharging=true,facing=north": {
+      "model": "create_em:block/capacitor_2_dis"
+    },
+    "charge=2,discharging=true,facing=east": {
+      "model": "create_em:block/capacitor_2_dis",
+      "y": 90
+    },
+    "charge=2,discharging=true,facing=south": {
+      "model": "create_em:block/capacitor_2_dis",
+      "y": 180
+    },
+    "charge=2,discharging=true,facing=west": {
+      "model": "create_em:block/capacitor_2_dis",
+      "y": 270
+    },
+    "charge=3,discharging=false,facing=north": {
+      "model": "create_em:block/capacitor_3"
+    },
+    "charge=3,discharging=false,facing=east": {
+      "model": "create_em:block/capacitor_3",
+      "y": 90
+    },
+    "charge=3,discharging=false,facing=south": {
+      "model": "create_em:block/capacitor_3",
+      "y": 180
+    },
+    "charge=3,discharging=false,facing=west": {
+      "model": "create_em:block/capacitor_3",
+      "y": 270
+    },
+    "charge=3,discharging=true,facing=north": {
+      "model": "create_em:block/capacitor_3_dis"
+    },
+    "charge=3,discharging=true,facing=east": {
+      "model": "create_em:block/capacitor_3_dis",
+      "y": 90
+    },
+    "charge=3,discharging=true,facing=south": {
+      "model": "create_em:block/capacitor_3_dis",
+      "y": 180
+    },
+    "charge=3,discharging=true,facing=west": {
+      "model": "create_em:block/capacitor_3_dis",
+      "y": 270
+    },
+    "charge=4,discharging=false,facing=north": {
+      "model": "create_em:block/capacitor_4"
+    },
+    "charge=4,discharging=false,facing=east": {
+      "model": "create_em:block/capacitor_4",
+      "y": 90
+    },
+    "charge=4,discharging=false,facing=south": {
+      "model": "create_em:block/capacitor_4",
+      "y": 180
+    },
+    "charge=4,discharging=false,facing=west": {
+      "model": "create_em:block/capacitor_4",
+      "y": 270
+    },
+    "charge=4,discharging=true,facing=north": {
+      "model": "create_em:block/capacitor_4_dis"
+    },
+    "charge=4,discharging=true,facing=east": {
+      "model": "create_em:block/capacitor_4_dis",
+      "y": 90
+    },
+    "charge=4,discharging=true,facing=south": {
+      "model": "create_em:block/capacitor_4_dis",
+      "y": 180
+    },
+    "charge=4,discharging=true,facing=west": {
+      "model": "create_em:block/capacitor_4_dis",
+      "y": 270
+    }
+  }
+}

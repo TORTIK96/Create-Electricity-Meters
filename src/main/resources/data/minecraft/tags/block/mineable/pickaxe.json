@@ -10,6 +10,9 @@
     "create_em:tuned_link",
     "create_em:battery",
     "create_em:transfer_switch",
-    "create_em:mini_meter"
+    "create_em:mini_meter",
+    "create_em:capacitor",
+    "create_em:electrifier",
+    "create_em:power_cable"
   ]
 }

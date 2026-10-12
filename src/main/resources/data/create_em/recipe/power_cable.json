@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "K": {
+      "item": "minecraft:dried_kelp"
+    },
+    "I": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "KKK",
+    "III",
+    "KKK"
+  ],
+  "result": {
+    "count": 6,
+    "id": "create_em:power_cable"
+  }
+}
