@@ -48,11 +48,8 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
 
     private ScrollOptionBehaviour<AtsMode> mode;
 
-    /** Защита от замыкания, если вход и выход оказались в одной сети проводов. */
-    private boolean busy;
-    /** Когда ввод в последний раз сам толкнул энергию (не пробно). */
-    private long pushedMain = Long.MIN_VALUE / 2, pushedReserve = Long.MIN_VALUE / 2;
-    private final EnergyPort.Satiety satiety = new EnergyPort.Satiety();
+    /** Крошечный буфер: см. {@link Relay}. */
+    private final Relay relay = new Relay();
     private long lastMain = Long.MIN_VALUE / 2, lastReserve = Long.MIN_VALUE / 2;
     /** С какого тика основной ввод непрерывно есть; -1 — нет. */
     private long mainSince = -1;
@@ -115,49 +112,19 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         return level == null ? 0 : level.getGameTime();
     }
 
-    /**
-     * АВР ничего не хранит: что пришло на активный ввод, в том же вызове уходит на выход.
-     * Пропал ввод — нагрузка сразу это замечает, а запаса, который «кормил бы» её после отключения, нет.
-     */
+    /** Ввод толкает в нас: отмечаем, что он жив, и принимаем, только если он сейчас активный. */
     private int offer(boolean main, int amount, boolean simulate) {
         if (main) lastMain = now();
         else lastReserve = now();
-        if (!simulate) {
-            if (main) pushedMain = now();
-            else pushedReserve = now();
-        }
-        if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE) || busy) return 0;
-        IEnergyStorage target = outTarget();
-        if (target == null || !target.canReceive() || satiety.isFull(now())) return 0;
-        busy = true;
-        try {
-            int offer = EnergyPort.room(target, Math.min(amount, maxTransfer()));
-            int moved = target.receiveEnergy(offer, simulate);
-            if (!simulate) {
-                satiety.record(now(), offer, moved);
-                windowFe += moved;
-            }
-            return moved;
-        } finally {
-            busy = false;
-        }
+        if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE)) return 0;
+        return relay.accept(amount, simulate, outTarget(), maxTransfer());
     }
 
-    /** Потребитель сам забирает с выхода — забираем с активного ввода. */
+    /** Потребитель сам забирает с выхода. */
     private int take(int amount, boolean simulate) {
-        if (busy) return 0;
-        BlockCapabilityCache<IEnergyStorage, Direction> c = source == AtsSource.MAIN ? mainCache
-                : source == AtsSource.RESERVE ? reserveCache : null;
-        IEnergyStorage src = c == null ? null : c.getCapability();
-        if (src == null || !src.canExtract()) return 0;
-        busy = true;
-        try {
-            int moved = src.extractEnergy(Math.min(amount, maxTransfer()), simulate);
-            if (!simulate) windowFe += moved;
-            return moved;
-        } finally {
-            busy = false;
-        }
+        int given = relay.take(amount, simulate);
+        if (!simulate) windowFe += given;
+        return given;
     }
 
     @Nullable
@@ -200,6 +167,8 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
             setChanged();
         }
 
+        windowFe += relay.push(outTarget()); // одно предложение нагрузке за тик
+
         if (++windowTicks >= WINDOW) {
             float f = windowFe / (float) WINDOW;
             boolean changed = f != flow || windowFe > 0;
@@ -216,33 +185,16 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         }
     }
 
-    /** Источник, который сам не толкает: проверяем, есть ли в нём энергия, и, если ввод активен, переносим сами. */
+    /** Источник, который сам не толкает: проверяем, есть ли в нём энергия, и, если ввод активен, берём сами. */
     private void probe(@Nullable BlockCapabilityCache<IEnergyStorage, Direction> cache, boolean main) {
-        if (cache == null || busy) return;
-        // ввод, который толкает сам, уже обслужен — второй путь дал бы потребителю двойную порцию
-        if (now() - (main ? pushedMain : pushedReserve) <= 1) return;
+        if (cache == null) return;
         IEnergyStorage src = cache.getCapability();
         if (src == null || !src.canExtract()) return;
-        int can = src.extractEnergy(maxTransfer(), true);
-        if (can <= 0) return;
+        if (src.extractEnergy(maxTransfer(), true) <= 0) return;
         if (main) lastMain = now();
         else lastReserve = now();
-        if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE)) return;
-        IEnergyStorage target = outTarget();
-        if (target == null || !target.canReceive()) return;
-        busy = true;
-        try {
-            if (satiety.isFull(now())) return;
-            int offer = EnergyPort.room(target, can);
-            int fits = target.receiveEnergy(offer, true);
-            if (fits <= 0) return;
-            int taken = src.extractEnergy(fits, false);
-            int got = target.receiveEnergy(taken, false);
-            satiety.record(now(), offer, got);
-            windowFe += got;
-        } finally {
-            busy = false;
-        }
+        if (source == (main ? AtsSource.MAIN : AtsSource.RESERVE))
+            relay.pull(src, outTarget(), maxTransfer());
     }
 
     private void initCaches(ServerLevel sl) {

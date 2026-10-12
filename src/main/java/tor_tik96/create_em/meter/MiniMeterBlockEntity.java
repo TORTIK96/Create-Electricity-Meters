@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import tor_tik96.create_em.Config;
 import tor_tik96.create_em.EMFormat;
 import tor_tik96.create_em.power.EnergyPort;
+import tor_tik96.create_em.power.Relay;
 import tor_tik96.create_em.registry.EMRegistry;
 
 import java.util.List;
@@ -32,20 +33,13 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private float flow, passed;
     /** Запас потребителя в начале окна; -1 — ещё не замеряли. */
     private long targetStoredAtStart = -1;
-    /** Защита от замыкания, если вход и выход оказались в одной сети проводов. */
-    private boolean busy;
-    /** Когда в последний раз источник сам толкнул энергию во вход. */
-    private long lastPush = Long.MIN_VALUE / 2;
-    private final EnergyPort.Satiety satiety = new EnergyPort.Satiety();
+    /** Крошечный буфер: см. {@link Relay}. */
+    private final Relay relay = new Relay();
     @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> inCache, outCache;
 
-    /**
-     * Счётчик ничего не хранит: что пришло на вход, тут же передаётся на выход в том же вызове,
-     * а потребитель, который сам забирает с выхода, на самом деле забирает со входа.
-     * Поэтому без питания на входе через счётчик не проходит ничего, и показания честные.
-     */
-    private final EnergyPort input = EnergyPort.input(this::passForward, () -> 0, MiniMeterBlockEntity::capacity);
-    private final EnergyPort output = EnergyPort.output(this::passBackward, () -> 0, MiniMeterBlockEntity::capacity);
+    private final EnergyPort input = EnergyPort.input(
+            (a, sim) -> relay.accept(a, sim, neighbor(true), capacity()), relay::buffer, MiniMeterBlockEntity::capacity);
+    private final EnergyPort output = EnergyPort.output(this::takeOut, relay::buffer, MiniMeterBlockEntity::capacity);
 
     public MiniMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.MINI_METER_BE.get(), pos, state);
@@ -82,41 +76,11 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         return (out ? outCache : inCache).getCapability();
     }
 
-    /** Источник толкает во вход — сразу толкаем потребителю на выходе. */
-    private int passForward(int amount, boolean simulate) {
-        if (busy) return 0;
-        IEnergyStorage target = neighbor(true);
-        if (target == null || !target.canReceive()) return 0;
-        long now = level.getGameTime();
-        if (satiety.isFull(now)) return 0;
-        busy = true;
-        try {
-            int offer = EnergyPort.room(target, Math.min(amount, capacity()));
-            int moved = target.receiveEnergy(offer, simulate);
-            if (!simulate) {
-                satiety.record(now, offer, moved);
-                windowFe += moved;
-                lastPush = level.getGameTime();
-            }
-            return moved;
-        } finally {
-            busy = false;
-        }
-    }
-
-    /** Потребитель забирает с выхода — забираем у источника на входе. */
-    private int passBackward(int amount, boolean simulate) {
-        if (busy) return 0;
-        IEnergyStorage source = neighbor(false);
-        if (source == null || !source.canExtract()) return 0;
-        busy = true;
-        try {
-            int moved = source.extractEnergy(Math.min(amount, capacity()), simulate);
-            if (!simulate) windowFe += moved;
-            return moved;
-        } finally {
-            busy = false;
-        }
+    /** Потребитель сам забирает с выхода. */
+    private int takeOut(int amount, boolean simulate) {
+        int given = relay.take(amount, simulate);
+        if (!simulate) windowFe += given;
+        return given;
     }
 
     @Override
@@ -124,24 +88,9 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super.tick();
         if (!(level instanceof ServerLevel)) return;
 
-        // источник, который сам не толкает (например, аккумулятор другого мода): тянем со входа сами
         IEnergyStorage source = neighbor(false), target = neighbor(true);
-        // если источник толкает сам, второй путь не нужен: двигатель получил бы энергию дважды за тик
-        boolean pushed = level.getGameTime() - lastPush <= 1;
-        if (!pushed && source != null && target != null && source.canExtract() && target.canReceive() && !busy) {
-            int can = source.extractEnergy(capacity(), true);
-            if (can > 0) {
-                long now = level.getGameTime();
-                int offer = EnergyPort.room(target, can);
-                int fits = satiety.isFull(now) ? 0 : target.receiveEnergy(offer, true);
-                if (fits > 0) {
-                    int taken = source.extractEnergy(fits, false);
-                    int got = target.receiveEnergy(taken, false);
-                    satiety.record(now, offer, got);
-                    windowFe += got;
-                }
-            }
-        }
+        relay.pull(source, target, capacity());   // источник, который сам не толкает
+        windowFe += relay.push(target);           // одно предложение потребителю за тик
 
         if (++windowTicks >= WINDOW) {
             // потребление = принято − насколько вырос запас самого потребителя
@@ -178,6 +127,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super.write(tag, registries, clientPacket);
         tag.putFloat("Flow", flow);
         tag.putFloat("Passed", passed);
+        tag.putInt("Buffer", relay.buffer());
     }
 
     @Override
@@ -185,6 +135,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super.read(tag, registries, clientPacket);
         flow = tag.getFloat("Flow");
         passed = tag.getFloat("Passed");
+        relay.load(tag.getInt("Buffer"));
     }
 
     @Override
