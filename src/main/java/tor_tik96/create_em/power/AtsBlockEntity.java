@@ -124,7 +124,7 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         if (target == null || !target.canReceive()) return 0;
         busy = true;
         try {
-            int moved = target.receiveEnergy(Math.min(amount, maxTransfer()), simulate);
+            int moved = target.receiveEnergy(EnergyPort.room(target, Math.min(amount, maxTransfer())), simulate);
             if (!simulate) windowFe += moved;
             return moved;
         } finally {
@@ -219,7 +219,7 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         if (target == null || !target.canReceive()) return;
         busy = true;
         try {
-            int fits = target.receiveEnergy(can, true);
+            int fits = target.receiveEnergy(EnergyPort.room(target, can), true);
             if (fits <= 0) return;
             int taken = src.extractEnergy(fits, false);
             windowFe += target.receiveEnergy(taken, false);

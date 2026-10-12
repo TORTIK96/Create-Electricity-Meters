@@ -86,7 +86,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         if (target == null || !target.canReceive()) return 0;
         busy = true;
         try {
-            int moved = target.receiveEnergy(Math.min(amount, capacity()), simulate);
+            int moved = target.receiveEnergy(EnergyPort.room(target, Math.min(amount, capacity())), simulate);
             if (!simulate) windowFe += moved;
             return moved;
         } finally {
@@ -119,7 +119,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         if (source != null && target != null && source.canExtract() && target.canReceive() && !busy) {
             int can = source.extractEnergy(capacity(), true);
             if (can > 0) {
-                int fits = target.receiveEnergy(can, true);
+                int fits = target.receiveEnergy(EnergyPort.room(target, can), true);
                 if (fits > 0) {
                     int taken = source.extractEnergy(fits, false);
                     windowFe += target.receiveEnergy(taken, false);

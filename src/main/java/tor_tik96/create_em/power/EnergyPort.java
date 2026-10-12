@@ -37,6 +37,17 @@ public final class EnergyPort implements IEnergyStorage {
         return new EnergyPort(NONE, extractor, false, true, stored, capacity);
     }
 
+    /**
+     * Сколько имеет смысл отдать потребителю: не больше свободного места в его буфере.
+     * Некоторые машины принимают сколько угодно, а лишнее выбрасывают — тогда энергия уходит в никуда,
+     * а счётчик это засчитывает. Если блок про ёмкость не сообщает (провода, проходные блоки) — не ограничиваем.
+     */
+    public static int room(IEnergyStorage target, int amount) {
+        int max = target.getMaxEnergyStored();
+        if (max <= 0) return amount;
+        return Math.max(0, Math.min(amount, max - target.getEnergyStored()));
+    }
+
     @Override public int receiveEnergy(int toReceive, boolean simulate) { return toReceive <= 0 ? 0 : receiver.move(toReceive, simulate); }
     @Override public int extractEnergy(int toExtract, boolean simulate) { return toExtract <= 0 ? 0 : extractor.move(toExtract, simulate); }
     @Override public int getEnergyStored() { return stored.getAsInt(); }
