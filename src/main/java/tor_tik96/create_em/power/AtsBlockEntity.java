@@ -50,6 +50,9 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
 
     /** Защита от замыкания, если вход и выход оказались в одной сети проводов. */
     private boolean busy;
+    /** Когда ввод в последний раз сам толкнул энергию (не пробно). */
+    private long pushedMain = Long.MIN_VALUE / 2, pushedReserve = Long.MIN_VALUE / 2;
+    private final EnergyPort.Satiety satiety = new EnergyPort.Satiety();
     private long lastMain = Long.MIN_VALUE / 2, lastReserve = Long.MIN_VALUE / 2;
     /** С какого тика основной ввод непрерывно есть; -1 — нет. */
     private long mainSince = -1;
@@ -119,13 +122,21 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
     private int offer(boolean main, int amount, boolean simulate) {
         if (main) lastMain = now();
         else lastReserve = now();
+        if (!simulate) {
+            if (main) pushedMain = now();
+            else pushedReserve = now();
+        }
         if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE) || busy) return 0;
         IEnergyStorage target = outTarget();
-        if (target == null || !target.canReceive()) return 0;
+        if (target == null || !target.canReceive() || satiety.isFull(now())) return 0;
         busy = true;
         try {
-            int moved = target.receiveEnergy(EnergyPort.room(target, Math.min(amount, maxTransfer())), simulate);
-            if (!simulate) windowFe += moved;
+            int offer = EnergyPort.room(target, Math.min(amount, maxTransfer()));
+            int moved = target.receiveEnergy(offer, simulate);
+            if (!simulate) {
+                satiety.record(now(), offer, moved);
+                windowFe += moved;
+            }
             return moved;
         } finally {
             busy = false;
@@ -208,6 +219,8 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
     /** Источник, который сам не толкает: проверяем, есть ли в нём энергия, и, если ввод активен, переносим сами. */
     private void probe(@Nullable BlockCapabilityCache<IEnergyStorage, Direction> cache, boolean main) {
         if (cache == null || busy) return;
+        // ввод, который толкает сам, уже обслужен — второй путь дал бы потребителю двойную порцию
+        if (now() - (main ? pushedMain : pushedReserve) <= 1) return;
         IEnergyStorage src = cache.getCapability();
         if (src == null || !src.canExtract()) return;
         int can = src.extractEnergy(maxTransfer(), true);
@@ -219,10 +232,14 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         if (target == null || !target.canReceive()) return;
         busy = true;
         try {
-            int fits = target.receiveEnergy(EnergyPort.room(target, can), true);
+            if (satiety.isFull(now())) return;
+            int offer = EnergyPort.room(target, can);
+            int fits = target.receiveEnergy(offer, true);
             if (fits <= 0) return;
             int taken = src.extractEnergy(fits, false);
-            windowFe += target.receiveEnergy(taken, false);
+            int got = target.receiveEnergy(taken, false);
+            satiety.record(now(), offer, got);
+            windowFe += got;
         } finally {
             busy = false;
         }

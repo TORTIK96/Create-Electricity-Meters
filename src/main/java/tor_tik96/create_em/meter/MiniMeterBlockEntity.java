@@ -34,6 +34,9 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private long targetStoredAtStart = -1;
     /** Защита от замыкания, если вход и выход оказались в одной сети проводов. */
     private boolean busy;
+    /** Когда в последний раз источник сам толкнул энергию во вход. */
+    private long lastPush = Long.MIN_VALUE / 2;
+    private final EnergyPort.Satiety satiety = new EnergyPort.Satiety();
     @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> inCache, outCache;
 
     /**
@@ -84,10 +87,17 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         if (busy) return 0;
         IEnergyStorage target = neighbor(true);
         if (target == null || !target.canReceive()) return 0;
+        long now = level.getGameTime();
+        if (satiety.isFull(now)) return 0;
         busy = true;
         try {
-            int moved = target.receiveEnergy(EnergyPort.room(target, Math.min(amount, capacity())), simulate);
-            if (!simulate) windowFe += moved;
+            int offer = EnergyPort.room(target, Math.min(amount, capacity()));
+            int moved = target.receiveEnergy(offer, simulate);
+            if (!simulate) {
+                satiety.record(now, offer, moved);
+                windowFe += moved;
+                lastPush = level.getGameTime();
+            }
             return moved;
         } finally {
             busy = false;
@@ -116,13 +126,19 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
 
         // источник, который сам не толкает (например, аккумулятор другого мода): тянем со входа сами
         IEnergyStorage source = neighbor(false), target = neighbor(true);
-        if (source != null && target != null && source.canExtract() && target.canReceive() && !busy) {
+        // если источник толкает сам, второй путь не нужен: двигатель получил бы энергию дважды за тик
+        boolean pushed = level.getGameTime() - lastPush <= 1;
+        if (!pushed && source != null && target != null && source.canExtract() && target.canReceive() && !busy) {
             int can = source.extractEnergy(capacity(), true);
             if (can > 0) {
-                int fits = target.receiveEnergy(EnergyPort.room(target, can), true);
+                long now = level.getGameTime();
+                int offer = EnergyPort.room(target, can);
+                int fits = satiety.isFull(now) ? 0 : target.receiveEnergy(offer, true);
                 if (fits > 0) {
                     int taken = source.extractEnergy(fits, false);
-                    windowFe += target.receiveEnergy(taken, false);
+                    int got = target.receiveEnergy(taken, false);
+                    satiety.record(now, offer, got);
+                    windowFe += got;
                 }
             }
         }

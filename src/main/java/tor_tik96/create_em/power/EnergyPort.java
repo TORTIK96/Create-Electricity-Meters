@@ -48,6 +48,28 @@ public final class EnergyPort implements IEnergyStorage {
         return Math.max(0, Math.min(amount, max - target.getEnergyStored()));
     }
 
+    /**
+     * Сыт ли потребитель в этом тике. Если в одном вызове он взял меньше, чем ему предложили, —
+     * ему хватило, и повторные предложения в том же тике отклоняем: некоторые машины ограничивают
+     * приём за вызов, а не за тик, и при втором вызове берут ещё порцию сверх нормы.
+     */
+    public static final class Satiety {
+        private long tick = Long.MIN_VALUE;
+        private boolean full;
+
+        public boolean isFull(long now) {
+            return tick == now && full;
+        }
+
+        public void record(long now, int offered, int taken) {
+            if (tick != now) {
+                tick = now;
+                full = false;
+            }
+            if (taken < offered) full = true;
+        }
+    }
+
     @Override public int receiveEnergy(int toReceive, boolean simulate) { return toReceive <= 0 ? 0 : receiver.move(toReceive, simulate); }
     @Override public int extractEnergy(int toExtract, boolean simulate) { return toExtract <= 0 ? 0 : extractor.move(toExtract, simulate); }
     @Override public int getEnergyStored() { return stored.getAsInt(); }

@@ -98,14 +98,18 @@ public class PowerCableBlockEntity extends BlockEntity {
                 if (targets.isEmpty()) return 0;
                 int limit = Math.min(amount, Config.safe(Config.CABLE_MAX_TRANSFER, Integer.MAX_VALUE));
                 int left = limit;
+                // первый проход — поровну; второй — остаток только тем, кто взял всю долю
+                // (кто взял меньше, больше не хочет; повторный вызов некоторые машины принимают
+                // сверх нормы и выбрасывают лишнее)
+                boolean[] hungry = new boolean[targets.size()];
                 for (int i = 0; i < targets.size() && left > 0; i++) {
-                    int share = Math.max(1, left / (targets.size() - i));
-                    left -= targets.get(i).receiveEnergy(Math.min(share, left), simulate);
+                    int share = Math.min(left, Math.max(1, left / (targets.size() - i)));
+                    int got = targets.get(i).receiveEnergy(share, simulate);
+                    hungry[i] = got >= share;
+                    left -= got;
                 }
-                for (IEnergyStorage t : targets) {
-                    if (left <= 0) break;
-                    left -= t.receiveEnergy(left, simulate);
-                }
+                for (int i = 0; i < targets.size() && left > 0; i++)
+                    if (hungry[i]) left -= targets.get(i).receiveEnergy(left, simulate);
                 return limit - left;
             } finally {
                 busy = false;
