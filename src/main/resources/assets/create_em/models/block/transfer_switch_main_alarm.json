@@ -5,11 +5,9 @@
     "casing": "create:block/brass_casing",
     "particle": "create:block/brass_casing",
     "north": "create_em:block/transfer_switch_front_main_alarm",
-    "south": "create_em:block/transfer_switch_in_main",
-    "down": "create_em:block/transfer_switch_in_reserve",
-    "up": "create_em:block/energy_meter_mark_out",
-    "east": "create_em:block/energy_meter_mark_out",
-    "west": "create_em:block/energy_meter_mark_out"
+    "east": "create_em:block/transfer_switch_in_main",
+    "west": "create_em:block/transfer_switch_in_reserve",
+    "up": "create_em:block/energy_meter_mark_out"
   },
   "elements": [
     {
@@ -118,16 +116,6 @@
           "texture": "#east",
           "cullface": "east"
         },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#south",
-          "cullface": "south"
-        },
         "west": {
           "uv": [
             0,
@@ -147,16 +135,6 @@
           ],
           "texture": "#up",
           "cullface": "up"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#down",
-          "cullface": "down"
         }
       }
     }

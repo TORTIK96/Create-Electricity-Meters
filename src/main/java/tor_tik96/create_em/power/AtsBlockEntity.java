@@ -89,15 +89,22 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         return maxTransfer() * 2;
     }
 
-    /** Сзади — ввод 1, снизу — ввод 2, лицо — ничего, сверху и по бокам — выход. */
+    /** Если смотреть на панель: слева — ввод 1, справа — ввод 2, сверху — выход. */
+    public static Direction mainSide(BlockState state) {
+        return state.getValue(AtsBlock.FACING).getClockWise();
+    }
+
+    public static Direction reserveSide(BlockState state) {
+        return state.getValue(AtsBlock.FACING).getCounterClockWise();
+    }
+
     @Nullable
     public IEnergyStorage port(@Nullable Direction side) {
-        if (side == null) return outPort;
-        Direction front = getBlockState().getValue(AtsBlock.FACING);
-        if (side == front) return null;
-        if (side == front.getOpposite()) return mainPort;
-        if (side == Direction.DOWN) return reservePort;
-        return outPort;
+        if (side == null || side == Direction.UP) return outPort;
+        BlockState state = getBlockState();
+        if (side == mainSide(state)) return mainPort;
+        if (side == reserveSide(state)) return reservePort;
+        return null;
     }
 
     private long now() {
@@ -137,8 +144,10 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         probe(mainCache, true);
         probe(reserveCache, false);
 
+        boolean wasMain = mainAlive, wasReserve = reserveAlive;
         mainAlive = t - lastMain <= ALIVE_TICKS;
         reserveAlive = t - lastReserve <= ALIVE_TICKS;
+        if (wasMain != mainAlive || wasReserve != reserveAlive) sendData(); // иначе очки показывали старое
         if (!mainAlive) mainSince = -1;
         else if (mainSince < 0) mainSince = t;
 
@@ -198,16 +207,14 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
     }
 
     private void initCaches(ServerLevel sl) {
-        Direction front = getBlockState().getValue(AtsBlock.FACING);
-        Direction back = front.getOpposite();
+        Direction main = mainSide(getBlockState()), reserve = reserveSide(getBlockState());
         mainCache = BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, sl,
-                worldPosition.relative(back), back.getOpposite());
+                worldPosition.relative(main), main.getOpposite());
         reserveCache = BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, sl,
-                worldPosition.below(), Direction.UP);
+                worldPosition.relative(reserve), reserve.getOpposite());
         outCaches.clear();
-        for (Direction d : new Direction[]{Direction.UP, front.getClockWise(), front.getCounterClockWise()})
-            outCaches.add(BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, sl,
-                    worldPosition.relative(d), d.getOpposite()));
+        outCaches.add(BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, sl,
+                worldPosition.above(), Direction.DOWN));
     }
 
     /** Повернули ключом — стороны поменялись, кэши соседей пересоздаём. */
