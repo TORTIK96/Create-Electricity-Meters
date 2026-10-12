@@ -27,6 +27,8 @@ import tor_tik96.create_em.meter.client.ClientAccess;
 import tor_tik96.create_em.Config;
 import tor_tik96.create_em.registry.EMRegistry;
 import tor_tik96.create_em.seal.SealRegistry;
+import tor_tik96.create_em.billing.BillingData;
+import tor_tik96.create_em.billing.BillingStage;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -69,6 +71,13 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     // ---- лимит ----
     private int limit;                  // 0 = по умолчанию (максимум уровня)
 
+    // ---- расчёты (правда — в BillingData, здесь кеш для подсказок; синхронизируется) ----
+    private String ownerName = "";
+    private long acctSinceFe, acctPaidAt = -1, acctBalance;
+    private BillingStage stage = BillingStage.NORMAL;
+    /** Андезитовый счётчик при отключении за долг «выбивает»: сам не включится, нужно взвести. */
+    private boolean tripped;
+
     public EnergyMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.METER_BE.get(), pos, state);
     }
@@ -99,6 +108,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (--sealCheckTimer <= 0) { sealCheckTimer = 40; validateSeal(); }
 
         int budget = getLimit();                     // лимит счётчика на тик
+        if (tripped || stage == BillingStage.CUT) budget = 0;
+        else if (stage == BillingStage.LIMITED) budget = getLimit() * Config.LIMITED_PERCENT.get() / 100;
         int sent = push(backCache, budget);
         sent += push(bottomCache, budget - sent);
 
@@ -107,9 +118,10 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (sent > 0) setChanged();
 
         if (++windowTicks >= WINDOW) {
+            boolean billingChanged = updateBilling(windowFe);
             float newFlow = windowFe / (float) WINDOW;
             // пока идёт энергия — синхронизируем раз в секунду, чтобы показания в подсказке шли вживую
-            boolean changed = windowFe > 0 || newFlow != flowPerTick || syncedLimit != getLimit();
+            boolean changed = billingChanged || windowFe > 0 || newFlow != flowPerTick || syncedLimit != getLimit();
             syncedLimit = getLimit();
             flowPerTick = newFlow;
             windowFe = 0;
@@ -143,6 +155,52 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         super.setBlockState(state);
         backCache = bottomCache = null; // поворот -> пересоздать кеши
     }
+
+    // ---------------- расчёты ----------------
+    /** Раз в секунду: сообщить потребление на лицевой счёт и забрать оттуда баланс и стадию. */
+    private boolean updateBilling(long fe) {
+        if (level == null || level.getServer() == null || supplier == null || owner == null) {
+            boolean changed = stage != BillingStage.NORMAL;
+            stage = BillingStage.NORMAL;
+            return changed;
+        }
+        BillingData bd = BillingData.get(level.getServer());
+        bd.report(supplier, owner, ownerName, fe);
+        BillingData.Account a = bd.account(supplier, owner);
+        BillingStage newStage = a.stage(level.getGameTime());
+        boolean changed = newStage != stage || a.balance != acctBalance || a.paidAt != acctPaidAt;
+        stage = newStage;
+        acctSinceFe = a.feSincePayment;
+        acctPaidAt = a.paidAt;
+        acctBalance = a.balance;
+        if (stage == BillingStage.CUT && getTier() == MeterTier.ANDESITE && !tripped) {
+            tripped = true;
+            changed = true;
+            level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.IRON_TRAPDOOR_CLOSE,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1f, 0.6f);
+        }
+        return changed;
+    }
+
+    public boolean isTripped() { return tripped; }
+    public BillingStage getStage() { return stage; }
+
+    /** Можно ли взвести расцепитель: долг закрыт (не CUT), взводит поставщик или хозяин счётчика. */
+    public boolean canRearm(Player p) {
+        if (!tripped || stage == BillingStage.CUT) return false;
+        return p.isCreative() || isSupplier(p) || (owner != null && owner.equals(p.getUUID()));
+    }
+
+    public boolean rearm(Player p) {
+        if (!canRearm(p)) return false;
+        tripped = false;
+        if (level != null) level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.IRON_TRAPDOOR_OPEN,
+                net.minecraft.sounds.SoundSource.BLOCKS, 1f, 1.2f);
+        sync();
+        return true;
+    }
+
+    public void setOwnerName(String name) { ownerName = name; setChanged(); }
 
     // ---------------- лимит ----------------
     /** Текущий лимит, FE/t, всегда в коридоре уровня (конфиг мог поменяться). Только сервер. */
@@ -246,7 +304,9 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
 
     // ---------------- показания ----------------
     public long getTotalFe() { return totalFe; }
-    public long getSincePaymentFe() { return totalFe - paidFe; }
+    /** С последней оплаты: по лицевому счёту, если счётчик опломбирован; иначе — по своей отметке. */
+    public long getSincePaymentFe() { return isSealed() ? acctSinceFe : totalFe - paidFe; }
+    private long lastPaidAt() { return isSealed() ? acctPaidAt : paidAtTick; }
     public float getFlowPerTick() { return flowPerTick; }
 
     /**
@@ -254,6 +314,11 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
      * Вызывается расчётной системой; пока её нет — из креатива (Shift-ПКМ пустой рукой).
      */
     public void markPaid() {
+        if (supplier != null && owner != null && level != null && level.getServer() != null) {
+            BillingData bd = BillingData.get(level.getServer());
+            bd.markPaid(bd.account(supplier, owner), level.getGameTime());
+            updateBilling(0);
+        }
         paidFe = totalFe;
         paidAtTick = level != null ? level.getGameTime() : 0;
         setChanged();
@@ -271,6 +336,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
                 .append(kwh(totalFe))));
         tooltip.add(line(0, Component.translatable("create_em.tooltip.since_payment").withStyle(LABEL)
                 .append(kwh(getSincePaymentFe()))));
+        addStageLines(tooltip, 0);
         return true;
     }
 
@@ -292,6 +358,13 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
                     .append(Component.literal(supplierName).withStyle(VALUE))));
         else
             tooltip.add(line(1, Component.translatable("create_em.tooltip.no_seal").withStyle(ChatFormatting.RED)));
+        if (!supplierName.isEmpty()) {
+            tooltip.add(line(1, Component.translatable("create_em.tooltip.balance").withStyle(LABEL)
+                    .append(Component.translatable("create_em.unit.items", acctBalance).withStyle(acctBalance < 0 ? ChatFormatting.RED : VALUE))));
+            tooltip.add(line(1, Component.translatable("create_em.tooltip.stage").withStyle(LABEL)
+                    .append(Component.translatable(stage.key()).withStyle(stageColor()))));
+        }
+        if (tripped) tooltip.add(line(1, Component.translatable("create_em.tooltip.tripped").withStyle(ChatFormatting.RED)));
 
         int limit = Math.max(1, syncedLimit);
         int loadPct = Math.round(flowPerTick * 100f / limit);
@@ -305,6 +378,18 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tooltip.add(line(1, Component.translatable("create_em.tooltip.load").withStyle(LABEL)
                 .append(Component.literal(loadPct + "%").withStyle(loadColor))));
         return true;
+    }
+
+    private ChatFormatting stageColor() {
+        return switch (stage) { case NORMAL -> ChatFormatting.GREEN; case WARNING, LIMITED -> ChatFormatting.GOLD; case CUT -> ChatFormatting.RED; };
+    }
+
+    /** Без очков показываем только проблему: долг или сработавший расцепитель. */
+    private void addStageLines(List<Component> tooltip, int indent) {
+        if (stage != BillingStage.NORMAL)
+            tooltip.add(line(indent, Component.translatable(stage.key()).withStyle(stageColor())));
+        if (tripped)
+            tooltip.add(line(indent, Component.translatable("create_em.tooltip.tripped").withStyle(ChatFormatting.RED)));
     }
 
     public static MutableComponent line(int indent, Component c) {
@@ -321,6 +406,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     }
 
     private MutableComponent lastPaymentText() {
+        long paidAtTick = lastPaidAt();
         if (paidAtTick < 0 || level == null)
             return Component.translatable("create_em.tooltip.never").withStyle(ChatFormatting.DARK_GRAY);
         long days = Math.max(0, (level.getGameTime() - paidAtTick) / 24000L);
@@ -342,6 +428,12 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (supplier != null) tag.putUUID("Supplier", supplier);
         tag.putString("SupplierName", supplierName);
         tag.putInt("UserLimit", limit);
+        tag.putString("OwnerName", ownerName);
+        tag.putBoolean("Tripped", tripped);
+        tag.putLong("AcctSince", acctSinceFe);
+        tag.putLong("AcctPaidAt", acctPaidAt);
+        tag.putLong("AcctBalance", acctBalance);
+        tag.putInt("Stage", stage.ordinal());
     }
 
     @Override
@@ -359,6 +451,12 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         supplier = tag.hasUUID("Supplier") ? tag.getUUID("Supplier") : null;
         supplierName = tag.getString("SupplierName");
         if (tag.contains("UserLimit")) limit = tag.getInt("UserLimit");
+        if (tag.contains("OwnerName")) ownerName = tag.getString("OwnerName");
+        tripped = tag.getBoolean("Tripped");
+        acctSinceFe = tag.getLong("AcctSince");
+        acctPaidAt = tag.contains("AcctPaidAt") ? tag.getLong("AcctPaidAt") : -1;
+        acctBalance = tag.getLong("AcctBalance");
+        stage = BillingStage.values()[Math.max(0, Math.min(3, tag.getInt("Stage")))];
     }
 
     @Override
@@ -370,6 +468,11 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putLong("PaidAt", paidAtTick);
         tag.putInt("Limit", getLimit());
         tag.putString("SupplierName", supplierName);
+        tag.putBoolean("Tripped", tripped);
+        tag.putLong("AcctSince", acctSinceFe);
+        tag.putLong("AcctPaidAt", acctPaidAt);
+        tag.putLong("AcctBalance", acctBalance);
+        tag.putInt("Stage", stage.ordinal());
         links.save(tag);
         return tag;
     }

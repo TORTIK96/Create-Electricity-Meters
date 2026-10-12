@@ -85,6 +85,8 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         LineNetwork.onPlaced(level, pos, placer);
+        if (!level.isClientSide && placer instanceof Player p && level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be)
+            be.setOwnerName(p.getGameProfile().getName());
     }
 
     /** Игрок ломает опломбированный счётчик — пломба сорвана, в журнал поставщика пишется его имя. */

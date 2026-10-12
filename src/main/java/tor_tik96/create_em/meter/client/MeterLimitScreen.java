@@ -18,6 +18,7 @@ import java.util.List;
  */
 public class MeterLimitScreen extends AbstractContainerScreen<MeterLimitMenu> {
     private final List<Button> buttons = new ArrayList<>();
+    private Button rearm;
 
     public MeterLimitScreen(MeterLimitMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -39,6 +40,11 @@ public class MeterLimitScreen extends AbstractContainerScreen<MeterLimitMenu> {
         int half = (w * 4 + gap * 3 - gap) / 2;
         add(x, y, half, Component.translatable("create_em.limit.min").getString(), MeterLimitMenu.BTN_MIN);
         add(x + half + gap, y, half, Component.translatable("create_em.limit.max").getString(), MeterLimitMenu.BTN_MAX);
+        // взвести расцепитель: поверх шкалы, виден только когда сработал
+        rearm = addRenderableWidget(Button.builder(Component.translatable("create_em.limit.rearm"), b -> {
+            if (minecraft != null && minecraft.gameMode != null)
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MeterLimitMenu.BTN_REARM);
+        }).bounds(leftPos + imageWidth - 70, topPos + 2, 64, 13).build());
     }
 
     private void add(int x, int y, int w, String label, int id) {
@@ -54,6 +60,8 @@ public class MeterLimitScreen extends AbstractContainerScreen<MeterLimitMenu> {
         super.containerTick();
         boolean edit = menu.canEdit();
         for (Button b : buttons) b.active = edit;
+        rearm.visible = menu.isTripped();
+        rearm.active = menu.canRearm();
     }
 
     @Override

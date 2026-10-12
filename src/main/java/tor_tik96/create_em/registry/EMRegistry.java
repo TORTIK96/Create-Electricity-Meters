@@ -20,6 +20,9 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import tor_tik96.create_em.Create_em;
+import tor_tik96.create_em.billing.TerminalBlock;
+import tor_tik96.create_em.billing.TerminalBlockEntity;
+import tor_tik96.create_em.billing.TerminalMenu;
 import tor_tik96.create_em.line.*;
 import tor_tik96.create_em.meter.EnergyMeterBlock;
 import tor_tik96.create_em.meter.EnergyMeterBlockEntity;
@@ -61,6 +64,11 @@ public final class EMRegistry {
             () -> new LineConnectorBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.TERRACOTTA_WHITE).strength(1f).sound(SoundType.COPPER).noOcclusion()));
 
+    // ---------- расчёты ----------
+    public static final DeferredBlock<TerminalBlock> TERMINAL = BLOCKS.register("billing_terminal",
+            () -> new TerminalBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
+
     public static final DeferredItem<BlockItem> ANDESITE_METER_ITEM =
             ITEMS.registerSimpleBlockItem("andesite_energy_meter", ANDESITE_METER, new Item.Properties());
     public static final DeferredItem<BlockItem> BRASS_METER_ITEM =
@@ -69,6 +77,8 @@ public final class EMRegistry {
             ITEMS.registerSimpleBlockItem("line_transformer", TRANSFORMER, new Item.Properties());
     public static final DeferredItem<BlockItem> LINE_CONNECTOR_ITEM =
             ITEMS.registerSimpleBlockItem("line_connector", LINE_CONNECTOR, new Item.Properties());
+    public static final DeferredItem<BlockItem> TERMINAL_ITEM =
+            ITEMS.registerSimpleBlockItem("billing_terminal", TERMINAL, new Item.Properties());
     public static final DeferredItem<LineWireItem> LINE_WIRE =
             ITEMS.register("line_wire", () -> new LineWireItem(new Item.Properties()));
     public static final DeferredItem<SealItem> SEAL =
@@ -93,6 +103,14 @@ public final class EMRegistry {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LineConnectorBlockEntity>> LINE_CONNECTOR_BE =
             BE_TYPES.register("line_connector", () -> BlockEntityType.Builder
                     .of(LineConnectorBlockEntity::new, LINE_CONNECTOR.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TerminalBlockEntity>> TERMINAL_BE =
+            BE_TYPES.register("billing_terminal", () -> BlockEntityType.Builder
+                    .of(TerminalBlockEntity::new, TERMINAL.get()).build(null));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
+            MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static void init(IEventBus modBus) {
         COMPONENTS.register(modBus);

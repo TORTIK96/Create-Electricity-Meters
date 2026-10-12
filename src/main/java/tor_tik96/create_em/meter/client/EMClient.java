@@ -7,6 +7,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import tor_tik96.create_em.Create_em;
+import tor_tik96.create_em.billing.client.TerminalScreen;
 import tor_tik96.create_em.line.client.LineNodeRenderer;
 import tor_tik96.create_em.registry.EMRegistry;
 
@@ -28,6 +29,7 @@ public final class EMClient {
     @SubscribeEvent
     static void registerScreens(RegisterMenuScreensEvent e) {
         e.register(EMRegistry.METER_LIMIT_MENU.get(), MeterLimitScreen::new);
+        e.register(EMRegistry.TERMINAL_MENU.get(), TerminalScreen::new);
     }
 
     private EMClient() {}

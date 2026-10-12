@@ -34,6 +34,22 @@ public final class Config {
             .comment("Максимальная длина провода сервисной линии, блоков")
             .defineInRange("maxWireLength", 24, 2, 256);
 
+    public static final ModConfigSpec.IntValue BILLING_PERIOD_DAYS = BUILDER
+            .comment("Расчётный период: раз в сколько игровых дней выставляются квитанции")
+            .defineInRange("billingPeriodDays", 3, 1, 365);
+
+    public static final ModConfigSpec.IntValue LIMIT_AFTER_DAYS = BUILDER
+            .comment("Через сколько игровых дней долга мощность урезается")
+            .defineInRange("limitAfterDays", 2, 0, 365);
+
+    public static final ModConfigSpec.IntValue CUT_AFTER_DAYS = BUILDER
+            .comment("Через сколько игровых дней долга счётчик отключается")
+            .defineInRange("cutAfterDays", 4, 0, 365);
+
+    public static final ModConfigSpec.IntValue LIMITED_PERCENT = BUILDER
+            .comment("Сколько процентов лимита остаётся при ограничении за долг")
+            .defineInRange("limitedPercent", 20, 0, 100);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     private Config() {}
