@@ -18,6 +18,14 @@ public final class Config {
             .comment("Сколько FE считается за 1 кВт·ч")
             .defineInRange("fePerKwh", 1_000_000L, 1L, Long.MAX_VALUE);
 
+    public static final ModConfigSpec.IntValue TRANSFORMER_MAX_TRANSFER = BUILDER
+            .comment("Сколько FE/t трансформатор может отдать в сервисную линию")
+            .defineInRange("transformerMaxTransfer", 16384, 1, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue MAX_WIRE_LENGTH = BUILDER
+            .comment("Максимальная длина провода сервисной линии, блоков")
+            .defineInRange("maxWireLength", 24, 2, 256);
+
     static final ModConfigSpec SPEC = BUILDER.build();
 
     private Config() {}

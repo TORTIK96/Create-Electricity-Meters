@@ -30,6 +30,9 @@ public class Create_em {
                     .displayItems((params, output) -> {
                         output.accept(EMRegistry.ANDESITE_METER_ITEM.get());
                         output.accept(EMRegistry.BRASS_METER_ITEM.get());
+                        output.accept(EMRegistry.TRANSFORMER_ITEM.get());
+                        output.accept(EMRegistry.LINE_CONNECTOR_ITEM.get());
+                        output.accept(EMRegistry.LINE_WIRE.get());
                     })
                     .build());
 

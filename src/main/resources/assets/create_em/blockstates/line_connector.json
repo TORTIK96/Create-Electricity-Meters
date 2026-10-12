@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "create_em:block/line_connector"
+    },
+    "facing=down": {
+      "model": "create_em:block/line_connector",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "create_em:block/line_connector",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "create_em:block/line_connector",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
+      "model": "create_em:block/line_connector",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "create_em:block/line_connector",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

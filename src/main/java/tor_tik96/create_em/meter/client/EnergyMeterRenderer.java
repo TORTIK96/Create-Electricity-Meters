@@ -12,6 +12,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
+import tor_tik96.create_em.line.client.LineWireRenderer;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import tor_tik96.create_em.Create_em;
 import tor_tik96.create_em.meter.EnergyMeterBlockEntity;
@@ -53,7 +55,15 @@ public class EnergyMeterRenderer implements BlockEntityRenderer<EnergyMeterBlock
         else renderNixie(be, pose, buffers);
 
         pose.popPose();
+
+        LineWireRenderer.render(be, be, pose, buffers); // провод линии к клемме сверху
     }
+
+    @Override public boolean shouldRenderOffScreen(EnergyMeterBlockEntity be) { return !be.getLinks().isEmpty(); }
+    @Override public AABB getRenderBoundingBox(EnergyMeterBlockEntity be) {
+        return be.getLinks().isEmpty() ? new AABB(be.getBlockPos()) : AABB.INFINITE;
+    }
+    @Override public int getViewDistance() { return 128; }
 
     private void renderNeedle(EnergyMeterBlockEntity be, float pt, PoseStack pose,
                               MultiBufferSource buffers, int light, int overlay) {

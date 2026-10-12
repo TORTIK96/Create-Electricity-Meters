@@ -18,6 +18,9 @@ import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.phys.Vec3;
+import tor_tik96.create_em.line.LineLinks;
+import tor_tik96.create_em.line.LineNode;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.api.equipment.goggles.IHaveHoveringInformation;
 import tor_tik96.create_em.meter.client.ClientAccess;
@@ -25,15 +28,17 @@ import tor_tik96.create_em.Config;
 import tor_tik96.create_em.registry.EMRegistry;
 
 import java.util.List;
+import java.util.UUID;
 
 import static net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING;
 
 /**
- * Энергия заходит сверху в небольшой буфер, каждый тик счётчик сам толкает её в выходы
- * (сзади и снизу) и учитывает ТОЛЬКО то, что потребитель реально принял.
- * Вытянуть энергию из счётчика нельзя ни с какой стороны.
+ * Конец сервисной линии. Энергия приходит ТОЛЬКО по проводу линии от трансформатора
+ * (клемма сверху) в небольшой буфер; каждый тик счётчик сам толкает её в выходы
+ * (сзади и снизу) и учитывает только то, что потребитель реально принял.
+ * Обычной FE счётчик не принимает и не отдаёт ни с какой стороны.
  */
-public class EnergyMeterBlockEntity extends BlockEntity implements IHaveGoggleInformation, IHaveHoveringInformation {
+public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHaveGoggleInformation, IHaveHoveringInformation {
     private static final int WINDOW = 20; // усреднение потока за секунду
 
     private int buffer;
@@ -50,24 +55,27 @@ public class EnergyMeterBlockEntity extends BlockEntity implements IHaveGoggleIn
 
     @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> backCache, bottomCache;
 
-    private final IEnergyStorage input = new IEnergyStorage() {
-        @Override public int receiveEnergy(int max, boolean simulate) {
-            int accepted = Math.max(0, Math.min(max, getMaxEnergyStored() - buffer));
-            if (!simulate && accepted > 0) { buffer += accepted; setChanged(); }
-            return accepted;
-        }
-        @Override public int extractEnergy(int max, boolean simulate) { return 0; }
-        @Override public int getEnergyStored() { return buffer; }
-        @Override public int getMaxEnergyStored() { return getTier().bufferSize(); }
-        @Override public boolean canExtract() { return false; }
-        @Override public boolean canReceive() { return true; }
-    };
+    private final LineLinks links = new LineLinks(this);
+    @Nullable private UUID owner;
 
     public EnergyMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.METER_BE.get(), pos, state);
     }
 
-    public IEnergyStorage getInput() { return input; }
+    /** Приём энергии с линии: сколько влезло в буфер. */
+    public int acceptFromLine(int amount) {
+        int accepted = Math.max(0, Math.min(amount, getTier().bufferSize() - buffer));
+        if (accepted > 0) { buffer += accepted; setChanged(); }
+        return accepted;
+    }
+
+    // ---------------- LineNode ----------------
+    @Override public LineLinks getLinks() { return links; }
+    @Override public Vec3 getWireAnchor() { return new Vec3(0.5, 15.1 / 16, 0.5); } // клемма на крышке
+    @Override public int getMaxLinks() { return 1; }
+    @Override public boolean isTerminal() { return true; }
+    @Override public @Nullable UUID getOwner() { return owner; }
+    @Override public void setOwner(@Nullable UUID owner) { this.owner = owner; setChanged(); }
 
     public MeterTier getTier() {
         return getBlockState().getBlock() instanceof EnergyMeterBlock b ? b.getTier() : MeterTier.ANDESITE;
@@ -196,7 +204,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements IHaveGoggleIn
         return true;
     }
 
-    private static MutableComponent line(int indent, Component c) {
+    public static MutableComponent line(int indent, Component c) {
         return Component.literal(" ".repeat(4 + indent * 2)).append(c); // отступы как у Create
     }
 
@@ -225,6 +233,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements IHaveGoggleIn
         tag.putFloat("Flow", flowPerTick);
         tag.putLong("PaidFe", paidFe);
         tag.putLong("PaidAt", paidAtTick);
+        links.save(tag);
+        if (owner != null) tag.putUUID("Owner", owner);
     }
 
     @Override
@@ -236,6 +246,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements IHaveGoggleIn
         paidFe = tag.getLong("PaidFe");
         paidAtTick = tag.contains("PaidAt") ? tag.getLong("PaidAt") : -1;
         if (tag.contains("Limit")) syncedLimit = tag.getInt("Limit"); // только в пакете синхронизации
+        links.load(tag);
+        if (tag.hasUUID("Owner")) owner = tag.getUUID("Owner");
     }
 
     @Override
@@ -246,6 +258,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements IHaveGoggleIn
         tag.putLong("PaidFe", paidFe);
         tag.putLong("PaidAt", paidAtTick);
         tag.putInt("Limit", getTier().limitPerTick());
+        links.save(tag);
         return tag;
     }
 

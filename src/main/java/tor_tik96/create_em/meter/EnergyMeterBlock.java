@@ -5,7 +5,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -22,14 +24,15 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import tor_tik96.create_em.line.LineNetwork;
 import tor_tik96.create_em.registry.EMRegistry;
 
 import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Счётчик электроэнергии. Вход — только сверху, выходы — сзади (против циферблата) и снизу.
- * Циферблат смотрит на игрока, который его поставил.
+ * Счётчик электроэнергии. Вход — провод сервисной линии к клемме сверху,
+ * выходы FE — сзади (против циферблата) и снизу. Циферблат смотрит на игрока, который его поставил.
  */
 public class EnergyMeterBlock extends HorizontalDirectionalBlock implements EntityBlock {
     private final MeterTier tier;
@@ -72,6 +75,18 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
         return level.isClientSide
                 ? (l, p, st, be) -> ((EnergyMeterBlockEntity) be).clientTick()
                 : (l, p, st, be) -> ((EnergyMeterBlockEntity) be).serverTick();
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        LineNetwork.onPlaced(level, pos, placer);
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
+        if (!state.is(newState.getBlock())) LineNetwork.onRemoved(level, pos);
+        super.onRemove(state, level, pos, newState, moved);
     }
 
     /** Временно, пока нет расчётной системы: в креативе Shift-ПКМ пустой рукой отмечает оплату. */
