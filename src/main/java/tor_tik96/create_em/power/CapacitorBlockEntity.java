@@ -62,6 +62,13 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         mode = new ScrollOptionBehaviour<>(CapacitorMode.class, Component.translatable("create_em.capacitor.mode"), this,
                 new SideSlot(8, 11.5f, CapacitorBlockEntity::isSide)) {
+            /** Старое сохранение могло положить сюда значение другой рамки (например, 100) — не даём выйти за список режимов. */
+            @Override
+            public void read(net.minecraft.nbt.CompoundTag nbt, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
+                super.read(nbt, registries, clientPacket);
+                if (value < 0 || value > max) value = 0;
+            }
+
             @Override
             public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
                 return new ValueSettingsBoard(label, max, 1, List.of(Component.translatable("create_em.capacitor.mode_row")),
@@ -70,8 +77,8 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
         };
         behaviours.add(mode);
 
-        threshold = new ScrollValueBehaviour(Component.translatable("create_em.capacitor.threshold"), this,
-                new SideSlot(8, 4.5f, CapacitorBlockEntity::isSide)) {
+        threshold = new ExtraScrollValueBehaviour(Component.translatable("create_em.capacitor.threshold"), this,
+                new SideSlot(8, 4.5f, CapacitorBlockEntity::isSide), "ThresholdPercent") {
             @Override
             public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
                 return new ValueSettingsBoard(label, 100, 10, List.of(Component.translatable("create_em.capacitor.threshold_row")),

@@ -68,6 +68,13 @@ public class ElectrifierBlockEntity extends SmartBlockEntity implements IHaveGog
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         target = new ScrollOptionBehaviour<>(ElectrifierTarget.class, Component.translatable("create_em.electrifier.target"), this,
                 new CenteredSideValueBoxTransform((s, d) -> d.getAxis().isHorizontal())) {
+            /** Старое сохранение могло положить сюда значение другой рамки (например, 100) — не даём выйти за список режимов. */
+            @Override
+            public void read(net.minecraft.nbt.CompoundTag nbt, net.minecraft.core.HolderLookup.Provider registries, boolean clientPacket) {
+                super.read(nbt, registries, clientPacket);
+                if (value < 0 || value > max) value = 0;
+            }
+
             @Override
             public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
                 return new ValueSettingsBoard(label, max, 1, List.of(Component.translatable("create_em.electrifier.target_row")),
@@ -77,8 +84,8 @@ public class ElectrifierBlockEntity extends SmartBlockEntity implements IHaveGog
         behaviours.add(target);
 
         // радиус — рамка сверху и снизу (электризатор обычно в полу или потолке)
-        radius = new ScrollValueBehaviour(Component.translatable("create_em.electrifier.radius"), this,
-                new CenteredSideValueBoxTransform((s, d) -> d.getAxis().isVertical())) {
+        radius = new ExtraScrollValueBehaviour(Component.translatable("create_em.electrifier.radius"), this,
+                new CenteredSideValueBoxTransform((s, d) -> d.getAxis().isVertical()), "Radius") {
             @Override
             public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
                 return new ValueSettingsBoard(label, max, 1, List.of(Component.translatable("create_em.electrifier.radius_row")),
