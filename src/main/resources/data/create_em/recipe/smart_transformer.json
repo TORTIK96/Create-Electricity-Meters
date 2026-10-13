@@ -11,14 +11,14 @@
     "T": {
       "item": "create_em:line_transformer"
     },
-    "P": {
-      "item": "create:precision_mechanism"
+    "C": {
+      "item": "minecraft:comparator"
     }
   },
   "pattern": [
     " E ",
     "BTB",
-    " P "
+    " C "
   ],
   "result": {
     "count": 1,

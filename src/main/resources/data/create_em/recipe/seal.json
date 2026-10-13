@@ -3,13 +3,13 @@
   "category": "misc",
   "ingredients": [
     {
-      "item": "minecraft:honeycomb"
+      "item": "minecraft:iron_nugget"
+    },
+    {
+      "item": "minecraft:string"
     },
     {
       "item": "minecraft:red_dye"
-    },
-    {
-      "item": "minecraft:iron_nugget"
     }
   ],
   "result": {
