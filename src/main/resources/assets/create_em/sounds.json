@@ -1,0 +1,49 @@
+{
+  "transformer_hum": {
+    "category": "block",
+    "subtitle": "create_em.subtitle.transformer_hum",
+    "sounds": [
+      {
+        "name": "create_em:transformer_hum",
+        "stream": false,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "meter_tick": {
+    "category": "block",
+    "subtitle": "create_em.subtitle.meter_tick",
+    "sounds": [
+      {
+        "name": "create_em:meter_tick"
+      }
+    ]
+  },
+  "brass_meter_tick": {
+    "category": "block",
+    "subtitle": "create_em.subtitle.brass_meter_tick",
+    "sounds": [
+      {
+        "name": "create_em:brass_meter_tick"
+      }
+    ]
+  },
+  "ats_switch": {
+    "category": "block",
+    "subtitle": "create_em.subtitle.ats_switch",
+    "sounds": [
+      {
+        "name": "create_em:ats_switch"
+      }
+    ]
+  },
+  "breaker_trip": {
+    "category": "block",
+    "subtitle": "create_em.subtitle.breaker_trip",
+    "sounds": [
+      {
+        "name": "create_em:breaker_trip"
+      }
+    ]
+  }
+}

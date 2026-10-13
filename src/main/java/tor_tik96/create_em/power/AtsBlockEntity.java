@@ -165,6 +165,8 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         if (next != source) {
             source = next;
             setChanged();
+            level.playSound(null, worldPosition, tor_tik96.create_em.registry.EMSounds.ATS_SWITCH.get(),
+                    net.minecraft.sounds.SoundSource.BLOCKS, 0.9f, 0.95f + level.random.nextFloat() * 0.1f);
         }
 
         windowFe += relay.push(outTarget()); // одно предложение нагрузке за тик

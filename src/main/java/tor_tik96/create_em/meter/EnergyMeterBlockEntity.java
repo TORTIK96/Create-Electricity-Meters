@@ -87,9 +87,35 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         super(EMRegistry.METER_BE.get(), pos, state);
     }
 
+    /** Сколько потребители взяли за прошлый тик. */
+    private int lastSent;
+    private int soundTimer;
+
+    /** Тиканье под нагрузкой: чем больше нагрузка, тем чаще (раз в 2 с … 0.4 с). */
+    private void tickSound(int sent) {
+        if (sent <= 0 || level == null) { soundTimer = 0; return; }
+        float load = Math.min(1f, sent / (float) Math.max(1, getLimit()));
+        int interval = (int) (40 - 32 * load);
+        if (++soundTimer < interval) return;
+        soundTimer = 0;
+        var sound = getTier() == MeterTier.ANDESITE ? tor_tik96.create_em.registry.EMSounds.METER_TICK
+                : tor_tik96.create_em.registry.EMSounds.BRASS_METER_TICK;
+        level.playSound(null, worldPosition, sound.get(), net.minecraft.sounds.SoundSource.BLOCKS,
+                0.25f, 0.95f + level.random.nextFloat() * 0.1f);
+    }
+
+    /**
+     * Сколько держим в буфере: пара тиков реального потребления (минимум 256, чтобы поток мог
+     * разогнаться — удваивается каждый тик, пока всё забирают). Большой буфер после отключения
+     * линии ещё долго кормил бы потребителя «из ниоткуда».
+     */
+    private int bufferCap() {
+        return (int) Math.min(getTier().bufferSize(), Math.max(256L, 2L * lastSent));
+    }
+
     /** Приём энергии с линии: сколько влезло в буфер. */
     public int acceptFromLine(int amount) {
-        int accepted = Math.max(0, Math.min(amount, getTier().bufferSize() - buffer));
+        int accepted = Math.max(0, Math.min(amount, bufferCap() - buffer));
         if (accepted > 0) { buffer += accepted; setChanged(); }
         return accepted;
     }
@@ -118,6 +144,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         else if (stage == BillingStage.LIMITED) budget = budget * limitPercent / 100;
         int sent = push(backCache, budget);
         sent += push(bottomCache, budget - sent);
+        lastSent = sent;
+        tickSound(sent);
 
         totalFe += sent;
         windowFe += sent;
@@ -188,8 +216,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (stage == BillingStage.CUT && getTier() == MeterTier.ANDESITE && !tripped) {
             tripped = true;
             changed = true;
-            level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.IRON_TRAPDOOR_CLOSE,
-                    net.minecraft.sounds.SoundSource.BLOCKS, 1f, 0.6f);
+            level.playSound(null, worldPosition, tor_tik96.create_em.registry.EMSounds.BREAKER_TRIP.get(),
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1f, 1f);
         }
         return changed;
     }

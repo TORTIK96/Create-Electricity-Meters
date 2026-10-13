@@ -35,6 +35,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private long targetStoredAtStart = -1;
     /** Крошечный буфер: см. {@link Relay}. */
     private final Relay relay = new Relay();
+    private int soundTimer;
     @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> inCache, outCache;
 
     private final EnergyPort input = EnergyPort.input(
@@ -90,7 +91,13 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
 
         IEnergyStorage source = neighbor(false), target = neighbor(true);
         relay.pull(source, target, capacity());   // источник, который сам не толкает
-        windowFe += relay.push(target);           // одно предложение потребителю за тик
+        int moved = relay.push(target);           // одно предложение потребителю за тик
+        windowFe += moved;
+        if (moved > 0 && ++soundTimer >= 30) {
+            soundTimer = 0;
+            level.playSound(null, worldPosition, tor_tik96.create_em.registry.EMSounds.BRASS_METER_TICK.get(),
+                    net.minecraft.sounds.SoundSource.BLOCKS, 0.12f, 1.3f + level.random.nextFloat() * 0.1f);
+        }
 
         if (++windowTicks >= WINDOW) {
             // потребление = принято − насколько вырос запас самого потребителя

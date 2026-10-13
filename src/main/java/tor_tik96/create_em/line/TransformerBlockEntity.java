@@ -54,7 +54,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         }
         @Override public int extractEnergy(int max, boolean simulate) { return 0; }
         @Override public int getEnergyStored() { return buffer; }
-        @Override public int getMaxEnergyStored() { return Config.TRANSFORMER_MAX_TRANSFER.get() * 2; }
+        @Override public int getMaxEnergyStored() { return bufferCap(); }
         @Override public boolean canExtract() { return false; }
         @Override public boolean canReceive() { return true; }
     };
@@ -64,6 +64,26 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
     }
 
     public IEnergyStorage getInput() { return input; }
+
+    /** Сколько счётчики взяли за прошлый тик. */
+    private int lastSent;
+
+    /** Запас — пара тиков реальной раздачи (минимум 256), иначе после отключения генератора линия ещё долго живёт. */
+    private int bufferCap() {
+        return (int) Math.min(Config.TRANSFORMER_MAX_TRANSFER.get() * 2L, Math.max(256L, 2L * lastSent));
+    }
+
+    /** Гул под нагрузкой — звук на клиенте, сам выключается, когда раздача прекратилась. */
+    void clientTick() {
+        tor_tik96.create_em.line.client.TransformerHum.tick(this);
+    }
+
+    public float getOutPerTick() { return outPerTick; }
+
+    /** Насколько нагружен (0…1) — громкость гула. */
+    public float getLoad() {
+        return syncedMax <= 0 ? 0 : Math.min(1f, outPerTick / syncedMax);
+    }
 
     void serverTick() {
         if (level == null) return;
@@ -98,6 +118,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
             buffer -= sent;
             if (sent > 0) setChanged();
         }
+        lastSent = sent;
 
         windowFe += sent;
         if (++windowTicks >= WINDOW) {

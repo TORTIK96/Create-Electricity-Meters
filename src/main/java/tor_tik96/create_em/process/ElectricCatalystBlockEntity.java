@@ -83,10 +83,24 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         }
 
         CatalystProcess next = run ? wanted : CatalystProcess.NONE;
+        ambientSound(next);
         if (next != current) {
             level.setBlock(worldPosition, ElectricCatalystBlock.withProcess(getBlockState(), next), Block.UPDATE_ALL);
             notifyFans();
         }
+    }
+
+    /** Изредка — звук того, что внутри: вода, костёр, лава, призрачный огонь. */
+    private void ambientSound(CatalystProcess p) {
+        if (p == CatalystProcess.NONE || level.random.nextInt(40) != 0) return;
+        var sound = switch (p) {
+            case SPLASHING -> net.minecraft.sounds.SoundEvents.WATER_AMBIENT;
+            case SMOKING -> net.minecraft.sounds.SoundEvents.CAMPFIRE_CRACKLE;
+            case BLASTING -> net.minecraft.sounds.SoundEvents.LAVA_AMBIENT;
+            default -> net.minecraft.sounds.SoundEvents.SOUL_ESCAPE.value();
+        };
+        level.playSound(null, worldPosition, sound, net.minecraft.sounds.SoundSource.BLOCKS, 0.35f,
+                0.9f + level.random.nextFloat() * 0.2f);
     }
 
     /** Режим, который выбран переключателем или сигналом (без учёта энергии). */

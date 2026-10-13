@@ -280,5 +280,10 @@
   "block.create_em.electrifier.tooltip.behaviour2": "_3 blocks_ in every direction (config).",
   "block.create_em.electrifier.tooltip.control1": "R-Click a side",
   "block.create_em.electrifier.tooltip.action1": "Targets: _all but players_, _animals_, _hostile_ or _everyone_.",
-  "create_em.mini_meter.tooltip.passed": "Passed through: "
+  "create_em.mini_meter.tooltip.passed": "Passed through: ",
+  "create_em.subtitle.transformer_hum": "Transformer hums",
+  "create_em.subtitle.meter_tick": "Meter ticks",
+  "create_em.subtitle.brass_meter_tick": "Meter relay clicks",
+  "create_em.subtitle.ats_switch": "Transfer switch clicks",
+  "create_em.subtitle.breaker_trip": "Breaker trips"
 }

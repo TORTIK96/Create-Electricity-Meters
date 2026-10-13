@@ -224,6 +224,7 @@ public final class EMRegistry {
         ITEMS.register(modBus);
         BE_TYPES.register(modBus);
         MENUS.register(modBus);
+        EMSounds.init(modBus);
         modBus.addListener(EMRegistry::registerCaps);
     }
 

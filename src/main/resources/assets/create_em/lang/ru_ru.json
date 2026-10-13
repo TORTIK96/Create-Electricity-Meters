@@ -280,5 +280,10 @@
   "block.create_em.electrifier.tooltip.behaviour2": "_3 блока_ во все стороны (конфиг).",
   "block.create_em.electrifier.tooltip.control1": "ПКМ по боку",
   "block.create_em.electrifier.tooltip.action1": "Кого бить: _всех, кроме игроков_, _животных_, _враждебных_ или _всех_.",
-  "create_em.mini_meter.tooltip.passed": "Прошло через счётчик: "
+  "create_em.mini_meter.tooltip.passed": "Прошло через счётчик: ",
+  "create_em.subtitle.transformer_hum": "Гудит трансформатор",
+  "create_em.subtitle.meter_tick": "Тикает счётчик",
+  "create_em.subtitle.brass_meter_tick": "Щёлкает реле счётчика",
+  "create_em.subtitle.ats_switch": "Щёлкает АВР",
+  "create_em.subtitle.breaker_trip": "Выбило расцепитель"
 }

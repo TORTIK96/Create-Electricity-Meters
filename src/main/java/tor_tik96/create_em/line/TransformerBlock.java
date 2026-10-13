@@ -78,8 +78,10 @@ public class TransformerBlock extends HorizontalDirectionalBlock implements Enti
 
     @Nullable @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState s, BlockEntityType<T> type) {
-        if (level.isClientSide || type != EMRegistry.TRANSFORMER_BE.get()) return null;
-        return (l, p, st, be) -> ((TransformerBlockEntity) be).serverTick();
+        if (type != EMRegistry.TRANSFORMER_BE.get()) return null;
+        return level.isClientSide
+                ? (l, p, st, be) -> ((TransformerBlockEntity) be).clientTick()
+                : (l, p, st, be) -> ((TransformerBlockEntity) be).serverTick();
     }
 
     @Override
