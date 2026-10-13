@@ -91,7 +91,7 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
 
         IEnergyStorage source = neighbor(false), target = neighbor(true);
         relay.pull(source, target, capacity());   // источник, который сам не толкает
-        int moved = relay.push(target);           // одно предложение потребителю за тик
+        int moved = relay.push(target, capacity());           // одно предложение потребителю за тик
         windowFe += moved;
         if (moved > 0 && ++soundTimer >= 30) {
             soundTimer = 0;
@@ -134,7 +134,6 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super.write(tag, registries, clientPacket);
         tag.putFloat("Flow", flow);
         tag.putFloat("Passed", passed);
-        tag.putInt("Buffer", relay.buffer());
     }
 
     @Override
@@ -142,7 +141,6 @@ public class MiniMeterBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super.read(tag, registries, clientPacket);
         flow = tag.getFloat("Flow");
         passed = tag.getFloat("Passed");
-        relay.load(tag.getInt("Buffer"));
     }
 
     @Override

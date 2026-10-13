@@ -93,6 +93,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
             rescanTimer = 100; // раз в 5 с — чтобы подхватить подгрузившиеся чанки
         }
 
+        buffer = Math.min(buffer, bufferCap()); // старый большой запас из сохранения — отбрасываем
         int sent = 0;
         int budget = Math.min(buffer, Config.TRANSFORMER_MAX_TRANSFER.get());
         // энергию получают только счётчики, опломбированные владельцем этого трансформатора

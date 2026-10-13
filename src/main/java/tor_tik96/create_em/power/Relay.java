@@ -52,8 +52,13 @@ public final class Relay {
         buffer += source.extractEnergy(want, false);
     }
 
-    /** Раз в тик: одно предложение потребителю. Возвращает, сколько он взял. */
-    public int push(@Nullable IEnergyStorage target) {
+    /**
+     * Раз в тик: одно предложение потребителю. Возвращает, сколько он взял.
+     * Сначала отбрасываем всё сверх нормы — например, огромный запас из старого сохранения,
+     * который иначе ещё долго «кормил» бы потребителя после отключения питания.
+     */
+    public int push(@Nullable IEnergyStorage target, int max) {
+        buffer = Math.min(buffer, Math.max(MIN, cap(target, max)));
         int moved = 0;
         if (target != null && target.canReceive() && buffer > 0)
             moved = target.receiveEnergy(buffer, false);
@@ -76,7 +81,4 @@ public final class Relay {
         buffer = 0;
     }
 
-    public void load(int buffer) {
-        this.buffer = Math.max(0, buffer);
-    }
 }

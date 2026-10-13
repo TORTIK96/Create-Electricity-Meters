@@ -142,6 +142,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         if (powerCap > 0) budget = Math.min(budget, powerCap);
         if (tripped || remoteOff || stage == BillingStage.CUT) budget = 0;
         else if (stage == BillingStage.LIMITED) budget = budget * limitPercent / 100;
+        buffer = Math.min(buffer, bufferCap()); // старый большой запас из сохранения — отбрасываем
         int sent = push(backCache, budget);
         sent += push(bottomCache, budget - sent);
         lastSent = sent;

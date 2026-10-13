@@ -169,7 +169,7 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
                     net.minecraft.sounds.SoundSource.BLOCKS, 0.9f, 0.95f + level.random.nextFloat() * 0.1f);
         }
 
-        windowFe += relay.push(outTarget()); // одно предложение нагрузке за тик
+        windowFe += relay.push(outTarget(), maxTransfer()); // одно предложение нагрузке за тик
 
         if (++windowTicks >= WINDOW) {
             float f = windowFe / (float) WINDOW;
