@@ -15,9 +15,9 @@ import tor_tik96.create_em.meter.MeterTier;
  * (с понятными сокращениями 2k, 8M), кнопки «Минимум» и «Максимум».
  */
 public class MeterLimitScreen extends EMScreen<MeterLimitMenu> {
-    private static final int W = 200, H = 144;
+    private static final int W = 200, H = 166;
 
-    private EMButton min, max, rearm;
+    private EMButton min, max, rearm, ownerOff;
     private NumberField limitField;
 
     public MeterLimitScreen(MeterLimitMenu menu, Inventory inv, Component title) {
@@ -33,10 +33,11 @@ public class MeterLimitScreen extends EMScreen<MeterLimitMenu> {
     protected void init() {
         super.init();
         int x = leftPos, y = topPos;
-        limitField = field(x + 6, y + 99, W - 12, MeterLimitMenu.F_LIMIT, () -> menu.getLimit(), () -> null,
+        ownerOff = btn(x + 6, y + 95, W - 12, MeterLimitMenu.BTN_OWNER_OFF, Component.translatable("create_em.limit.switch_off"));
+        limitField = field(x + 6, y + 121, W - 12, MeterLimitMenu.F_LIMIT, () -> menu.getLimit(), () -> null,
                 menu::canEdit, Component.translatable("create_em.limit.hint"));
-        min = btn(x + 6, y + 119, 93, MeterLimitMenu.BTN_MIN, Component.translatable("create_em.limit.min"));
-        max = btn(x + 101, y + 119, 93, MeterLimitMenu.BTN_MAX, Component.translatable("create_em.limit.max"));
+        min = btn(x + 6, y + 141, 93, MeterLimitMenu.BTN_MIN, Component.translatable("create_em.limit.min"));
+        max = btn(x + 101, y + 141, 93, MeterLimitMenu.BTN_MAX, Component.translatable("create_em.limit.max"));
         rearm = btn(x + 6, y + 75, W - 12, MeterLimitMenu.BTN_REARM, Component.translatable("create_em.limit.rearm"));
         rearm.visible = false;
     }
@@ -56,6 +57,8 @@ public class MeterLimitScreen extends EMScreen<MeterLimitMenu> {
         max.active = edit;
         rearm.visible = menu.isTripped();
         rearm.active = menu.canRearm();
+        ownerOff.active = menu.canToggleOwnerOff();
+        ownerOff.setMessage(Component.translatable(menu.isOwnerOff() ? "create_em.limit.switch_on" : "create_em.limit.switch_off"));
         limitField.box.setTextColor(theme().screenText);
     }
 
@@ -88,7 +91,9 @@ public class MeterLimitScreen extends EMScreen<MeterLimitMenu> {
                 6, 44, W - 12, 0xFF9AA49D, false, 1);
 
         if (!menu.isTripped()) {
-            Component status = !menu.canEdit()
+            Component status = menu.isOwnerOff()
+                    ? Component.translatable("create_em.limit.owner_off").withStyle(ChatFormatting.GOLD)
+                    : !menu.canEdit()
                     ? Component.translatable(menu.isSealed() ? "create_em.limit.locked_sealed" : "create_em.limit.locked_owner").withStyle(ChatFormatting.DARK_RED)
                     : Component.translatable(menu.isSealed() ? "create_em.limit.sealed" : "create_em.limit.unsealed");
             EMGui.text(g, font, status, 6, 80, W - 12, t.labelColor(), false, 1);

@@ -79,6 +79,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     private boolean tripped;
     /** Поставщик отключил счётчик из панели / ограничил мощность (0 — без ограничения). */
     private boolean remoteOff;
+    /** Хозяин счётчика сам отключил его (рубильник в меню). */
+    private boolean ownerOff;
     private int powerCap;
     /** Сколько процентов лимита оставляет поставщик при урезании за долг. */
     private int limitPercent = 20;
@@ -140,7 +142,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
 
         int budget = getLimit();                     // лимит счётчика на тик
         if (powerCap > 0) budget = Math.min(budget, powerCap);
-        if (tripped || remoteOff || stage == BillingStage.CUT) budget = 0;
+        if (tripped || remoteOff || ownerOff || stage == BillingStage.CUT) budget = 0;
         else if (stage == BillingStage.LIMITED) budget = budget * limitPercent / 100;
         buffer = Math.min(buffer, bufferCap()); // старый большой запас из сохранения — отбрасываем
         int sent = push(backCache, budget);
@@ -224,6 +226,24 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     }
 
     public boolean isTripped() { return tripped; }
+    public boolean isOwnerOff() { return ownerOff; }
+
+    /** Выключить счётчик сам может его хозяин (кто поставил); в творческом — кто угодно. */
+    public boolean canToggleOwnerOff(Player p) {
+        return p.isCreative() || owner == null || owner.equals(p.getUUID());
+    }
+
+    public boolean toggleOwnerOff(Player p) {
+        if (!canToggleOwnerOff(p)) return false;
+        ownerOff = !ownerOff;
+        if (level != null) {
+            level.playSound(null, worldPosition, tor_tik96.create_em.registry.EMSounds.ATS_SWITCH.get(),
+                    net.minecraft.sounds.SoundSource.BLOCKS, 0.8f, ownerOff ? 0.9f : 1.05f);
+        }
+        setChanged();
+        sync();
+        return true;
+    }
     public BillingStage getStage() { return stage; }
 
     /** Можно ли взвести расцепитель: долг закрыт (не CUT), взводит поставщик или хозяин счётчика. */
@@ -408,6 +428,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         }
         if (tripped) tooltip.add(line(1, Component.translatable("create_em.tooltip.tripped").withStyle(ChatFormatting.RED)));
         if (remoteOff) tooltip.add(line(1, Component.translatable("create_em.tooltip.remote_off").withStyle(ChatFormatting.RED)));
+        if (ownerOff) tooltip.add(line(1, Component.translatable("create_em.tooltip.owner_off").withStyle(ChatFormatting.GOLD)));
         if (powerCap > 0) tooltip.add(line(1, Component.translatable("create_em.tooltip.power_cap").withStyle(LABEL)
                 .append(Component.literal(String.format("%,d FE/t", powerCap)).withStyle(ChatFormatting.GOLD))));
 
@@ -437,6 +458,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
             tooltip.add(line(indent, Component.translatable("create_em.tooltip.tripped").withStyle(ChatFormatting.RED)));
         if (remoteOff)
             tooltip.add(line(indent, Component.translatable("create_em.tooltip.remote_off").withStyle(ChatFormatting.RED)));
+        if (ownerOff)
+            tooltip.add(line(indent, Component.translatable("create_em.tooltip.owner_off").withStyle(ChatFormatting.GOLD)));
     }
 
     public static MutableComponent line(int indent, Component c) {
@@ -482,6 +505,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putLong("AcctBalance", acctBalance);
         tag.putInt("Stage", stage.ordinal());
         tag.putBoolean("RemoteOff", remoteOff);
+        tag.putBoolean("OwnerOff", ownerOff);
         tag.putInt("PowerCap", powerCap);
     }
 
@@ -507,6 +531,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         acctBalance = tag.getLong("AcctBalance");
         stage = BillingStage.values()[Math.max(0, Math.min(3, tag.getInt("Stage")))];
         remoteOff = tag.getBoolean("RemoteOff");
+        ownerOff = tag.getBoolean("OwnerOff");
         powerCap = tag.getInt("PowerCap");
     }
 
@@ -525,6 +550,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putLong("AcctBalance", acctBalance);
         tag.putInt("Stage", stage.ordinal());
         tag.putBoolean("RemoteOff", remoteOff);
+        tag.putBoolean("OwnerOff", ownerOff);
         tag.putInt("PowerCap", powerCap);
         links.save(tag);
         return tag;

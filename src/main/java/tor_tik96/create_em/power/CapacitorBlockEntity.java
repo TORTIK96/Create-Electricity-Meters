@@ -7,6 +7,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.CenteredSideValueBox
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,6 +42,7 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private static final int STALL_TICKS = 20;
 
     private ScrollOptionBehaviour<CapacitorMode> mode;
+    private ScrollValueBehaviour threshold;
     private int energy;
     private boolean discharging;
     private int stall;
@@ -59,7 +61,7 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         mode = new ScrollOptionBehaviour<>(CapacitorMode.class, Component.translatable("create_em.capacitor.mode"), this,
-                new CenteredSideValueBoxTransform((s, d) -> d.getAxis().isHorizontal() && d.getAxis() != s.getValue(CapacitorBlock.FACING).getAxis())) {
+                new SideSlot(8, 11.5f, CapacitorBlockEntity::isSide)) {
             @Override
             public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
                 return new ValueSettingsBoard(label, max, 1, List.of(Component.translatable("create_em.capacitor.mode_row")),
@@ -67,6 +69,37 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
             }
         };
         behaviours.add(mode);
+
+        threshold = new ScrollValueBehaviour(Component.translatable("create_em.capacitor.threshold"), this,
+                new SideSlot(8, 4.5f, CapacitorBlockEntity::isSide)) {
+            @Override
+            public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
+                return new ValueSettingsBoard(label, 100, 10, List.of(Component.translatable("create_em.capacitor.threshold_row")),
+                        new ValueSettingsFormatter(v -> Component.literal(compact(v.value()))));
+            }
+        }.between(1, 100);
+        threshold.value = 100;
+        threshold.withFormatter(CapacitorBlockEntity::compact);
+        behaviours.add(threshold);
+    }
+
+    /** Рамки — на боковых гранях (не на «+» и «−»). */
+    private static boolean isSide(BlockState s, Direction d) {
+        return d.getAxis().isHorizontal() && d.getAxis() != s.getValue(CapacitorBlock.FACING).getAxis();
+    }
+
+    /** Порог в процентах → «250k» для рамки. */
+    private static String compact(int percent) {
+        long fe = (long) capacity() * percent / 100;
+        if (fe >= 1_000_000) return String.format("%.1fM", fe / 1e6).replace(".0M", "M");
+        if (fe >= 1000) return (fe / 1000) + "k";
+        return String.valueOf(fe);
+    }
+
+    /** Сколько конденсатор копит — порог, выставленный на блоке. */
+    public int limit() {
+        int pct = threshold == null ? 100 : Math.max(1, Math.min(100, threshold.getValue()));
+        return (int) Math.max(1, (long) capacity() * pct / 100);
     }
 
     public static int capacity() {
@@ -85,7 +118,7 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private int receive(int amount, boolean simulate) {
         if (discharging) return 0;
         int rate = Config.safe(Config.CAPACITOR_CHARGE_RATE, 4096);
-        int accepted = Math.max(0, Math.min(Math.min(amount, rate), capacity() - energy));
+        int accepted = Math.max(0, Math.min(Math.min(amount, rate), limit() - energy));
         if (!simulate && accepted > 0) {
             energy += accepted;
             setChanged();
@@ -121,7 +154,7 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
 
         if (!discharging && energy > 0) {
             boolean start = switch (mode.get()) {
-                case ON_FULL -> energy >= capacity();
+                case ON_FULL -> energy >= limit();
                 case ON_SIGNAL -> rising;
                 case HOLD -> false;
             };
@@ -162,7 +195,7 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
     }
 
     private void updateState() {
-        int cap = capacity();
+        int cap = limit(); // шкала и сигнал — от выставленного порога
         int charge = energy <= 0 ? 0 : Math.min(4, 1 + (int) ((long) energy * 4 / cap));
         int power = energy <= 0 ? 0 : Math.min(15, 1 + (int) ((long) energy * 14 / cap));
         if (energy >= cap) power = 15;
@@ -216,7 +249,7 @@ public class CapacitorBlockEntity extends SmartBlockEntity implements IHaveGoggl
         tooltip.add(line(0, Component.translatable(getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.WHITE)));
         tooltip.add(line(1, Component.translatable("create_em.capacitor.tooltip.mode").withStyle(ChatFormatting.GRAY)
                 .append(Component.translatable(mode.get().getTranslationKey()).withStyle(ChatFormatting.AQUA))));
-        int cap = capacity();
+        int cap = limit();
         tooltip.add(line(1, Component.translatable("create_em.battery.tooltip.charge").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(EMFormat.fe(energy) + " / " + EMFormat.fe(cap) + " (" + (int) ((long) energy * 100 / cap) + "%)")
                         .withStyle(ChatFormatting.AQUA))));

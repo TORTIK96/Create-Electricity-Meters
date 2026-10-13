@@ -114,8 +114,8 @@ public final class Config {
             .defineInRange("electrifierMaxDamage", 100, 1, 10000);
 
     public static final ModConfigSpec.IntValue ELECTRIFIER_RADIUS = BUILDER
-            .comment("Электризатор: радиус поражения, блоков")
-            .defineInRange("electrifierRadius", 3, 1, 16);
+            .comment("Электризатор: наибольший радиус, который можно выставить на блоке, блоков")
+            .defineInRange("electrifierRadius", 8, 1, 16);
 
     public static final ModConfigSpec.IntValue ELECTRIFIER_MAX_INPUT = BUILDER
             .comment("Электризатор: наибольший приём, FE/t")

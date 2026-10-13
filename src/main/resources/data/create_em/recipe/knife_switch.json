@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "L": {
+      "item": "minecraft:lever"
+    },
+    "C": {
+      "item": "create:copper_sheet"
+    },
+    "B": {
+      "item": "create:brass_sheet"
+    }
+  },
+  "pattern": [
+    " L ",
+    "CBC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_em:knife_switch"
+  }
+}

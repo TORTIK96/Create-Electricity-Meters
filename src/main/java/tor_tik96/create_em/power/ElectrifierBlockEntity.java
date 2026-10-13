@@ -7,6 +7,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.CenteredSideValueBox
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,6 +51,7 @@ public class ElectrifierBlockEntity extends SmartBlockEntity implements IHaveGog
     private static final int FLASH_TICKS = 3;
 
     private ScrollOptionBehaviour<ElectrifierTarget> target;
+    private ScrollValueBehaviour radius;
     private long pending;
     private int sinceZap = PERIOD;
     private int flash;
@@ -73,6 +75,18 @@ public class ElectrifierBlockEntity extends SmartBlockEntity implements IHaveGog
             }
         };
         behaviours.add(target);
+
+        // радиус — рамка сверху и снизу (электризатор обычно в полу или потолке)
+        radius = new ScrollValueBehaviour(Component.translatable("create_em.electrifier.radius"), this,
+                new CenteredSideValueBoxTransform((s, d) -> d.getAxis().isVertical())) {
+            @Override
+            public ValueSettingsBoard createBoard(Player player, BlockHitResult hit) {
+                return new ValueSettingsBoard(label, max, 1, List.of(Component.translatable("create_em.electrifier.radius_row")),
+                        new ValueSettingsFormatter(v -> Component.translatable("create_em.electrifier.radius_value", v.value())));
+            }
+        }.between(1, Config.safe(Config.ELECTRIFIER_RADIUS, 8));
+        radius.value = 3;
+        behaviours.add(radius);
     }
 
     @Nullable
@@ -109,7 +123,7 @@ public class ElectrifierBlockEntity extends SmartBlockEntity implements IHaveGog
         lastFe = (int) Math.min(Integer.MAX_VALUE, fe);
         lastDamage = damage;
 
-        int r = Config.safe(Config.ELECTRIFIER_RADIUS, 3);
+        int r = Math.max(1, Math.min(radius.getValue(), Config.safe(Config.ELECTRIFIER_RADIUS, 8)));
         AABB area = new AABB(worldPosition).inflate(r);
         int hit = 0;
         if (damage >= 0.5f) {
@@ -162,6 +176,8 @@ public class ElectrifierBlockEntity extends SmartBlockEntity implements IHaveGog
         tooltip.add(line(0, Component.translatable(getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.WHITE)));
         tooltip.add(line(1, Component.translatable("create_em.electrifier.tooltip.target").withStyle(ChatFormatting.GRAY)
                 .append(Component.translatable(target.get().getTranslationKey()).withStyle(ChatFormatting.AQUA))));
+        tooltip.add(line(1, Component.translatable("create_em.electrifier.tooltip.radius").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(String.valueOf(radius.getValue())).withStyle(ChatFormatting.AQUA))));
         tooltip.add(line(1, Component.translatable("create_em.electrifier.tooltip.last").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(EMFormat.fe(lastFe) + " → " + String.format("%.1f", lastDamage / 2f) + " ❤")
                         .withStyle(ChatFormatting.GOLD))));

@@ -113,6 +113,12 @@ public final class EMRegistry {
             () -> new tor_tik96.create_em.power.ElectrifierBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_ORANGE).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
 
+    public static final DeferredBlock<tor_tik96.create_em.power.KnifeSwitchBlock> KNIFE_SWITCH = BLOCKS.register("knife_switch",
+            () -> new tor_tik96.create_em.power.KnifeSwitchBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(2f).sound(SoundType.COPPER).noOcclusion()));
+    public static final DeferredItem<BlockItem> KNIFE_SWITCH_ITEM =
+            ITEMS.registerSimpleBlockItem("knife_switch", KNIFE_SWITCH, new Item.Properties());
+
     public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
             ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
     public static final DeferredItem<BlockItem> POWER_CABLE_ITEM =
@@ -212,6 +218,11 @@ public final class EMRegistry {
             BE_TYPES.register("electrifier", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.power.ElectrifierBlockEntity::new, ELECTRIFIER.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.power.KnifeSwitchBlockEntity>> KNIFE_SWITCH_BE =
+            BE_TYPES.register("knife_switch", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.power.KnifeSwitchBlockEntity::new, KNIFE_SWITCH.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -243,6 +254,7 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ATS_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, MINI_METER_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CAPACITOR_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, KNIFE_SWITCH_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
     }

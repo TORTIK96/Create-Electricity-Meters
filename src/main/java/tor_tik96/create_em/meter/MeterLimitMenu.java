@@ -18,11 +18,11 @@ import tor_tik96.create_em.registry.EMRegistry;
 public class MeterLimitMenu extends AbstractContainerMenu implements tor_tik96.create_em.panel.ValuePayload.Receiver {
     public static final int F_LIMIT = 1;
     public static final int BTN_MINUS_LARGE = 0, BTN_MINUS_SMALL = 1, BTN_PLUS_SMALL = 2, BTN_PLUS_LARGE = 3,
-            BTN_MIN = 4, BTN_MAX = 5, BTN_REARM = 6;
+            BTN_MIN = 4, BTN_MAX = 5, BTN_REARM = 6, BTN_OWNER_OFF = 7;
 
     // слоты данных
     private static final int LIMIT_LO = 0, LIMIT_HI = 1, MIN_LO = 2, MIN_HI = 3, MAX_LO = 4, MAX_HI = 5,
-            CAN_EDIT = 6, TIER = 7, SEALED = 8, TRIPPED = 9, CAN_REARM = 10, COUNT = 11;
+            CAN_EDIT = 6, TIER = 7, SEALED = 8, TRIPPED = 9, CAN_REARM = 10, OWNER_OFF = 11, CAN_OWNER_OFF = 12, COUNT = 13;
 
     @Nullable private final EnergyMeterBlockEntity meter; // только на сервере
     private final ContainerData data;
@@ -55,6 +55,8 @@ public class MeterLimitMenu extends AbstractContainerMenu implements tor_tik96.c
                     case SEALED -> meter.isSealed() ? 1 : 0;
                     case TRIPPED -> meter.isTripped() ? 1 : 0;
                     case CAN_REARM -> meter.canRearm(player) ? 1 : 0;
+                    case OWNER_OFF -> meter.isOwnerOff() ? 1 : 0;
+                    case CAN_OWNER_OFF -> meter.canToggleOwnerOff(player) ? 1 : 0;
                     default -> 0;
                 };
             }
@@ -73,6 +75,8 @@ public class MeterLimitMenu extends AbstractContainerMenu implements tor_tik96.c
     public boolean isSealed() { return data.get(SEALED) == 1; }
     public boolean isTripped() { return data.get(TRIPPED) == 1; }
     public boolean canRearm() { return data.get(CAN_REARM) == 1; }
+    public boolean isOwnerOff() { return data.get(OWNER_OFF) == 1; }
+    public boolean canToggleOwnerOff() { return data.get(CAN_OWNER_OFF) == 1; }
     public MeterTier getTier() { return MeterTier.values()[Math.max(0, Math.min(MeterTier.values().length - 1, data.get(TIER)))]; }
 
     /** Нажатие кнопки приходит на сервер; права проверяются здесь, а не на клиенте. */
@@ -80,6 +84,7 @@ public class MeterLimitMenu extends AbstractContainerMenu implements tor_tik96.c
     public boolean clickMenuButton(Player player, int id) {
         if (meter == null) return false;
         if (id == BTN_REARM) return meter.rearm(player);
+        if (id == BTN_OWNER_OFF) return meter.toggleOwnerOff(player);
         if (!meter.canEditLimit(player)) return false;
         MeterTier t = meter.getTier();
         int cur = meter.getLimit();

@@ -13,6 +13,7 @@
     "create_em:mini_meter",
     "create_em:capacitor",
     "create_em:electrifier",
-    "create_em:power_cable"
+    "create_em:power_cable",
+    "create_em:knife_switch"
   ]
 }
