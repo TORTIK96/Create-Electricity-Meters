@@ -1,6 +1,5 @@
 {
-  "type": "create:mechanical_crafting",
-  "accept_mirrored": false,
+  "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
     "T": {
@@ -13,7 +12,7 @@
       "item": "create:brass_casing"
     },
     "P": {
-      "item": "create:precision_mechanism"
+      "item": "minecraft:comparator"
     }
   },
   "pattern": [
@@ -24,6 +23,5 @@
   "result": {
     "count": 1,
     "id": "create_em:brass_energy_meter"
-  },
-  "show_notification": false
+  }
 }
