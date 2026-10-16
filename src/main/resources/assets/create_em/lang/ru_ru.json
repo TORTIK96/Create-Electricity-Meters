@@ -380,5 +380,15 @@
   "block.create_em.state_connector.tooltip.control1": "ПКМ",
   "block.create_em.state_connector.tooltip.action1": "Направление: _к пластине_ (кружок) или _от пластины_ (крест).",
   "item.create_em.state_mark.tooltip.condition2": "Силовой кабель",
-  "item.create_em.state_mark.tooltip.behaviour2": "Маркируется _весь соединённый пролёт_ ваших кабелей одной маркировкой. Госкабель и обычный кабель не соединяются в одну сеть."
+  "item.create_em.state_mark.tooltip.behaviour2": "Маркируется _весь соединённый пролёт_ ваших кабелей одной маркировкой. Госкабель и обычный кабель не соединяются в одну сеть.",
+  "block.create_em.line_converter": "Обратный преобразователь",
+  "create_em.converter.owner": "Хозяин: ",
+  "create_em.converter.output": "Отдаёт: ",
+  "create_em.converter.linked": "Подключён к линии",
+  "create_em.converter.no_line": "Не подключён к линии",
+  "block.create_em.line_converter.tooltip.summary": "Забирает энергию с _сервисной линии_ и отдаёт обычную _FE_ с боков и снизу — _без счётчика_ и без расчётов. Поставщик пользуется своей энергией сам.",
+  "block.create_em.line_converter.tooltip.condition1": "Чей",
+  "block.create_em.line_converter.tooltip.behaviour1": "Трансформатор кормит его, только если у них _один хозяин_. Подключить провод линии может только хозяин; чужой преобразователь на линии ничего не получит.",
+  "block.create_em.line_converter.tooltip.condition2": "Госмаркировка",
+  "block.create_em.line_converter.tooltip.behaviour2": "Можно _промаркировать_ — тогда он отдаёт энергию только в госустройства и госконнекторы."
 }

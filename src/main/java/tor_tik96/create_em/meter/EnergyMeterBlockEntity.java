@@ -42,7 +42,7 @@ import static net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING;
  * (сзади и снизу) и учитывает только то, что потребитель реально принял.
  * Обычной FE счётчик не принимает и не отдаёт ни с какой стороны.
  */
-public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHaveGoggleInformation, IHaveHoveringInformation {
+public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, tor_tik96.create_em.line.LineSink, IHaveGoggleInformation, IHaveHoveringInformation {
     private static final int WINDOW = 20; // усреднение потока за секунду
 
     private int buffer;
@@ -125,6 +125,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     }
 
     /** Приём энергии с линии: сколько влезло в буфер. */
+    @Override
     public int acceptFromLine(int amount) {
         int accepted = Math.max(0, Math.min(amount, bufferCap() - buffer));
         if (accepted > 0) { buffer += accepted; setChanged(); }

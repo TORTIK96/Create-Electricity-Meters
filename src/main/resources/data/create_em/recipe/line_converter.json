@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create_em:line_transformer"
+    },
+    {
+      "item": "create:electron_tube"
+    },
+    {
+      "item": "create:copper_sheet"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_em:line_converter"
+  }
+}

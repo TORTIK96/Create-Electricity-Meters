@@ -36,6 +36,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
     private int buffer;
 
     private List<EnergyMeterBlockEntity> meters = List.of();
+    private List<LineConverterBlockEntity> converters = new java.util.ArrayList<>();
     private int metersVersion = -1;
     private int rescanTimer;
 
@@ -110,7 +111,8 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
     void serverTick() {
         if (level == null) return;
         if (metersVersion != LineNetwork.version() || --rescanTimer <= 0) {
-            meters = LineNetwork.findMeters(level, worldPosition);
+            converters = new java.util.ArrayList<>();
+            meters = LineNetwork.findSinks(level, worldPosition, converters);
             metersVersion = LineNetwork.version();
             rescanTimer = 100; // раз в 5 с — чтобы подхватить подгрузившиеся чанки
         }
@@ -125,15 +127,18 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         List<EnergyMeterBlockEntity> sealed = new java.util.ArrayList<>();
         for (EnergyMeterBlockEntity m : meters)
             if (owner != null && !m.isRemoved() && owner.equals(m.getSealSupplier()) && (!gov || govAllowed(m))) sealed.add(m);
+        // и обратные преобразователи самого владельца — ему энергия без счётчика
+        List<LineSink> sinks = new java.util.ArrayList<>(sealed);
+        if (!gov) for (LineConverterBlockEntity c : converters) if (!c.isRemoved() && c.belongsTo(owner)) sinks.add(c);
 
-        if (budget > 0 && !sealed.isEmpty()) {
+        if (budget > 0 && !sinks.isEmpty()) {
             // поровну, а недобор одних счётчиков достаётся остальным
-            List<EnergyMeterBlockEntity> open = new java.util.ArrayList<>(sealed);
+            List<LineSink> open = new java.util.ArrayList<>(sinks);
             while (budget > 0 && !open.isEmpty()) {
                 int share = Math.max(1, budget / open.size());
                 var it = open.iterator();
                 while (it.hasNext() && budget > 0) {
-                    EnergyMeterBlockEntity m = it.next();
+                    LineSink m = it.next();
                     if (m.isRemoved()) { it.remove(); continue; }
                     int got = m.acceptFromLine(Math.min(share, budget));
                     if (got < Math.min(share, budget)) it.remove();

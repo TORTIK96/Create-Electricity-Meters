@@ -50,6 +50,11 @@ public final class LineNetwork {
      * Незагруженные участки пропускаются; ссылки на исчезнувшие узлы удаляются.
      */
     public static List<EnergyMeterBlockEntity> findMeters(Level level, BlockPos start) {
+        return findSinks(level, start, new ArrayList<>());
+    }
+
+    /** Счётчики линии; обратные преобразователи складываются в {@code converters}. */
+    public static List<EnergyMeterBlockEntity> findSinks(Level level, BlockPos start, List<LineConverterBlockEntity> converters) {
         List<EnergyMeterBlockEntity> meters = new ArrayList<>();
         Set<BlockPos> visited = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
@@ -64,6 +69,10 @@ public final class LineNetwork {
             if (be instanceof EnergyMeterBlockEntity meter && !pos.equals(start)) {
                 meters.add(meter);
                 continue; // счётчик — конец линии
+            }
+            if (be instanceof LineConverterBlockEntity conv && !pos.equals(start)) {
+                converters.add(conv);
+                continue; // преобразователь — тоже конец
             }
             for (BlockPos next : List.copyOf(node.getLinks().get())) {
                 if (!level.isLoaded(next)) continue;

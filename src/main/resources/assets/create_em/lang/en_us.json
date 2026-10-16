@@ -380,5 +380,15 @@
   "block.create_em.state_connector.tooltip.control1": "R-Click",
   "block.create_em.state_connector.tooltip.action1": "Direction: _towards the plate_ (ring) or _away from it_ (cross).",
   "item.create_em.state_mark.tooltip.condition2": "Power cable",
-  "item.create_em.state_mark.tooltip.behaviour2": "The _whole connected run_ of your cables is tagged with one tag. State cable and ordinary cable never form one network."
+  "item.create_em.state_mark.tooltip.behaviour2": "The _whole connected run_ of your cables is tagged with one tag. State cable and ordinary cable never form one network.",
+  "block.create_em.line_converter": "Line Converter",
+  "create_em.converter.owner": "Owner: ",
+  "create_em.converter.output": "Output: ",
+  "create_em.converter.linked": "Connected to a line",
+  "create_em.converter.no_line": "Not connected to a line",
+  "block.create_em.line_converter.tooltip.summary": "Takes energy from the _service line_ and gives ordinary _FE_ from its sides and bottom — _no meter_, no billing. Lets a supplier use their own energy.",
+  "block.create_em.line_converter.tooltip.condition1": "Ownership",
+  "block.create_em.line_converter.tooltip.behaviour1": "A transformer feeds it only if they have _the same owner_. Only the owner can wire it; someone else's converter on the line gets nothing.",
+  "block.create_em.line_converter.tooltip.condition2": "State tag",
+  "block.create_em.line_converter.tooltip.behaviour2": "Can be _tagged_ — then it gives energy only to state devices and state connectors."
 }

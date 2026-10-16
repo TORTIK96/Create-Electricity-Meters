@@ -81,6 +81,10 @@ public final class EMRegistry {
             () -> new TransformerBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_RED).strength(-1f, 3600000f).sound(SoundType.NETHERITE_BLOCK).noOcclusion(), false, true));
 
+    public static final DeferredBlock<LineConverterBlock> LINE_CONVERTER = BLOCKS.register("line_converter",
+            () -> new LineConverterBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_GREEN).strength(3f).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops().noOcclusion()));
+
     public static final DeferredBlock<LineConnectorBlock> LINE_CONNECTOR = BLOCKS.register("line_connector",
             () -> new LineConnectorBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.TERRACOTTA_WHITE).strength(1f).sound(SoundType.COPPER).noOcclusion()));
@@ -166,6 +170,8 @@ public final class EMRegistry {
             ITEMS.registerSimpleBlockItem("smart_transformer", SMART_TRANSFORMER, new Item.Properties());
     public static final DeferredItem<BlockItem> LINE_CONNECTOR_ITEM =
             ITEMS.registerSimpleBlockItem("line_connector", LINE_CONNECTOR, new Item.Properties());
+    public static final DeferredItem<BlockItem> LINE_CONVERTER_ITEM =
+            ITEMS.registerSimpleBlockItem("line_converter", LINE_CONVERTER, new Item.Properties());
     public static final DeferredItem<BlockItem> TERMINAL_ITEM =
             ITEMS.registerSimpleBlockItem("billing_terminal", TERMINAL, new Item.Properties());
     public static final DeferredItem<LineWireItem> LINE_WIRE =
@@ -252,6 +258,11 @@ public final class EMRegistry {
             BE_TYPES.register("state_connector", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.grid.StateConnectorBlockEntity::new, STATE_CONNECTOR.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LineConverterBlockEntity>> LINE_CONVERTER_BE =
+            BE_TYPES.register("line_converter", () -> BlockEntityType.Builder
+                    .of(LineConverterBlockEntity::new, LINE_CONVERTER.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -286,6 +297,7 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CAPACITOR_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, KNIFE_SWITCH_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, STATE_CONNECTOR_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, LINE_CONVERTER_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
     }

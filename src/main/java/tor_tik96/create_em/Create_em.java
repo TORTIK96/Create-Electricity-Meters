@@ -34,6 +34,7 @@ public class Create_em {
                         output.accept(EMRegistry.MINI_METER_ITEM.get());
                         output.accept(EMRegistry.TRANSFORMER_ITEM.get());
                         output.accept(EMRegistry.SMART_TRANSFORMER_ITEM.get());
+                        output.accept(EMRegistry.LINE_CONVERTER_ITEM.get());
                         output.accept(EMRegistry.LINE_CONNECTOR_ITEM.get());
                         output.accept(EMRegistry.LINE_WIRE.get());
                         output.accept(EMRegistry.SEAL.get());
