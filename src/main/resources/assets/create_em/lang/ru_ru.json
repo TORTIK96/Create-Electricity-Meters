@@ -390,5 +390,15 @@
   "block.create_em.line_converter.tooltip.condition1": "Чей",
   "block.create_em.line_converter.tooltip.behaviour1": "Трансформатор кормит его, только если у них _один хозяин_. Подключить провод линии может только хозяин; чужой преобразователь на линии ничего не получит.",
   "block.create_em.line_converter.tooltip.condition2": "Госмаркировка",
-  "block.create_em.line_converter.tooltip.behaviour2": "Можно _промаркировать_ — тогда он отдаёт энергию только в госустройства и госконнекторы."
+  "block.create_em.line_converter.tooltip.behaviour2": "Можно _промаркировать_ — тогда он отдаёт энергию только в госустройства и госконнекторы.",
+  "block.create_em.process_sorter": "Сортировщик обработки",
+  "create_em.sorter.raw_right": "Сырое — направо",
+  "create_em.sorter.raw_left": "Сырое — налево",
+  "block.create_em.process_sorter.tooltip.summary": "Ставится в конце ленты после вентилятора. Отличает _уже обработанное_ от _необработанного_ без фильтров по предметам — по пометке, которую Create ставит на предмет на ленте.",
+  "block.create_em.process_sorter.tooltip.condition1": "Готовое",
+  "block.create_em.process_sorter.tooltip.behaviour1": "Обработано один раз (или этим потоком не обрабатывается) — _прямо_, по зелёной стрелке. Цепочки вроде _булыжник → камень → гладкий камень_ останавливаются на первом шаге.",
+  "block.create_em.process_sorter.tooltip.condition2": "Сырое",
+  "block.create_em.process_sorter.tooltip.behaviour2": "Не было в потоке или не успело — _вбок_, по оранжевой стрелке, обратно в петлю. Недоделанная обработка продолжится с того же места.",
+  "block.create_em.process_sorter.tooltip.control1": "ПКМ",
+  "block.create_em.process_sorter.tooltip.action1": "Сырое — _направо_ или _налево_. Поворот — ключом."
 }

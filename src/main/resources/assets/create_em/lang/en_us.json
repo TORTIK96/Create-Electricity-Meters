@@ -390,5 +390,15 @@
   "block.create_em.line_converter.tooltip.condition1": "Ownership",
   "block.create_em.line_converter.tooltip.behaviour1": "A transformer feeds it only if they have _the same owner_. Only the owner can wire it; someone else's converter on the line gets nothing.",
   "block.create_em.line_converter.tooltip.condition2": "State tag",
-  "block.create_em.line_converter.tooltip.behaviour2": "Can be _tagged_ — then it gives energy only to state devices and state connectors."
+  "block.create_em.line_converter.tooltip.behaviour2": "Can be _tagged_ — then it gives energy only to state devices and state connectors.",
+  "block.create_em.process_sorter": "Processing Sorter",
+  "create_em.sorter.raw_right": "Unprocessed goes right",
+  "create_em.sorter.raw_left": "Unprocessed goes left",
+  "block.create_em.process_sorter.tooltip.summary": "Place at the end of a belt after a fan. Tells _processed_ items from _unprocessed_ ones without item filters — by the mark Create puts on items on belts.",
+  "block.create_em.process_sorter.tooltip.condition1": "Processed",
+  "block.create_em.process_sorter.tooltip.behaviour1": "Processed once (or not processable by this stream) — _straight ahead_, green arrow. Chains like _cobblestone → stone → smooth stone_ stop after the first step.",
+  "block.create_em.process_sorter.tooltip.condition2": "Unprocessed",
+  "block.create_em.process_sorter.tooltip.behaviour2": "Never in the stream or not finished — _to the side_, orange arrow, back into the loop. Unfinished processing continues where it left off.",
+  "block.create_em.process_sorter.tooltip.control1": "R-Click",
+  "block.create_em.process_sorter.tooltip.action1": "Unprocessed goes _right_ or _left_. Rotate with a wrench."
 }

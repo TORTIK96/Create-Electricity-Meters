@@ -141,6 +141,12 @@ public final class EMRegistry {
     public static final DeferredItem<tor_tik96.create_em.grid.StateMarkItem> STATE_MARK =
             ITEMS.register("state_mark", () -> new tor_tik96.create_em.grid.StateMarkItem(new Item.Properties()));
 
+    public static final DeferredBlock<tor_tik96.create_em.process.ProcessSorterBlock> PROCESS_SORTER = BLOCKS.register("process_sorter",
+            () -> new tor_tik96.create_em.process.ProcessSorterBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(2f).sound(SoundType.WOOD)));
+    public static final DeferredItem<BlockItem> PROCESS_SORTER_ITEM =
+            ITEMS.registerSimpleBlockItem("process_sorter", PROCESS_SORTER, new Item.Properties());
+
     public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
             ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
     public static final DeferredItem<BlockItem> POWER_CABLE_ITEM =
@@ -262,6 +268,11 @@ public final class EMRegistry {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LineConverterBlockEntity>> LINE_CONVERTER_BE =
             BE_TYPES.register("line_converter", () -> BlockEntityType.Builder
                     .of(LineConverterBlockEntity::new, LINE_CONVERTER.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.process.ProcessSorterBlockEntity>> PROCESS_SORTER_BE =
+            BE_TYPES.register("process_sorter", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.process.ProcessSorterBlockEntity::new, PROCESS_SORTER.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));

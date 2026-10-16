@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "create:block/andesite_casing",
+    "up": "create_em:block/process_sorter_top",
+    "down": "create:block/andesite_casing",
+    "north": "create_em:block/process_sorter_done",
+    "south": "create:block/andesite_casing",
+    "east": "create_em:block/process_sorter_raw",
+    "west": "create:block/andesite_casing"
+  }
+}
