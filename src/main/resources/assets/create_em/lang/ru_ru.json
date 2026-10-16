@@ -378,7 +378,7 @@
   "block.create_em.state_connector.tooltip.condition1": "Чей коннектор",
   "block.create_em.state_connector.tooltip.behaviour1": "Работает только между блоками под _вашей_ маркировкой и вашими госконнекторами. Сломать, повернуть и переключить может только _хозяин_.",
   "block.create_em.state_connector.tooltip.control1": "ПКМ",
-  "block.create_em.state_connector.tooltip.action1": "Направление: _к пластине_ (кружок) или _от пластины_ (крест).",
+  "block.create_em.state_connector.tooltip.action1": "Направление: _в устройство_ (зелёная клемма) или _из устройства_ (оранжевая клемма).",
   "item.create_em.state_mark.tooltip.condition2": "Силовой кабель",
   "item.create_em.state_mark.tooltip.behaviour2": "Маркируется _весь соединённый пролёт_ ваших кабелей одной маркировкой. Госкабель и обычный кабель не соединяются в одну сеть.",
   "block.create_em.line_converter": "Обратный преобразователь",

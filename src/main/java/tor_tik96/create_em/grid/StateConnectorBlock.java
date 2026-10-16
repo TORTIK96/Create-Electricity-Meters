@@ -38,6 +38,34 @@ public class StateConnectorBlock extends Block implements IBE<StateConnectorBloc
     /** true — энергия идёт из устройства наружу. */
     public static final BooleanProperty OUT = BooleanProperty.create("out");
 
+    /** Маленький: пластина на грани устройства и изолятор с клеммой (как коннекторы New Age). */
+    private static final java.util.Map<Direction, net.minecraft.world.phys.shapes.VoxelShape> SHAPES = new java.util.EnumMap<>(Direction.class);
+
+    static {
+        for (Direction d : Direction.values())
+            SHAPES.put(d, net.minecraft.world.phys.shapes.Shapes.or(
+                    box(d, 3, 3, 0, 13, 13, 1.5),     // пластина
+                    box(d, 6, 6, 1.5, 10, 10, 10)));  // изолятор с клеммой
+    }
+
+    /** Бокс задан для коннектора, прижатого к устройству на севере; поворачиваем. */
+    private static net.minecraft.world.phys.shapes.VoxelShape box(Direction d, double x1, double y1, double z1, double x2, double y2, double z2) {
+        return switch (d) {
+            case SOUTH -> Block.box(16 - x2, y1, 16 - z2, 16 - x1, y2, 16 - z1);
+            case EAST -> Block.box(16 - z2, y1, x1, 16 - z1, y2, x2);
+            case WEST -> Block.box(z1, y1, 16 - x2, z2, y2, 16 - x1);
+            case UP -> Block.box(x1, 16 - z2, y1, x2, 16 - z1, y2);
+            case DOWN -> Block.box(x1, z1, 16 - y2, x2, z2, 16 - y1);
+            default -> Block.box(x1, y1, z1, x2, y2, z2);
+        };
+    }
+
+    @Override
+    protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level,
+                                                                  BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext ctx) {
+        return SHAPES.get(state.getValue(FACING));
+    }
+
     public StateConnectorBlock(Properties props) {
         super(props);
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(OUT, false));

@@ -135,7 +135,7 @@ public final class EMRegistry {
 
     public static final DeferredBlock<tor_tik96.create_em.grid.StateConnectorBlock> STATE_CONNECTOR = BLOCKS.register("state_connector",
             () -> new tor_tik96.create_em.grid.StateConnectorBlock(BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.COLOR_BLUE).strength(3f, 1200f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
+                    .mapColor(MapColor.COLOR_BLUE).strength(3f, 1200f).sound(SoundType.COPPER).requiresCorrectToolForDrops().noOcclusion()));
     public static final DeferredItem<BlockItem> STATE_CONNECTOR_ITEM =
             ITEMS.registerSimpleBlockItem("state_connector", STATE_CONNECTOR, new Item.Properties());
     public static final DeferredItem<tor_tik96.create_em.grid.StateMarkItem> STATE_MARK =

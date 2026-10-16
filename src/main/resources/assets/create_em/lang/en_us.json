@@ -378,7 +378,7 @@
   "block.create_em.state_connector.tooltip.condition1": "Ownership",
   "block.create_em.state_connector.tooltip.behaviour1": "Works only between blocks under _your_ tag and your state connectors. Only the _owner_ can break, rotate or switch it.",
   "block.create_em.state_connector.tooltip.control1": "R-Click",
-  "block.create_em.state_connector.tooltip.action1": "Direction: _towards the plate_ (ring) or _away from it_ (cross).",
+  "block.create_em.state_connector.tooltip.action1": "Direction: _into the device_ (green terminal) or _out of it_ (orange terminal).",
   "item.create_em.state_mark.tooltip.condition2": "Power cable",
   "item.create_em.state_mark.tooltip.behaviour2": "The _whole connected run_ of your cables is tagged with one tag. State cable and ordinary cable never form one network.",
   "block.create_em.line_converter": "Line Converter",

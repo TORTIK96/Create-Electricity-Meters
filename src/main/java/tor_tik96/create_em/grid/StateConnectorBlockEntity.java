@@ -293,11 +293,12 @@ public class StateConnectorBlockEntity extends SmartBlockEntity implements LineN
     @Override public @Nullable UUID getOwner() { return owner; }
     @Override public void setOwner(@Nullable UUID owner) { this.owner = owner; setChanged(); }
 
-    /** Провод крепится к середине задней грани. */
+    /** Провод крепится к клемме на конце изолятора. */
     @Override
     public Vec3 getWireAnchor() {
         Direction back = facing().getOpposite();
-        return new Vec3(0.5 + back.getStepX() * 0.5, 0.5 + back.getStepY() * 0.5, 0.5 + back.getStepZ() * 0.5);
+        double k = 1.5 / 16; // клемма чуть дальше центра блока от устройства
+        return new Vec3(0.5 + back.getStepX() * k, 0.5 + back.getStepY() * k, 0.5 + back.getStepZ() * k);
     }
 
     // ---------- NBT ----------
