@@ -15,12 +15,13 @@ import java.util.UUID;
 /** Сервер → клиент: список абонентов и хранилище для открытой панели поставщика. */
 public record PanelSyncPayload(int containerId, List<AccountView> accounts, List<VaultView> vault,
                                long price, long perFe, int[] values, int nextBillSec,
-                               int periodDays, int limitAfterDays, int limitPercent, int cutAfterDays) implements CustomPacketPayload {
+                               int periodDays, int limitAfterDays, int limitPercent, int cutAfterDays,
+                               boolean prepaidDefault) implements CustomPacketPayload {
     public static final Type<PanelSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "panel_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, PanelSyncPayload> CODEC = StreamCodec.ofMember(PanelSyncPayload::write, PanelSyncPayload::read);
 
     public record AccountView(UUID consumer, String name, long balance, int stage, boolean disabled, int cap,
-                              long sinceFe, long unbilledFe) {}
+                              long sinceFe, long unbilledFe, long ownPrice, long ownPerFe, int payMode, boolean prepaid) {}
 
     public record VaultView(ItemStack sample, long count) {}
 
@@ -38,6 +39,10 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
             buf.writeVarInt(a.cap());
             buf.writeLong(a.sinceFe());
             buf.writeLong(a.unbilledFe());
+            buf.writeLong(a.ownPrice());
+            buf.writeLong(a.ownPerFe());
+            buf.writeVarInt(a.payMode());
+            buf.writeBoolean(a.prepaid());
         }
         buf.writeVarInt(vault.size());
         for (VaultView v : vault) {
@@ -53,6 +58,7 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
         buf.writeVarInt(limitAfterDays);
         buf.writeVarInt(limitPercent);
         buf.writeVarInt(cutAfterDays);
+        buf.writeBoolean(prepaidDefault);
     }
 
     private static PanelSyncPayload read(RegistryFriendlyByteBuf buf) {
@@ -61,7 +67,7 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
         List<AccountView> acc = new ArrayList<>(n);
         for (int i = 0; i < n; i++)
             acc.add(new AccountView(buf.readUUID(), buf.readUtf(64), buf.readLong(), buf.readVarInt(), buf.readBoolean(),
-                    buf.readVarInt(), buf.readLong(), buf.readLong()));
+                    buf.readVarInt(), buf.readLong(), buf.readLong(), buf.readLong(), buf.readLong(), buf.readVarInt(), buf.readBoolean()));
         int m = buf.readVarInt();
         List<VaultView> vault = new ArrayList<>(m);
         for (int i = 0; i < m; i++) vault.add(new VaultView(ItemStack.OPTIONAL_STREAM_CODEC.decode(buf), buf.readLong()));
@@ -70,7 +76,7 @@ public record PanelSyncPayload(int containerId, List<AccountView> accounts, List
         for (int i = 0; i < values.length; i++) values[i] = buf.readVarInt();
         int next = buf.readVarInt();
         return new PanelSyncPayload(id, acc, vault, price, perFe, values, next,
-                buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
+                buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean());
     }
 
     /** Клиент: отдать данные открытой панели, если это она. */

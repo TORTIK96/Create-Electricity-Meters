@@ -30,6 +30,7 @@ public class Create_em {
                     .displayItems((params, output) -> {
                         output.accept(EMRegistry.ANDESITE_METER_ITEM.get());
                         output.accept(EMRegistry.BRASS_METER_ITEM.get());
+                        output.accept(EMRegistry.PUBLIC_METER_ITEM.get());
                         output.accept(EMRegistry.MINI_METER_ITEM.get());
                         output.accept(EMRegistry.TRANSFORMER_ITEM.get());
                         output.accept(EMRegistry.SMART_TRANSFORMER_ITEM.get());
@@ -37,6 +38,8 @@ public class Create_em {
                         output.accept(EMRegistry.LINE_WIRE.get());
                         output.accept(EMRegistry.SEAL.get());
                         output.accept(EMRegistry.TERMINAL_ITEM.get());
+                        output.accept(EMRegistry.STATE_SUBSTATION_ITEM.get());
+                        output.accept(EMRegistry.STATE_SEAL.get());
                         output.accept(EMRegistry.BATTERY_ITEM.get());
                         output.accept(EMRegistry.ATS_ITEM.get());
                         output.accept(EMRegistry.KNIFE_SWITCH_ITEM.get());

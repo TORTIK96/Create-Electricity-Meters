@@ -40,21 +40,29 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
     /** Есть ли на счётчике действующая пломба (только для модели; правда — в SealRegistry). */
     public static final BooleanProperty SEALED = BooleanProperty.create("sealed");
     private final MeterTier tier;
+    /** Общественный: пользуются все по очереди, расход идёт на счёт того, кто открыл сеанс. */
+    private final boolean publicMeter;
     private final Map<Direction, VoxelShape> shapes = new EnumMap<>(Direction.class);
 
     public EnergyMeterBlock(MeterTier tier, Properties props) {
+        this(tier, props, false);
+    }
+
+    public EnergyMeterBlock(MeterTier tier, Properties props, boolean publicMeter) {
         super(props);
         this.tier = tier;
+        this.publicMeter = publicMeter;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(SEALED, false));
         for (Direction d : Direction.Plane.HORIZONTAL) shapes.put(d, buildShape(tier, d));
     }
 
     public MeterTier getTier() { return tier; }
+    public boolean isPublic() { return publicMeter; }
 
     // Кодек нужен только для датагена/регистров; уровень берём тот же.
     @Override
     protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-        return simpleCodec(p -> new EnergyMeterBlock(tier, p));
+        return simpleCodec(p -> new EnergyMeterBlock(tier, p, publicMeter));
     }
 
     @Override
@@ -101,8 +109,10 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
         if (!state.is(newState.getBlock())) {
             // убрали не игроком (взрыв, контрапция, ключ Create...) — пломба тоже срывается
-            if (!level.isClientSide && level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be && be.isSealed())
-                be.breakSeal("");
+            if (!level.isClientSide && level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be) {
+                be.closeSessionOnRemove(); // общественный: досчитать открытый сеанс
+                if (be.isSealed()) be.breakSeal("");
+            }
             LineNetwork.onRemoved(level, pos);
         }
         super.onRemove(state, level, pos, newState, moved);
@@ -117,7 +127,12 @@ public class EnergyMeterBlock extends HorizontalDirectionalBlock implements Enti
         if (!(level.getBlockEntity(pos) instanceof EnergyMeterBlockEntity be)) return InteractionResult.PASS;
         if (level.isClientSide) return InteractionResult.SUCCESS;
 
-        if (player.isCreative() && player.isShiftKeyDown()) {
+        // общественный: ПКМ — открыть/закрыть свой сеанс; Shift-ПКМ — меню лимита
+        if (publicMeter && !player.isShiftKeyDown() && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+            be.useSession(sp);
+            return InteractionResult.CONSUME;
+        }
+        if (!publicMeter && player.isCreative() && player.isShiftKeyDown()) {
             be.markPaid();
             player.displayClientMessage(Component.translatable("create_em.meter.marked_paid"), true);
         } else {

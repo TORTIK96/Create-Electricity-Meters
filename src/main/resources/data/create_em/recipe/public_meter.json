@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create_em:brass_energy_meter"
+    },
+    {
+      "item": "create:copper_sheet"
+    },
+    {
+      "item": "minecraft:stone_button"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_em:public_meter"
+  }
+}

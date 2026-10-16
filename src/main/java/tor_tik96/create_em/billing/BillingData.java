@@ -33,6 +33,9 @@ public class BillingData extends SavedData {
 
     public static final int CURRENCY_SLOTS = 6;
 
+    /** Схема оплаты абонента. */
+    public static final int PAY_DEFAULT = 0, PAY_POSTPAID = 1, PAY_PREPAID = 2;
+
     /** Тариф поставщика: price кредитов за perFe FE. price = 0 — энергия бесплатна. */
     public static final class Tariff {
         public long price = 0;
@@ -57,6 +60,8 @@ public class BillingData extends SavedData {
         public final int[] value = new int[CURRENCY_SLOTS];
         /** Хранилище: образец (count = 1) и сколько штук лежит. */
         public final List<VaultEntry> vault = new ArrayList<>();
+        /** Схема оплаты для абонентов, у которых не выбрана своя: true — предоплата. */
+        public boolean prepaidDefault;
         Supplier() { Arrays.fill(currency, ItemStack.EMPTY); Arrays.fill(value, 1); }
     }
 
@@ -78,6 +83,10 @@ public class BillingData extends SavedData {
         public long lastBillCost;
         public boolean disabled;        // отключён поставщиком удалённо
         public int powerCap;            // потолок мощности от поставщика, FE/t; 0 — без ограничения
+        /** Личный тариф: ownPrice кредитов за ownPerFe FE; ownPrice < 0 — действует общий тариф поставщика. */
+        public long ownPrice = -1, ownPerFe = 1_000_000;
+        /** Схема оплаты: {@link #PAY_DEFAULT} — как у поставщика по умолчанию, иначе своя. */
+        public int payMode = PAY_DEFAULT;
         int notifiedStage;
 
         Account(UUID supplier, UUID consumer) { this.supplier = supplier; this.consumer = consumer; }
@@ -89,6 +98,8 @@ public class BillingData extends SavedData {
      * поставщик урезает мощность или отключает (-1 — никогда, 0 — сразу).
      */
     public BillingStage stage(Account a, long now) {
+        // предоплата: деньги кончились — сразу отключение, долгов и отсрочек нет
+        if (isPrepaid(a)) return price(a) > 0 && a.balance <= 0 ? BillingStage.CUT : BillingStage.NORMAL;
         if (a.debtSince < 0 || a.balance >= 0) return BillingStage.NORMAL;
         Supplier s = supplier(a.supplier);
         long days = (now - a.debtSince) / DAY;
@@ -115,6 +126,56 @@ public class BillingData extends SavedData {
         t.price = Math.max(0, price);
         t.perFe = Math.max(1, perFe);
         setDirty();
+    }
+
+    /** Действующий тариф абонента: личный, если задан, иначе общий. */
+    public long price(Account a) { return a.ownPrice >= 0 ? a.ownPrice : tariff(a.supplier).price; }
+    public long perFe(Account a) { return a.ownPrice >= 0 ? Math.max(1, a.ownPerFe) : Math.max(1, tariff(a.supplier).perFe); }
+    public boolean hasOwnTariff(Account a) { return a.ownPrice >= 0; }
+
+    /** Личный тариф; price < 0 — вернуть общий. */
+    public void setOwnTariff(Account a, long price, long perFe) {
+        a.ownPrice = price < 0 ? -1 : price;
+        a.ownPerFe = Math.max(1, perFe);
+        setDirty();
+    }
+
+    public boolean isPrepaid(Account a) {
+        return a.payMode == PAY_DEFAULT ? supplier(a.supplier).prepaidDefault : a.payMode == PAY_PREPAID;
+    }
+
+    /** Сменить схему оплаты абонента. При переходе на постоплату с минусом — это долг с этого момента. */
+    public void setPayMode(Account a, int mode, long now) {
+        a.payMode = Math.max(PAY_DEFAULT, Math.min(PAY_PREPAID, mode));
+        if (!isPrepaid(a) && a.balance < 0 && a.debtSince < 0) a.debtSince = now;
+        if (isPrepaid(a)) chargePrepaid(a);
+        setDirty();
+    }
+
+    public void setPrepaidDefault(UUID supplierId, boolean prepaid, long now) {
+        supplier(supplierId).prepaidDefault = prepaid;
+        for (Account a : accounts.values())
+            if (a.supplier.equals(supplierId) && a.payMode == PAY_DEFAULT) {
+                if (!prepaid && a.balance < 0 && a.debtSince < 0) a.debtSince = now;
+                if (prepaid) chargePrepaid(a);
+            }
+        setDirty();
+    }
+
+    /**
+     * Предоплата: списываем за потреблённое сразу (вызывается раз в секунду из отчёта счётчика).
+     * Списывается только то, что набрало целый кредит; остаток ждёт следующей секунды.
+     */
+    private void chargePrepaid(Account a) {
+        long price = price(a), per = perFe(a);
+        if (price <= 0) { a.unbilledFe = 0; return; }
+        long cost = (long) Math.floor(a.unbilledFe / (double) per * price);
+        if (cost <= 0) return;
+        long fe = Math.min(a.unbilledFe, (long) Math.floor(cost * (double) per / price));
+        a.unbilledFe -= fe;
+        a.balance -= cost;
+        a.lastBillKwh = fe;
+        a.lastBillCost = cost;
     }
 
     /** Поставщик вручную задаёт баланс абонента. Долг отсчитывается заново от этого момента. */
@@ -198,6 +259,7 @@ public class BillingData extends SavedData {
         if (!consumerName.isEmpty()) a.consumerName = consumerName;
         a.unbilledFe += fe;
         a.feSincePayment += fe;
+        if (isPrepaid(a)) chargePrepaid(a);
         setDirty();
     }
 
@@ -292,7 +354,10 @@ public class BillingData extends SavedData {
     }
 
     private boolean billOne(MinecraftServer server, long now, Account a) {
-        Tariff t = tariff(a.supplier);
+        if (isPrepaid(a)) { chargePrepaid(a); return false; } // при предоплате списывается сразу, квитанций нет
+        Tariff t = new Tariff();
+        t.price = price(a);
+        t.perFe = perFe(a);
         long billedFe;
         long cost;
         if (t.price <= 0) {                 // бесплатно — просто обнуляем
@@ -328,7 +393,8 @@ public class BillingData extends SavedData {
             a.notifiedStage = st.ordinal();
             setDirty();
             if (st == BillingStage.NORMAL) continue;
-            Component msg = Component.translatable("create_em.stage.notice." + st.name().toLowerCase(), -a.balance)
+            String key = isPrepaid(a) ? "create_em.stage.notice.prepaid_empty" : "create_em.stage.notice." + st.name().toLowerCase();
+            Component msg = Component.translatable(key, -a.balance)
                     .withStyle(st == BillingStage.CUT ? ChatFormatting.RED : ChatFormatting.GOLD);
             ServerPlayer c = server.getPlayerList().getPlayer(a.consumer);
             if (c != null) c.sendSystemMessage(msg);
@@ -368,6 +434,9 @@ public class BillingData extends SavedData {
             c.putInt("Notified", a.notifiedStage);
             c.putBoolean("Disabled", a.disabled);
             c.putInt("Cap", a.powerCap);
+            c.putLong("OwnPrice", a.ownPrice);
+            c.putLong("OwnPerFe", a.ownPerFe);
+            c.putInt("PayMode", a.payMode);
             as.add(c);
         }
         tag.put("Accounts", as);
@@ -398,6 +467,7 @@ public class BillingData extends SavedData {
             c.putInt("LimitPercent", sup.limitPercent);
             c.putInt("CutAfter", sup.cutAfterDays);
             c.putLong("NextBilling", sup.nextBillingAt);
+            c.putBoolean("PrepaidDefault", sup.prepaidDefault);
             ss.add(c);
         });
         tag.put("Suppliers", ss);
@@ -430,6 +500,9 @@ public class BillingData extends SavedData {
             a.notifiedStage = c.getInt("Notified");
             a.disabled = c.getBoolean("Disabled");
             a.powerCap = c.getInt("Cap");
+            a.ownPrice = c.contains("OwnPrice") ? c.getLong("OwnPrice") : -1;
+            a.ownPerFe = c.contains("OwnPerFe") ? Math.max(1, c.getLong("OwnPerFe")) : 1_000_000;
+            a.payMode = c.getInt("PayMode");
             d.accounts.put(key(a.supplier, a.consumer), a);
         }
         for (Tag t0 : tag.getList("Suppliers", Tag.TAG_COMPOUND)) {
@@ -443,6 +516,7 @@ public class BillingData extends SavedData {
                 sup.cutAfterDays = c.getInt("CutAfter");
             }
             sup.nextBillingAt = c.contains("NextBilling") ? c.getLong("NextBilling") : -1;
+            sup.prepaidDefault = c.getBoolean("PrepaidDefault");
             ListTag cur = c.getList("Currency", Tag.TAG_COMPOUND);
             for (int i = 0; i < Math.min(CURRENCY_SLOTS, cur.size()); i++) {
                 CompoundTag e = cur.getCompound(i);

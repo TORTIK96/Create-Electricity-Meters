@@ -85,6 +85,15 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     /** Сколько процентов лимита оставляет поставщик при урезании за долг. */
     private int limitPercent = 20;
 
+    // ---- общественный счётчик: сеанс (кто сейчас пользуется) ----
+    @Nullable private UUID sessionPlayer;
+    private String sessionName = "";
+    private long sessionFe;
+    private int sessionFar, sessionIdle;
+    /** Закрыть сеанс, если игрок ушёл дальше этого (блоков) или вышел — через 10 с. */
+    private static final double SESSION_RANGE = 24;
+    private static final int SESSION_FAR_TICKS = 200, SESSION_IDLE_TICKS = 1200;
+
     public EnergyMeterBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.METER_BE.get(), pos, state);
     }
@@ -142,7 +151,8 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
 
         int budget = getLimit();                     // лимит счётчика на тик
         if (powerCap > 0) budget = Math.min(budget, powerCap);
-        if (tripped || remoteOff || ownerOff || stage == BillingStage.CUT) budget = 0;
+        if (isPublic()) tickSession();
+        if (tripped || remoteOff || ownerOff || stage == BillingStage.CUT || (isPublic() && sessionPlayer == null)) budget = 0;
         else if (stage == BillingStage.LIMITED) budget = budget * limitPercent / 100;
         buffer = Math.min(buffer, bufferCap()); // старый большой запас из сохранения — отбрасываем
         int sent = push(backCache, budget);
@@ -152,6 +162,10 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
 
         totalFe += sent;
         windowFe += sent;
+        if (sessionPlayer != null) {
+            sessionFe += sent;
+            sessionIdle = sent > 0 ? 0 : sessionIdle + 1;
+        }
         if (sent > 0) setChanged();
 
         if (++windowTicks >= WINDOW) {
@@ -195,7 +209,13 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
 
     // ---------------- расчёты ----------------
     /** Раз в секунду: сообщить потребление на лицевой счёт и забрать оттуда баланс и стадию. */
+    /** На чей счёт идёт энергия: у общественного счётчика — того, кто открыл сеанс, у обычного — хозяина. */
+    @Nullable private UUID consumer() { return isPublic() ? sessionPlayer : owner; }
+    private String consumerName() { return isPublic() ? sessionName : ownerName; }
+
     private boolean updateBilling(long fe) {
+        UUID owner = consumer();
+        String ownerName = consumerName();
         if (level == null || level.getServer() == null || supplier == null || owner == null) {
             boolean changed = stage != BillingStage.NORMAL || remoteOff || powerCap != 0;
             stage = BillingStage.NORMAL;
@@ -216,13 +236,93 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         acctSinceFe = a.feSincePayment;
         acctPaidAt = a.paidAt;
         acctBalance = a.balance;
-        if (stage == BillingStage.CUT && getTier() == MeterTier.ANDESITE && !tripped) {
+        // при предоплате расцепитель не выбивает: пополнил счёт — свет вернулся сам
+        if (stage == BillingStage.CUT && getTier() == MeterTier.ANDESITE && !tripped && !bd.isPrepaid(a)) {
             tripped = true;
             changed = true;
             level.playSound(null, worldPosition, tor_tik96.create_em.registry.EMSounds.BREAKER_TRIP.get(),
                     net.minecraft.sounds.SoundSource.BLOCKS, 1f, 1f);
         }
         return changed;
+    }
+
+    // ---------------- общественный счётчик ----------------
+    public boolean isPublic() {
+        return getBlockState().getBlock() instanceof EnergyMeterBlock b && b.isPublic();
+    }
+
+    @Nullable public UUID getSessionPlayer() { return sessionPlayer; }
+
+    /** ПКМ по общественному счётчику: открыть сеанс на себя, закрыть свой или узнать, кто занял. */
+    public void useSession(net.minecraft.server.level.ServerPlayer p) {
+        if (sessionPlayer != null && !sessionPlayer.equals(p.getUUID())) {
+            p.displayClientMessage(Component.translatable("create_em.public.busy", sessionName).withStyle(ChatFormatting.GOLD), true);
+            return;
+        }
+        if (sessionPlayer != null) { endSession(true); return; }
+        if (supplier == null) {
+            p.displayClientMessage(Component.translatable("create_em.public.unsealed").withStyle(ChatFormatting.RED), true);
+            return;
+        }
+        BillingData bd = BillingData.get(p.getServer());
+        BillingData.Account a = bd.account(supplier, p.getUUID()); // счёт заводится сразу — чтобы можно было пополнить в терминале
+        a.consumerName = p.getGameProfile().getName();
+        bd.changed();
+        BillingStage st = bd.stage(a, level.getGameTime());
+        if (st == BillingStage.CUT || a.disabled) {
+            p.displayClientMessage(Component.translatable(bd.isPrepaid(a) ? "create_em.public.no_money" : "create_em.public.debt")
+                    .withStyle(ChatFormatting.RED), false);
+            return;
+        }
+        sessionPlayer = p.getUUID();
+        sessionName = p.getGameProfile().getName();
+        sessionFe = 0;
+        sessionFar = sessionIdle = 0;
+        windowFe = 0; // всё, что было до сеанса, — не его
+        level.playSound(null, worldPosition, tor_tik96.create_em.registry.EMSounds.ATS_SWITCH.get(),
+                net.minecraft.sounds.SoundSource.BLOCKS, 0.8f, 1.1f);
+        p.displayClientMessage(Component.translatable("create_em.public.started").withStyle(ChatFormatting.GREEN), true);
+        updateBilling(0);
+        sync();
+    }
+
+    /** Закрыть сеанс: досчитать остаток на счёт игрока и сказать ему итог. */
+    private void endSession(boolean byPlayer) {
+        if (sessionPlayer == null || level == null || level.getServer() == null) return;
+        if (windowFe > 0) { updateBilling(windowFe); windowFe = 0; }
+        var server = level.getServer();
+        var p = server.getPlayerList().getPlayer(sessionPlayer);
+        if (p != null) {
+            long cost = 0;
+            if (supplier != null) {
+                BillingData bd = BillingData.get(server);
+                BillingData.Account a = bd.findAccount(supplier, sessionPlayer);
+                if (a != null) cost = (long) Math.floor(sessionFe / (double) bd.perFe(a) * bd.price(a));
+            }
+            p.sendSystemMessage(Component.translatable(byPlayer ? "create_em.public.stopped" : "create_em.public.auto_stopped",
+                    tor_tik96.create_em.EMFormat.fe(sessionFe), cost).withStyle(ChatFormatting.GRAY));
+        }
+        level.playSound(null, worldPosition, tor_tik96.create_em.registry.EMSounds.ATS_SWITCH.get(),
+                net.minecraft.sounds.SoundSource.BLOCKS, 0.8f, 0.9f);
+        sessionPlayer = null;
+        sessionName = "";
+        sessionFe = 0;
+        stage = BillingStage.NORMAL;
+        setChanged();
+        sync();
+    }
+
+    public void closeSessionOnRemove() {
+        if (sessionPlayer != null) endSession(false);
+    }
+
+    /** Сеанс сам закрывается, если игрок вышел, ушёл далеко или долго ничего не тратит. */
+    private void tickSession() {
+        if (sessionPlayer == null || level == null || level.getServer() == null) return;
+        var p = level.getServer().getPlayerList().getPlayer(sessionPlayer);
+        boolean far = p == null || p.level() != level || p.distanceToSqr(worldPosition.getCenter()) > SESSION_RANGE * SESSION_RANGE;
+        sessionFar = far ? sessionFar + 1 : 0;
+        if (sessionFar >= SESSION_FAR_TICKS || sessionIdle >= SESSION_IDLE_TICKS) endSession(false);
     }
 
     public boolean isTripped() { return tripped; }
@@ -293,12 +393,25 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     /** Поставщик по действующей пломбе (сервер) или null. Трансформатор кормит счётчик, только если это его владелец. */
     @Nullable public UUID getSealSupplier() { return supplier; }
     public String getSupplierName() { return supplierName; }
-    public boolean isSupplier(Player p) { return supplier != null && supplier.equals(p.getUUID()); }
+    public boolean isSupplier(Player p) {
+        if (supplier == null) return false;
+        // госсчётчиками управляют операторы сервера
+        if (tor_tik96.create_em.gov.Gov.SUPPLIER.equals(supplier)) return tor_tik96.create_em.gov.Gov.isOperator(p);
+        return supplier.equals(p.getUUID());
+    }
+
+    /** Кому сейчас идёт энергия (для списка доступа госсети): сеанс у общественного, иначе хозяин. */
+    @Nullable public UUID getBillingConsumer() { return consumer(); }
 
     public void installSeal(Player player) {
+        installSeal(player.getUUID(), player.getGameProfile().getName());
+    }
+
+    /** Пломба от имени поставщика (обычного игрока или «Госсети»). */
+    public void installSeal(UUID supplierId, String supplierDisplayName) {
         if (level == null || level.getServer() == null) return;
         SealRegistry.Seal seal = SealRegistry.get(level.getServer())
-                .install(player.getUUID(), player.getGameProfile().getName(), level, worldPosition);
+                .install(supplierId, supplierDisplayName, level, worldPosition);
         sealId = seal.id();
         supplier = seal.supplier();
         supplierName = seal.supplierName();
@@ -394,6 +507,10 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     @Override
     public boolean addToTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         if (ClientAccess.isWearingGoggles()) return false;
+        if (isPublic()) {
+            addSessionLines(tooltip, 0);
+            return true;
+        }
         tooltip.add(line(0, Component.translatable("create_em.tooltip.total").withStyle(LABEL)
                 .append(kwh(totalFe))));
         tooltip.add(line(0, Component.translatable("create_em.tooltip.since_payment").withStyle(LABEL)
@@ -407,6 +524,7 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         tooltip.add(line(0, Component.translatable(getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.WHITE)));
 
+        if (isPublic()) addSessionLines(tooltip, 0);
         tooltip.add(line(0, Component.translatable("create_em.tooltip.readings").withStyle(LABEL)));
         tooltip.add(line(1, Component.translatable("create_em.tooltip.total").withStyle(LABEL).append(kwh(totalFe))));
         if (isPlayerSneaking) tooltip.add(line(2, fe(totalFe)));
@@ -444,6 +562,17 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tooltip.add(line(1, Component.translatable("create_em.tooltip.load").withStyle(LABEL)
                 .append(Component.literal(loadPct + "%").withStyle(loadColor))));
         return true;
+    }
+
+    /** Общественный счётчик: свободен или чей сеанс и сколько уже потрачено. */
+    private void addSessionLines(List<Component> tooltip, int indent) {
+        if (sessionPlayer == null && sessionName.isEmpty()) {
+            tooltip.add(line(indent, Component.translatable("create_em.public.free").withStyle(ChatFormatting.GREEN)));
+            tooltip.add(line(indent, Component.translatable("create_em.public.hint").withStyle(ChatFormatting.GRAY)));
+        } else {
+            tooltip.add(line(indent, Component.translatable("create_em.public.session", sessionName).withStyle(ChatFormatting.GOLD)));
+            tooltip.add(line(indent, Component.translatable("create_em.public.spent").withStyle(LABEL).append(fe(sessionFe))));
+        }
     }
 
     private ChatFormatting stageColor() {
@@ -506,6 +635,9 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putInt("Stage", stage.ordinal());
         tag.putBoolean("RemoteOff", remoteOff);
         tag.putBoolean("OwnerOff", ownerOff);
+        if (sessionPlayer != null) tag.putUUID("Session", sessionPlayer);
+        tag.putString("SessionName", sessionName);
+        tag.putLong("SessionFe", sessionFe);
         tag.putInt("PowerCap", powerCap);
     }
 
@@ -532,6 +664,9 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         stage = BillingStage.values()[Math.max(0, Math.min(3, tag.getInt("Stage")))];
         remoteOff = tag.getBoolean("RemoteOff");
         ownerOff = tag.getBoolean("OwnerOff");
+        sessionPlayer = tag.hasUUID("Session") ? tag.getUUID("Session") : null;
+        sessionName = tag.getString("SessionName");
+        sessionFe = tag.getLong("SessionFe");
         powerCap = tag.getInt("PowerCap");
     }
 
@@ -551,6 +686,9 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, IHa
         tag.putInt("Stage", stage.ordinal());
         tag.putBoolean("RemoteOff", remoteOff);
         tag.putBoolean("OwnerOff", ownerOff);
+        if (sessionPlayer != null) tag.putUUID("Session", sessionPlayer);
+        tag.putString("SessionName", sessionName);
+        tag.putLong("SessionFe", sessionFe);
         tag.putInt("PowerCap", powerCap);
         links.save(tag);
         return tag;

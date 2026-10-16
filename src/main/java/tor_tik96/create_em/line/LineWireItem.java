@@ -78,7 +78,8 @@ public class LineWireItem extends Item {
     private static String checkNode(LineNode node, Player player) {
         if (node.getLinks().size() >= node.getMaxLinks()) return "create_em.wire.full";
         UUID owner = node.getOwner();
-        if (!node.isTerminal() && owner != null && !owner.equals(player.getUUID()) && !player.isCreative())
+        if (!node.isTerminal() && owner != null && !owner.equals(player.getUUID()) && !player.isCreative()
+                && !(tor_tik96.create_em.gov.Gov.SUPPLIER.equals(owner) && tor_tik96.create_em.gov.Gov.isOperator(player)))
             return "create_em.wire.not_owner";
         return null;
     }

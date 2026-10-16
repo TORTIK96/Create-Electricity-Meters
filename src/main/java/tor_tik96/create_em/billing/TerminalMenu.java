@@ -113,8 +113,8 @@ public class TerminalMenu extends AbstractContainerMenu {
                         case 0 -> a == null ? 0 : a.balance;
                         case 1 -> a == null ? 0 : a.feSincePayment;
                         case 2 -> a == null ? 0 : a.unbilledFe;
-                        case 3 -> bd.tariff(owner).price;
-                        default -> bd.tariff(owner).perFe;
+                        case 3 -> a == null ? bd.tariff(owner).price : bd.price(a);   // личный тариф, если задан
+                        default -> a == null ? bd.tariff(owner).perFe : bd.perFe(a);
                     };
                     return (int) ((v >>> ((i % 4) * 16)) & 0xFFFF);
                 }

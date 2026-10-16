@@ -28,7 +28,7 @@ import static tor_tik96.create_em.panel.SupplierPanelMenu.*;
  */
 public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
     private static final EMGui.Theme T = EMGui.Theme.BRASS;
-    private static final int ROW = 18, LIST_X = 6, LIST_Y = 26, LIST_W = 112, LIST_H = 200, LIST_ROWS = (LIST_H - 4) / ROW;
+    private static final int ROW = 18, LIST_X = 6, LIST_Y = 26, LIST_W = 112, LIST_H = 224, LIST_ROWS = (LIST_H - 4) / ROW;
     private static final int DET_X = 122, DET_W = W - 6 - 122;
     private static final int CELL = 20, VAULT_COLS = 12, VAULT_X = 8, VAULT_Y = 28;
     private static final int TAB_STEP = 61, TAB_VAULT = 3, TAB_TERMS = 2;
@@ -36,7 +36,7 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
 
     private final List<EMButton> tabs = new ArrayList<>();
     private final List<EMButton> accountButtons = new ArrayList<>();
-    private EMButton toggle, billOne;
+    private EMButton toggle, billOne, payMode, ownReset, prepaidDefault;
     private int scroll;
     private UUID selected;
 
@@ -63,12 +63,21 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
         int x = leftPos + DET_X, y = topPos;
         // абоненты
         toggle = acc(new EMButton(x, y + 124, DET_W, 16, Component.empty(), () -> T, () -> click(BTN_TOGGLE)));
-        field(x, y + 154, DET_W, F_BALANCE, () -> sel() == null ? 0 : sel().balance(), () -> selected,
+        field(x, y + 151, DET_W, F_BALANCE, () -> sel() == null ? 0 : sel().balance(), () -> selected,
                 () -> menu.tab == 0 && sel() != null, Component.translatable("create_em.panel.hint_balance"));
-        field(x, y + 182, DET_W, F_CAP, () -> sel() == null ? 0 : sel().cap(), () -> selected,
+        field(x, y + 176, DET_W, F_CAP, () -> sel() == null ? 0 : sel().cap(), () -> selected,
                 () -> menu.tab == 0 && sel() != null, Component.translatable("create_em.panel.hint_cap"));
-        billOne = acc(new EMButton(x, y + 206, DET_W / 2 - 1, 16, Component.translatable("create_em.panel.bill_one"), () -> T, () -> click(BTN_BILL_ONE)));
-        acc(new EMButton(x + DET_W / 2 + 1, y + 206, DET_W / 2 - 1, 16, Component.translatable("create_em.panel.bill_all"), () -> T, () -> click(BTN_BILL_ALL)));
+        billOne = acc(new EMButton(x, y + 237, DET_W / 2 - 1, 16, Component.translatable("create_em.panel.bill_one"), () -> T, () -> click(BTN_BILL_ONE)));
+        acc(new EMButton(x + DET_W / 2 + 1, y + 237, DET_W / 2 - 1, 16, Component.translatable("create_em.panel.bill_all"), () -> T, () -> click(BTN_BILL_ALL)));
+        // личный тариф и схема оплаты
+        field(x, y + 201, 40, F_OWN_PRICE, () -> sel() == null ? 0 : sel().ownPrice() >= 0 ? sel().ownPrice() : menu.getPrice(),
+                () -> selected, () -> menu.tab == 0 && sel() != null, Component.literal("0"));
+        field(x + 62, y + 201, DET_W - 62, F_OWN_PER_FE, () -> sel() == null ? 0 : sel().ownPrice() >= 0 ? sel().ownPerFe() : menu.getPerFe(),
+                () -> selected, () -> menu.tab == 0 && sel() != null, Component.literal("1M"));
+        payMode = acc(new EMButton(x, y + 219, DET_W / 2 - 1, 16, Component.empty(), () -> T, () -> click(BTN_PAYMODE)));
+        ownReset = acc(new EMButton(x + DET_W / 2 + 1, y + 219, DET_W / 2 - 1, 16, Component.translatable("create_em.panel.own_reset"), () -> T, () -> click(BTN_OWN_RESET)));
+        // условия: схема оплаты по умолчанию
+        prepaidDefault = addRenderableWidget(new EMButton(leftPos + 6, y + H - 26, W - 12, 16, Component.empty(), () -> T, () -> click(BTN_PREPAID_DEFAULT)));
         // валюта: тариф и цены
         field(leftPos + 38, y + 27, 66, F_PRICE, menu::getPrice, () -> null, () -> menu.tab == 1, Component.literal("0"));
         field(leftPos + 144, y + 27, 88, F_PER_FE, menu::getPerFe, () -> null, () -> menu.tab == 1, Component.literal("1M"));
@@ -106,6 +115,12 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
         toggle.active = s != null;
         billOne.active = s != null;
         toggle.setMessage(Component.translatable(s != null && s.disabled() ? "create_em.panel.turn_on" : "create_em.panel.turn_off"));
+        payMode.active = s != null;
+        ownReset.active = s != null && s.ownPrice() >= 0;
+        payMode.setMessage(Component.translatable(s == null ? "create_em.panel.pay_default"
+                : switch (s.payMode()) { case 1 -> "create_em.panel.pay_post"; case 2 -> "create_em.panel.pay_pre"; default -> "create_em.panel.pay_default"; }));
+        prepaidDefault.visible = menu.tab == TAB_TERMS;
+        prepaidDefault.setMessage(Component.translatable(menu.isPrepaidDefault() ? "create_em.panel.default_pre" : "create_em.panel.default_post"));
     }
 
     private AccountView sel() {
@@ -161,7 +176,7 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
                         g.fill(x + LIST_X + 1, y + LIST_Y + 2 + r * ROW, x + LIST_X + LIST_W - 1, y + LIST_Y + 2 + (r + 1) * ROW, 0xFF4A2E14);
             }
             case 1 -> { for (Slot s : menu.slots) if (s.isActive()) EMGui.slot(g, T, x + s.x, y + s.y); }
-            case TAB_TERMS -> EMGui.inset(g, T, x + 6, y + 120, W - 12, H - 126);
+            case TAB_TERMS -> EMGui.inset(g, T, x + 6, y + 120, W - 12, H - 154);
             case TAB_VAULT -> {
                 EMGui.inset(g, T, x + 6, y + 26, W - 12, H - 32);
                 List<VaultView> v = menu.getVault();
@@ -265,10 +280,16 @@ public class SupplierPanelScreen extends EMScreen<SupplierPanelMenu> {
                 s.disabled() ? Component.translatable("create_em.panel.state_off").withStyle(ChatFormatting.RED)
                         : Component.translatable(st.key()).withStyle(stageFmt(st)),
                 s.cap() > 0 ? Component.translatable("create_em.panel.cap", String.format("%,d FE/t", s.cap()))
-                        : Component.translatable("create_em.panel.no_cap")};
-        for (int i = 0; i < lines.length; i++) EMGui.text(g, font, lines[i], dx, dy + i * 14, dw, scr, false, 0);
-        EMGui.text(g, font, Component.translatable("create_em.panel.balance_label"), DET_X, 144, DET_W, label, false, 0);
-        EMGui.text(g, font, Component.translatable("create_em.panel.cap_label"), DET_X, 172, DET_W, label, false, 0);
+                        : Component.translatable("create_em.panel.no_cap"),
+                Component.translatable(s.prepaid() ? "create_em.panel.mode_pre" : "create_em.panel.mode_post"),
+                s.ownPrice() >= 0 ? Component.translatable("create_em.panel.own_tariff", s.ownPrice(), EMFormat.fe(s.ownPerFe()))
+                        : Component.translatable("create_em.panel.common_tariff")};
+        for (int i = 0; i < lines.length; i++) EMGui.text(g, font, lines[i], dx, dy - 2 + i * 11, dw, scr, false, 0);
+        EMGui.text(g, font, Component.translatable("create_em.panel.balance_label"), DET_X, 142, DET_W, label, false, 0);
+        EMGui.text(g, font, Component.translatable("create_em.panel.cap_label"), DET_X, 167, DET_W, label, false, 0);
+        EMGui.text(g, font, Component.translatable(s.ownPrice() >= 0 ? "create_em.panel.own_label" : "create_em.panel.own_label_common"),
+                DET_X, 192, DET_W, label, false, 0);
+        EMGui.text(g, font, Component.translatable("create_em.panel.per_short"), DET_X + 41, 204, 20, label, false, 1);
     }
 
     private static ChatFormatting stageFmt(BillingStage st) {

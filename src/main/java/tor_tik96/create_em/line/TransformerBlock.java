@@ -29,26 +29,44 @@ import tor_tik96.create_em.registry.EMRegistry;
 public class TransformerBlock extends HorizontalDirectionalBlock implements EntityBlock {
     /** Умный (латунный) трансформатор — ещё и панель поставщика. */
     private final boolean smart;
+    /** Господстанция: поставщик «Госсеть», ставят и настраивают только операторы. */
+    private final boolean state;
 
     private static final VoxelShape SHAPE = Shapes.or(
             Block.box(1, 0, 1, 15, 13, 15),     // корпус
             Block.box(5.5, 13, 5.5, 10.5, 16, 10.5)); // изолятор
 
     public TransformerBlock(Properties props, boolean smart) {
+        this(props, smart, false);
+    }
+
+    public TransformerBlock(Properties props, boolean smart, boolean state) {
         super(props);
         this.smart = smart;
+        this.state = state;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     public boolean isSmart() { return smart; }
+    public boolean isState() { return state; }
 
-    @Override protected MapCodec<? extends HorizontalDirectionalBlock> codec() { return simpleCodec(p -> new TransformerBlock(p, smart)); }
+    @Override protected MapCodec<? extends HorizontalDirectionalBlock> codec() { return simpleCodec(p -> new TransformerBlock(p, smart, state)); }
 
     /** ПКМ по умному трансформатору — панель поставщика (только владельцу). */
     @Override
     protected net.minecraft.world.InteractionResult useWithoutItem(BlockState s, Level level, BlockPos pos,
                                                                    net.minecraft.world.entity.player.Player player,
                                                                    net.minecraft.world.phys.BlockHitResult hit) {
+        if (state && level.getBlockEntity(pos) instanceof TransformerBlockEntity gov) {
+            if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
+            if (!tor_tik96.create_em.gov.Gov.isOperator(player)) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable("create_em.gov.ops_only")
+                        .withStyle(net.minecraft.ChatFormatting.RED), true);
+                return net.minecraft.world.InteractionResult.CONSUME;
+            }
+            gov.toggleInfinite(player);
+            return net.minecraft.world.InteractionResult.CONSUME;
+        }
         if (!smart || !(level.getBlockEntity(pos) instanceof TransformerBlockEntity be)) return net.minecraft.world.InteractionResult.PASS;
         if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
         if (be.getOwner() == null || !be.getOwner().equals(player.getUUID())) {
@@ -87,6 +105,18 @@ public class TransformerBlock extends HorizontalDirectionalBlock implements Enti
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
+        if (this.state && !level.isClientSide) {
+            // господстанцию ставит только оператор; остальным — блок обратно в руки
+            if (!(placer instanceof net.minecraft.world.entity.player.Player p) || !tor_tik96.create_em.gov.Gov.isOperator(p)) {
+                level.destroyBlock(pos, true);
+                if (placer instanceof net.minecraft.world.entity.player.Player p)
+                    p.displayClientMessage(net.minecraft.network.chat.Component.translatable("create_em.gov.ops_only")
+                            .withStyle(net.minecraft.ChatFormatting.RED), true);
+                return;
+            }
+            if (level.getBlockEntity(pos) instanceof TransformerBlockEntity be) be.setOwner(tor_tik96.create_em.gov.Gov.SUPPLIER);
+            return;
+        }
         LineNetwork.onPlaced(level, pos, placer);
     }
 

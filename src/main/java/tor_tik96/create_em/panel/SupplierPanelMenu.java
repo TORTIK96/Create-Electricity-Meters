@@ -35,13 +35,15 @@ import static tor_tik96.create_em.billing.BillingData.CURRENCY_SLOTS;
 public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePayload.Receiver {
     // кнопки
     public static final int BTN_TOGGLE = 1, BTN_BILL_ONE = 6, BTN_BILL_ALL = 7,
+            BTN_PAYMODE = 8, BTN_OWN_RESET = 9, BTN_PREPAID_DEFAULT = 10,
             SELECT_BASE = 1000, VAULT_BASE = 2000;
     // поля ввода
     public static final int F_BALANCE = 1, F_CAP = 2, F_PRICE = 3, F_PER_FE = 4,
-            F_PERIOD = 5, F_LIMIT_AFTER = 6, F_LIMIT_PERCENT = 7, F_CUT_AFTER = 8, F_VALUE0 = 10;
+            F_PERIOD = 5, F_LIMIT_AFTER = 6, F_LIMIT_PERCENT = 7, F_CUT_AFTER = 8, F_VALUE0 = 10,
+            F_OWN_PRICE = 20, F_OWN_PER_FE = 21;
 
     // раскладка (общая с экраном)
-    public static final int W = 256, H = 232;
+    public static final int W = 256, H = 256;
     public static final int CUR_X0 = 8, CUR_COL = 124, CUR_Y0 = 78, CUR_ROW = 20;
     public static final int INV_X = 47, INV_Y = 150, HOTBAR_Y = 208;
 
@@ -154,6 +156,10 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
             selected = i < list.size() ? list.get(i).consumer : null;
             return true;
         }
+        if (id == BTN_PREPAID_DEFAULT) {
+            bd.setPrepaidDefault(supplier, !bd.supplier(supplier).prepaidDefault, server.overworld().getGameTime());
+            return true;
+        }
         if (id == BTN_BILL_ALL) {
             sp.displayClientMessage(Component.translatable("create_em.bill.manual", bd.billNow(server, supplier)), true);
             return true;
@@ -169,6 +175,13 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
                         .withStyle(a.disabled ? ChatFormatting.RED : ChatFormatting.GREEN));
             }
             case BTN_BILL_ONE -> sp.displayClientMessage(Component.translatable("create_em.bill.manual", bd.billAccount(server, a)), true);
+            case BTN_PAYMODE -> {
+                bd.setPayMode(a, (a.payMode + 1) % 3, server.overworld().getGameTime());
+                ServerPlayer c = server.getPlayerList().getPlayer(a.consumer);
+                if (c != null) c.sendSystemMessage(Component.translatable(bd.isPrepaid(a) ? "create_em.panel.notice_prepaid" : "create_em.panel.notice_postpaid")
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            case BTN_OWN_RESET -> bd.setOwnTariff(a, -1, a.ownPerFe);
             default -> { return false; }
         }
         return true;
@@ -195,6 +208,19 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
             case F_CUT_AFTER -> bd.setTerms(supplier, sup.periodDays, sup.limitAfterDays, sup.limitPercent, iv, now);
             case F_PRICE -> bd.setTariff(supplier, value, t.perFe);
             case F_PER_FE -> bd.setTariff(supplier, t.price, value);
+            case F_OWN_PRICE, F_OWN_PER_FE -> {
+                BillingData.Account a = bd.findAccount(supplier, target);
+                if (a == null) return;
+                // первое изменение берёт недостающую половину из общего тарифа
+                long price = bd.hasOwnTariff(a) ? a.ownPrice : t.price;
+                long per = bd.hasOwnTariff(a) ? a.ownPerFe : t.perFe;
+                if (field == F_OWN_PRICE) price = Math.max(0, value);
+                else per = Math.max(1, value);
+                bd.setOwnTariff(a, price, per);
+                ServerPlayer c = sp.getServer().getPlayerList().getPlayer(a.consumer);
+                if (c != null) c.sendSystemMessage(Component.translatable("create_em.panel.notice_tariff", price,
+                        tor_tik96.create_em.EMFormat.fe(per)).withStyle(ChatFormatting.GRAY));
+            }
             case F_BALANCE, F_CAP -> {
                 BillingData.Account a = bd.findAccount(supplier, target);
                 if (a == null) return;
@@ -222,13 +248,15 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
         List<PanelSyncPayload.AccountView> acc = new ArrayList<>();
         for (BillingData.Account a : bd.accountsOf(supplier))
             acc.add(new PanelSyncPayload.AccountView(a.consumer, a.consumerName, a.balance, bd.stage(a, now).ordinal(),
-                    a.disabled, a.powerCap, a.feSincePayment, a.unbilledFe));
+                    a.disabled, a.powerCap, a.feSincePayment, a.unbilledFe,
+                    bd.hasOwnTariff(a) ? a.ownPrice : -1, a.ownPerFe, a.payMode, bd.isPrepaid(a)));
         BillingData.Supplier sup = bd.supplier(supplier);
         List<PanelSyncPayload.VaultView> v = new ArrayList<>();
         for (BillingData.VaultEntry e : sup.vault) v.add(new PanelSyncPayload.VaultView(e.sample, e.count));
         BillingData.Tariff t = bd.tariff(supplier);
         PacketDistributor.sendToPlayer(sp, new PanelSyncPayload(containerId, acc, v, t.price, t.perFe, sup.value.clone(),
-                bd.secondsToBill(supplier, now), sup.periodDays, sup.limitAfterDays, sup.limitPercent, sup.cutAfterDays));
+                bd.secondsToBill(supplier, now), sup.periodDays, sup.limitAfterDays, sup.limitPercent, sup.cutAfterDays,
+                sup.prepaidDefault));
     }
 
     // ---------- клиент ----------
@@ -244,6 +272,7 @@ public class SupplierPanelMenu extends AbstractContainerMenu implements ValuePay
     public int getLimitAfterDays() { return clientData == null ? -1 : clientData.limitAfterDays(); }
     public int getLimitPercent() { return clientData == null ? 0 : clientData.limitPercent(); }
     public int getCutAfterDays() { return clientData == null ? -1 : clientData.cutAfterDays(); }
+    public boolean isPrepaidDefault() { return clientData != null && clientData.prepaidDefault(); }
 
     @Override
     public boolean stillValid(Player p) {

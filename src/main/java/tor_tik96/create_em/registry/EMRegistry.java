@@ -61,6 +61,11 @@ public final class EMRegistry {
             () -> new EnergyMeterBlock(MeterTier.BRASS, BlockBehaviour.Properties.of()
                     .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops().noOcclusion()));
 
+    /** Общественный счётчик: латунный, с сеансами «старт/стоп» на счёт игрока. */
+    public static final DeferredBlock<EnergyMeterBlock> PUBLIC_METER = BLOCKS.register("public_meter",
+            () -> new EnergyMeterBlock(MeterTier.BRASS, BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.WARPED_STEM).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops().noOcclusion(), true));
+
     // ---------- сервисная линия ----------
     public static final DeferredBlock<TransformerBlock> TRANSFORMER = BLOCKS.register("line_transformer",
             () -> new TransformerBlock(BlockBehaviour.Properties.of()
@@ -70,6 +75,11 @@ public final class EMRegistry {
     public static final DeferredBlock<TransformerBlock> SMART_TRANSFORMER = BLOCKS.register("smart_transformer",
             () -> new TransformerBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.TERRACOTTA_YELLOW).strength(3f).sound(SoundType.COPPER).requiresCorrectToolForDrops().noOcclusion(), true));
+
+    /** Господстанция: только для операторов, ломается только в творческом. */
+    public static final DeferredBlock<TransformerBlock> STATE_SUBSTATION = BLOCKS.register("state_substation",
+            () -> new TransformerBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_RED).strength(-1f, 3600000f).sound(SoundType.NETHERITE_BLOCK).noOcclusion(), false, true));
 
     public static final DeferredBlock<LineConnectorBlock> LINE_CONNECTOR = BLOCKS.register("line_connector",
             () -> new LineConnectorBlock(BlockBehaviour.Properties.of()
@@ -140,6 +150,8 @@ public final class EMRegistry {
             ITEMS.registerSimpleBlockItem("andesite_energy_meter", ANDESITE_METER, new Item.Properties());
     public static final DeferredItem<BlockItem> BRASS_METER_ITEM =
             ITEMS.registerSimpleBlockItem("brass_energy_meter", BRASS_METER, new Item.Properties());
+    public static final DeferredItem<BlockItem> PUBLIC_METER_ITEM =
+            ITEMS.registerSimpleBlockItem("public_meter", PUBLIC_METER, new Item.Properties());
     public static final DeferredItem<BlockItem> TRANSFORMER_ITEM =
             ITEMS.registerSimpleBlockItem("line_transformer", TRANSFORMER, new Item.Properties());
     public static final DeferredItem<BlockItem> SMART_TRANSFORMER_ITEM =
@@ -150,6 +162,10 @@ public final class EMRegistry {
             ITEMS.registerSimpleBlockItem("billing_terminal", TERMINAL, new Item.Properties());
     public static final DeferredItem<LineWireItem> LINE_WIRE =
             ITEMS.register("line_wire", () -> new LineWireItem(new Item.Properties()));
+    public static final DeferredItem<BlockItem> STATE_SUBSTATION_ITEM =
+            ITEMS.registerSimpleBlockItem("state_substation", STATE_SUBSTATION, new Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC));
+    public static final DeferredItem<tor_tik96.create_em.gov.StateSealItem> STATE_SEAL =
+            ITEMS.register("state_seal", () -> new tor_tik96.create_em.gov.StateSealItem(new Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC)));
     public static final DeferredItem<SealItem> SEAL =
             ITEMS.register("seal", () -> new SealItem(new Item.Properties()));
 
@@ -161,12 +177,12 @@ public final class EMRegistry {
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EnergyMeterBlockEntity>> METER_BE =
             BE_TYPES.register("energy_meter", () -> BlockEntityType.Builder
-                    .of(EnergyMeterBlockEntity::new, ANDESITE_METER.get(), BRASS_METER.get()).build(null));
+                    .of(EnergyMeterBlockEntity::new, ANDESITE_METER.get(), BRASS_METER.get(), PUBLIC_METER.get()).build(null));
 
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TransformerBlockEntity>> TRANSFORMER_BE =
             BE_TYPES.register("line_transformer", () -> BlockEntityType.Builder
-                    .of(TransformerBlockEntity::new, TRANSFORMER.get(), SMART_TRANSFORMER.get()).build(null));
+                    .of(TransformerBlockEntity::new, TRANSFORMER.get(), SMART_TRANSFORMER.get(), STATE_SUBSTATION.get()).build(null));
 
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LineConnectorBlockEntity>> LINE_CONNECTOR_BE =

@@ -1,0 +1,409 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "create:block/creative_casing",
+    "casing": "create:block/creative_casing",
+    "side": "create_em:block/state_substation_side",
+    "front": "create_em:block/state_substation_front",
+    "parts": "create_em:block/line_parts"
+  },
+  "elements": [
+    {
+      "name": "plinth",
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        2,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ]
+        },
+        "up": {
+          "texture": "#casing",
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ]
+        },
+        "down": {
+          "texture": "#casing",
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ],
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "tank",
+      "from": [
+        2,
+        2,
+        2
+      ],
+      "to": [
+        14,
+        12,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#front",
+          "uv": [
+            2,
+            4,
+            14,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            2,
+            4,
+            14,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            2,
+            4,
+            14,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            2,
+            4,
+            14,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "name": "lid",
+      "from": [
+        1.5,
+        12,
+        1.5
+      ],
+      "to": [
+        14.5,
+        13,
+        14.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "south": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#casing",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "up": {
+          "texture": "#casing",
+          "uv": [
+            1.5,
+            1.5,
+            14.5,
+            14.5
+          ]
+        },
+        "down": {
+          "texture": "#casing",
+          "uv": [
+            1.5,
+            1.5,
+            14.5,
+            14.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "bushing_disc",
+      "from": [
+        6,
+        13,
+        6
+      ],
+      "to": [
+        10,
+        14,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "name": "bushing_neck",
+      "from": [
+        6.75,
+        14,
+        6.75
+      ],
+      "to": [
+        9.25,
+        15,
+        9.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "name": "terminal",
+      "from": [
+        7,
+        15,
+        7
+      ],
+      "to": [
+        9,
+        16,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#parts",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#parts",
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ]
+        }
+      }
+    }
+  ]
+}

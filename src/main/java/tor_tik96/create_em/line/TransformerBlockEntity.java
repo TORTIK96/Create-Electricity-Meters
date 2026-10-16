@@ -65,6 +65,28 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
 
     public IEnergyStorage getInput() { return input; }
 
+    // ---------- господстанция ----------
+    /** Бесконечный режим: энергия «от государства», без генераторов. Переключает оператор. */
+    private boolean infinite = true;
+
+    public boolean isState() {
+        return getBlockState().getBlock() instanceof TransformerBlock b && b.isState();
+    }
+
+    public void toggleInfinite(net.minecraft.world.entity.player.Player op) {
+        infinite = !infinite;
+        setChanged();
+        op.displayClientMessage(net.minecraft.network.chat.Component.translatable(infinite ? "create_em.gov.infinite_on" : "create_em.gov.infinite_off")
+                .withStyle(net.minecraft.ChatFormatting.AQUA), true);
+    }
+
+    /** Счётчик получает госэнергию, только если тот, на чей счёт он работает, есть в списке доступа. */
+    private boolean govAllowed(EnergyMeterBlockEntity m) {
+        UUID c = m.getBillingConsumer();
+        return c != null && level != null && level.getServer() != null
+                && tor_tik96.create_em.gov.GovData.get(level.getServer()).isAllowed(c);
+    }
+
     /** Сколько счётчики взяли за прошлый тик. */
     private int lastSent;
 
@@ -94,12 +116,15 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         }
 
         buffer = Math.min(buffer, bufferCap()); // старый большой запас из сохранения — отбрасываем
+        boolean gov = isState();
+        if (gov && !tor_tik96.create_em.gov.Gov.SUPPLIER.equals(owner)) owner = tor_tik96.create_em.gov.Gov.SUPPLIER; // поставили командой
+        if (gov && infinite) buffer = bufferCap(); // господстанция в бесконечном режиме сама вырабатывает энергию
         int sent = 0;
         int budget = Math.min(buffer, Config.TRANSFORMER_MAX_TRANSFER.get());
         // энергию получают только счётчики, опломбированные владельцем этого трансформатора
         List<EnergyMeterBlockEntity> sealed = new java.util.ArrayList<>();
         for (EnergyMeterBlockEntity m : meters)
-            if (owner != null && !m.isRemoved() && owner.equals(m.getSealSupplier())) sealed.add(m);
+            if (owner != null && !m.isRemoved() && owner.equals(m.getSealSupplier()) && (!gov || govAllowed(m))) sealed.add(m);
 
         if (budget > 0 && !sealed.isEmpty()) {
             // поровну, а недобор одних счётчиков достаётся остальным
@@ -165,6 +190,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         links.save(tag);
         if (owner != null) tag.putUUID("Owner", owner);
         tag.putInt("Buffer", buffer);
+        tag.putBoolean("Infinite", infinite);
     }
 
     @Override
@@ -173,6 +199,7 @@ public class TransformerBlockEntity extends BlockEntity implements LineNode, IHa
         links.load(tag);
         owner = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
         buffer = tag.getInt("Buffer");
+        infinite = !tag.contains("Infinite") || tag.getBoolean("Infinite");
         if (tag.contains("Out")) {
             outPerTick = tag.getFloat("Out");
             meterCount = tag.getInt("Meters");
