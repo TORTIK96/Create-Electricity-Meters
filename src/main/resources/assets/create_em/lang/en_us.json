@@ -400,5 +400,9 @@
   "block.create_em.process_sorter.tooltip.condition2": "Unprocessed",
   "block.create_em.process_sorter.tooltip.behaviour2": "Never in the stream or not finished — _to the side_, orange arrow, back into the loop. Unfinished processing continues where it left off.",
   "block.create_em.process_sorter.tooltip.control1": "R-Click",
-  "block.create_em.process_sorter.tooltip.action1": "Unprocessed goes _right_ or _left_. Rotate with a wrench."
+  "block.create_em.process_sorter.tooltip.action1": "Unprocessed goes _right_ or _left_. Rotate with a wrench.",
+  "create_em.catalyst.mode.universal": "Universal",
+  "create_em.catalyst.process.universal": "universal processing",
+  "block.create_em.electric_catalyst.tooltip.condition4": "Universal mode",
+  "block.create_em.electric_catalyst.tooltip.behaviour4": "_One line for everything_: picks the processing per item — food is _smoked_, washable things are _washed_, the rest is _smelted_. Each item is processed _once_; items without a recipe and food _don't burn_. Order is set in the config."
 }

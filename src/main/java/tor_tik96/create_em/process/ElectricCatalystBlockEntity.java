@@ -97,6 +97,7 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
             case SPLASHING -> net.minecraft.sounds.SoundEvents.WATER_AMBIENT;
             case SMOKING -> net.minecraft.sounds.SoundEvents.CAMPFIRE_CRACKLE;
             case BLASTING -> net.minecraft.sounds.SoundEvents.LAVA_AMBIENT;
+            case UNIVERSAL -> level.random.nextBoolean() ? net.minecraft.sounds.SoundEvents.CAMPFIRE_CRACKLE : net.minecraft.sounds.SoundEvents.WATER_AMBIENT;
             default -> net.minecraft.sounds.SoundEvents.SOUL_ESCAPE.value();
         };
         level.playSound(null, worldPosition, sound, net.minecraft.sounds.SoundSource.BLOCKS, 0.35f,

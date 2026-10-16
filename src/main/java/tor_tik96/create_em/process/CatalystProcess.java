@@ -9,7 +9,9 @@ public enum CatalystProcess implements StringRepresentable {
     SPLASHING("splashing", 0),
     SMOKING("smoking", 12),
     BLASTING("blasting", 15),
-    HAUNTING("haunting", 10);
+    HAUNTING("haunting", 10),
+    /** Сам выбирает обработку для каждого предмета ({@link UniversalFanType}). */
+    UNIVERSAL("universal", 13);
 
     private final String name;
     public final int light;
@@ -32,6 +34,7 @@ public enum CatalystProcess implements StringRepresentable {
             case SMOKING -> Config.CATALYST_SMOKING.get();
             case BLASTING -> Config.CATALYST_BLASTING.get();
             case HAUNTING -> Config.CATALYST_HAUNTING.get();
+            case UNIVERSAL -> Config.CATALYST_UNIVERSAL.get();
         };
     }
 

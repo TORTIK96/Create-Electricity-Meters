@@ -400,5 +400,9 @@
   "block.create_em.process_sorter.tooltip.condition2": "Сырое",
   "block.create_em.process_sorter.tooltip.behaviour2": "Не было в потоке или не успело — _вбок_, по оранжевой стрелке, обратно в петлю. Недоделанная обработка продолжится с того же места.",
   "block.create_em.process_sorter.tooltip.control1": "ПКМ",
-  "block.create_em.process_sorter.tooltip.action1": "Сырое — _направо_ или _налево_. Поворот — ключом."
+  "block.create_em.process_sorter.tooltip.action1": "Сырое — _направо_ или _налево_. Поворот — ключом.",
+  "create_em.catalyst.mode.universal": "Универсальный",
+  "create_em.catalyst.process.universal": "универсальная обработка",
+  "block.create_em.electric_catalyst.tooltip.condition4": "Универсальный режим",
+  "block.create_em.electric_catalyst.tooltip.behaviour4": "_Одна линия на всё_: для каждого предмета сам выбирает обработку — еду _коптит_, что промывается — _промывает_, остальное _плавит_. Каждый предмет обрабатывается _один раз_, предметы без рецепта и еда _не сгорают_. Порядок — в конфиге."
 }

@@ -11,7 +11,8 @@ public enum CatalystMode implements INamedIconOptions {
     SPLASHING(EMIcons.SPLASHING, CatalystProcess.SPLASHING),
     SMOKING(EMIcons.SMOKING, CatalystProcess.SMOKING),
     BLASTING(EMIcons.BLASTING, CatalystProcess.BLASTING),
-    HAUNTING(EMIcons.HAUNTING, CatalystProcess.HAUNTING);
+    HAUNTING(EMIcons.HAUNTING, CatalystProcess.HAUNTING),
+    UNIVERSAL(EMIcons.UNIVERSAL, CatalystProcess.UNIVERSAL);
 
     private final AllIcons icon;
     /** null — режим берётся из силы сигнала. */

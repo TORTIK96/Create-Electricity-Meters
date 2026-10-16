@@ -280,6 +280,12 @@ public final class EMRegistry {
     public static final DeferredHolder<MenuType<?>, MenuType<tor_tik96.create_em.panel.SupplierPanelMenu>> SUPPLIER_PANEL_MENU =
             MENUS.register("supplier_panel", () -> new MenuType<>(tor_tik96.create_em.panel.SupplierPanelMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
+    /** Свой тип обработки вентилятором Create — универсальный режим электрокатализатора. */
+    public static final DeferredRegister<com.simibubi.create.content.kinetics.fan.processing.FanProcessingType> FAN_TYPES =
+            DeferredRegister.create(com.simibubi.create.api.registry.CreateRegistries.FAN_PROCESSING_TYPE, Create_em.MODID);
+    public static final DeferredHolder<com.simibubi.create.content.kinetics.fan.processing.FanProcessingType, tor_tik96.create_em.process.UniversalFanType> UNIVERSAL_FAN =
+            FAN_TYPES.register("universal", tor_tik96.create_em.process.UniversalFanType::new);
+
     public static void init(IEventBus modBus) {
         COMPONENTS.register(modBus);
         BLOCKS.register(modBus);
@@ -287,6 +293,7 @@ public final class EMRegistry {
         BE_TYPES.register(modBus);
         MENUS.register(modBus);
         EMSounds.init(modBus);
+        FAN_TYPES.register(modBus);
         modBus.addListener(EMRegistry::registerCaps);
         tor_tik96.create_em.grid.GridIsolation.init(modBus);
     }

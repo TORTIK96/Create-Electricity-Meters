@@ -71,6 +71,17 @@ public final class Config {
             .comment("Электрокатализатор: расход в режиме призрачного огня, FE/t")
             .defineInRange("catalystHauntingFe", 48, 0, Integer.MAX_VALUE);
 
+    public static final ModConfigSpec.IntValue CATALYST_UNIVERSAL = BUILDER
+            .comment("Электрокатализатор: расход в универсальном режиме, FE/t")
+            .defineInRange("catalystUniversalFe", 128, 0, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> CATALYST_UNIVERSAL_ORDER = BUILDER
+            .comment("Электрокатализатор, универсальный режим: в каком порядке пробовать обработки для предмета.",
+                    "smoking — копчение, splashing — промывка, haunting — призрачный огонь, blasting — плавка.",
+                    "Например, чтобы дроблёную руду плавить, а не промывать, поставьте blasting раньше splashing.")
+            .defineListAllowEmpty("catalystUniversalOrder", java.util.List.of("smoking", "splashing", "haunting", "blasting"),
+                    () -> "smoking", o -> o instanceof String str && java.util.Set.of("smoking", "splashing", "haunting", "blasting").contains(str));
+
     // ---------- аккумулятор и АВР ----------
     public static final ModConfigSpec.IntValue BATTERY_CAPACITY = BUILDER
             .comment("Аккумулятор: ёмкость, FE")
