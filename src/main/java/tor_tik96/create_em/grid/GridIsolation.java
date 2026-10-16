@@ -95,6 +95,8 @@ public final class GridIsolation {
 
     /** Есть ли у блока хоть какая-то энергия (с любой стороны). */
     public static boolean hasEnergy(Level level, BlockPos pos) {
+        // счётчик сам FE не принимает (только по линии), но отдаёт — его тоже можно маркировать
+        if (level.getBlockEntity(pos) instanceof tor_tik96.create_em.meter.EnergyMeterBlockEntity) return true;
         return bypass(() -> {
             if (level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, null) != null) return true;
             for (Direction d : Direction.values())
