@@ -1,0 +1,116 @@
+package tor_tik96.create_em.grid;
+
+import com.simibubi.create.content.equipment.wrench.IWrenchable;
+import com.simibubi.create.foundation.block.IBE;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
+import tor_tik96.create_em.registry.EMRegistry;
+
+/**
+ * Госконнектор: единственный путь энергии в промаркированное устройство и из него.
+ * Лицо (с синей пластиной) прикладывается к устройству, сзади — обычная клемма FE.
+ * ПКМ хозяином — сменить направление: «в устройство» / «из устройства».
+ */
+public class StateConnectorBlock extends Block implements IBE<StateConnectorBlockEntity>, IWrenchable {
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    /** true — энергия идёт из устройства наружу. */
+    public static final BooleanProperty OUT = BooleanProperty.create("out");
+
+    public StateConnectorBlock(Properties props) {
+        super(props);
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(OUT, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+        b.add(FACING, OUT);
+    }
+
+    /** Лицом к блоку, по которому кликнули. */
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        return defaultBlockState().setValue(FACING, ctx.getClickedFace().getOpposite());
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && placer instanceof Player p)
+            withBlockEntityDo(level, pos, be -> be.setOwner(p.getUUID(), p.getGameProfile().getName()));
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        if (level.isClientSide) return InteractionResult.SUCCESS;
+        if (!(level.getBlockEntity(pos) instanceof StateConnectorBlockEntity be)) return InteractionResult.PASS;
+        if (!GridIsolation.canManage(player, be.getOwner(), null)) {
+            player.displayClientMessage(Component.translatable("create_em.connector.not_yours", be.getOwnerName())
+                    .withStyle(ChatFormatting.RED), true);
+            return InteractionResult.CONSUME;
+        }
+        boolean out = !state.getValue(OUT);
+        level.setBlock(pos, state.setValue(OUT, out), Block.UPDATE_ALL);
+        be.onModeChanged();
+        level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.5f, out ? 0.7f : 0.9f);
+        player.displayClientMessage(Component.translatable(out ? "create_em.connector.mode_out" : "create_em.connector.mode_in")
+                .withStyle(ChatFormatting.AQUA), true);
+        return InteractionResult.CONSUME;
+    }
+
+    /** Поворачивать ключом может только хозяин. */
+    @Override
+    public InteractionResult onWrenched(BlockState state, UseOnContext ctx) {
+        Player p = ctx.getPlayer();
+        if (p != null && ctx.getLevel().getBlockEntity(ctx.getClickedPos()) instanceof StateConnectorBlockEntity be
+                && !GridIsolation.canManage(p, be.getOwner(), null))
+            return InteractionResult.FAIL;
+        return IWrenchable.super.onWrenched(state, ctx);
+    }
+
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
+        IBE.onRemove(state, level, pos, newState);
+    }
+
+    @Override
+    public Class<StateConnectorBlockEntity> getBlockEntityClass() {
+        return StateConnectorBlockEntity.class;
+    }
+
+    @Override
+    public BlockEntityType<? extends StateConnectorBlockEntity> getBlockEntityType() {
+        return EMRegistry.STATE_CONNECTOR_BE.get();
+    }
+}

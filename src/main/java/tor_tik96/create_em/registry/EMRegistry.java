@@ -129,6 +129,14 @@ public final class EMRegistry {
     public static final DeferredItem<BlockItem> KNIFE_SWITCH_ITEM =
             ITEMS.registerSimpleBlockItem("knife_switch", KNIFE_SWITCH, new Item.Properties());
 
+    public static final DeferredBlock<tor_tik96.create_em.grid.StateConnectorBlock> STATE_CONNECTOR = BLOCKS.register("state_connector",
+            () -> new tor_tik96.create_em.grid.StateConnectorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_BLUE).strength(3f, 1200f).sound(SoundType.COPPER).requiresCorrectToolForDrops()));
+    public static final DeferredItem<BlockItem> STATE_CONNECTOR_ITEM =
+            ITEMS.registerSimpleBlockItem("state_connector", STATE_CONNECTOR, new Item.Properties());
+    public static final DeferredItem<tor_tik96.create_em.grid.StateMarkItem> STATE_MARK =
+            ITEMS.register("state_mark", () -> new tor_tik96.create_em.grid.StateMarkItem(new Item.Properties()));
+
     public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
             ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
     public static final DeferredItem<BlockItem> POWER_CABLE_ITEM =
@@ -239,6 +247,11 @@ public final class EMRegistry {
             BE_TYPES.register("knife_switch", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.power.KnifeSwitchBlockEntity::new, KNIFE_SWITCH.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.grid.StateConnectorBlockEntity>> STATE_CONNECTOR_BE =
+            BE_TYPES.register("state_connector", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.grid.StateConnectorBlockEntity::new, STATE_CONNECTOR.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -253,6 +266,7 @@ public final class EMRegistry {
         MENUS.register(modBus);
         EMSounds.init(modBus);
         modBus.addListener(EMRegistry::registerCaps);
+        tor_tik96.create_em.grid.GridIsolation.init(modBus);
     }
 
     /**
@@ -271,6 +285,7 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, MINI_METER_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CAPACITOR_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, KNIFE_SWITCH_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, STATE_CONNECTOR_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
     }

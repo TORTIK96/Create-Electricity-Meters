@@ -1,0 +1,50 @@
+{
+  "variants": {
+    "facing=north,out=false": {
+      "model": "create_em:block/state_connector_in"
+    },
+    "facing=north,out=true": {
+      "model": "create_em:block/state_connector_out"
+    },
+    "facing=south,out=false": {
+      "model": "create_em:block/state_connector_in",
+      "y": 180
+    },
+    "facing=south,out=true": {
+      "model": "create_em:block/state_connector_out",
+      "y": 180
+    },
+    "facing=east,out=false": {
+      "model": "create_em:block/state_connector_in",
+      "y": 90
+    },
+    "facing=east,out=true": {
+      "model": "create_em:block/state_connector_out",
+      "y": 90
+    },
+    "facing=west,out=false": {
+      "model": "create_em:block/state_connector_in",
+      "y": 270
+    },
+    "facing=west,out=true": {
+      "model": "create_em:block/state_connector_out",
+      "y": 270
+    },
+    "facing=up,out=false": {
+      "model": "create_em:block/state_connector_in",
+      "x": 270
+    },
+    "facing=up,out=true": {
+      "model": "create_em:block/state_connector_out",
+      "x": 270
+    },
+    "facing=down,out=false": {
+      "model": "create_em:block/state_connector_in",
+      "x": 90
+    },
+    "facing=down,out=true": {
+      "model": "create_em:block/state_connector_out",
+      "x": 90
+    }
+  }
+}

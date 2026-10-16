@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "create:block/copper_casing",
+    "north": "create_em:block/state_connector_front_out",
+    "south": "create_em:block/state_connector_back",
+    "east": "create:block/copper_casing",
+    "west": "create:block/copper_casing",
+    "up": "create:block/copper_casing",
+    "down": "create:block/copper_casing"
+  }
+}

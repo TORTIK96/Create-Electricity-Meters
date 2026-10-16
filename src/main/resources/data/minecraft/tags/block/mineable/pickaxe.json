@@ -15,6 +15,7 @@
     "create_em:electrifier",
     "create_em:power_cable",
     "create_em:knife_switch",
-    "create_em:public_meter"
+    "create_em:public_meter",
+    "create_em:state_connector"
   ]
 }

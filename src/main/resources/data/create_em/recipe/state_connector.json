@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "create:copper_sheet"
+    },
+    "L": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "A": {
+      "item": "create:copper_casing"
+    }
+  },
+  "pattern": [
+    "CLC",
+    "LAL",
+    "CLC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_em:state_connector"
+  }
+}
