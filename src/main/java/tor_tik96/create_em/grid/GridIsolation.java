@@ -71,7 +71,13 @@ public final class GridIsolation {
         if (marks.isEmpty()) return null;
         GridMarks.Mark own = marks.at(state, pos);
         GridMarks.Mark near = side == null ? null : marks.at(sl, pos.relative(side));
-        if (own != null) return near != null && near.owner().equals(own.owner()) ? null : DEAD;
+        if (own != null) {
+            if (near != null && near.owner().equals(own.owner())) return null;
+            // госконнектор того же хозяина — тоже свой (он сам решает, пропускать ли)
+            if (side != null && sl.getBlockEntity(pos.relative(side)) instanceof StateConnectorBlockEntity c
+                    && own.owner().equals(c.getOwner())) return null;
+            return DEAD;
+        }
         if (near != null) return state.is(EMRegistry.STATE_CONNECTOR.get()) ? null : DEAD;
         return null;
     }
@@ -99,6 +105,7 @@ public final class GridIsolation {
 
     /** Блок сменил статус — чужие провода должны заново спросить и его, и соседей. */
     public static void invalidate(Level level, BlockPos pos) {
+        tor_tik96.create_em.power.PowerCableBlockEntity.invalidateNetworks();
         level.invalidateCapabilities(pos);
         for (Direction d : Direction.values()) level.invalidateCapabilities(pos.relative(d));
     }
@@ -139,7 +146,8 @@ public final class GridIsolation {
                 return;
             }
             marks.unmark(pos);
-            if (!player.isCreative())
+            tor_tik96.create_em.power.PowerCableBlockEntity.invalidateNetworks();
+            if (!player.isCreative() && !(state.getBlock() instanceof tor_tik96.create_em.power.PowerCableBlock))
                 Block.popResource(level, pos, new ItemStack(EMRegistry.STATE_MARK.get()));
             invalidate(level, pos);
         }

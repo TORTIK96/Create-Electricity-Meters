@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Проходной узел ({@link Relay}) между промаркированным устройством (спереди) и обычной клеммой (сзади).
- * Работает, только если устройство спереди без маркировки или под маркировкой хозяина коннектора.
+ * Проходной узел ({@link Relay}) с выбором направления между двумя госблоками хозяина:
+ * маркированными устройствами или другими его госконнекторами. С обычными блоками не работает.
  */
 public class StateConnectorBlockEntity extends SmartBlockEntity {
     private static final int MAX = Integer.MAX_VALUE / 2;
@@ -71,7 +71,7 @@ public class StateConnectorBlockEntity extends SmartBlockEntity {
         return null;
     }
 
-    /** Чужое устройство (под чужой маркировкой) — не работаем ни в какую сторону. */
+    /** Работаем, только если с обеих сторон — госблоки своего хозяина (маркированные блоки или его госконнекторы). */
     private boolean allowed() {
         if (!(level instanceof ServerLevel sl) || owner == null) return false;
         GridMarks marks = GridMarks.get(sl);
@@ -79,8 +79,10 @@ public class StateConnectorBlockEntity extends SmartBlockEntity {
     }
 
     private boolean ok(GridMarks marks, ServerLevel sl, BlockPos pos) {
+        if (!sl.isLoaded(pos)) return false;
+        if (sl.getBlockEntity(pos) instanceof StateConnectorBlockEntity other) return owner.equals(other.owner);
         GridMarks.Mark m = marks.at(sl, pos);
-        return m == null || m.owner().equals(owner);
+        return m != null && m.owner().equals(owner);
     }
 
     @Nullable private IEnergyStorage front() { return neighbor(facing()); }

@@ -33,7 +33,7 @@ public class PowerCableBlockEntity extends BlockEntity {
         for (Direction d : Direction.values()) faces.put(d, new Face(d));
     }
 
-    static void invalidateNetworks() {
+    public static void invalidateNetworks() {
         VERSION++;
     }
 
@@ -66,6 +66,9 @@ public class PowerCableBlockEntity extends BlockEntity {
             Deque<BlockPos> queue = new ArrayDeque<>();
             queue.add(start);
             seen.add(start);
+            // госкабель и обычный кабель — разные сети, даже если касаются
+            tor_tik96.create_em.grid.GridMarks marks = tor_tik96.create_em.grid.GridMarks.get(level);
+            UUID owner = ownerAt(marks, level, start);
             while (!queue.isEmpty() && seen.size() < 4096) {
                 BlockPos p = queue.poll();
                 BlockState st = level.getBlockState(p);
@@ -74,7 +77,7 @@ public class PowerCableBlockEntity extends BlockEntity {
                     if (!st.getValue(PowerCableBlock.PROPS.get(d))) continue;
                     BlockPos np = p.relative(d);
                     if (level.getBlockState(np).getBlock() instanceof PowerCableBlock) {
-                        if (seen.add(np)) queue.add(np);
+                        if (Objects.equals(owner, ownerAt(marks, level, np)) && seen.add(np)) queue.add(np);
                     } else if (endKeys.add(np.asLong() * 6 + d.ordinal())) {
                         net.ends.add(new End(np, BlockCapabilityCache.create(Capabilities.EnergyStorage.BLOCK, level,
                                 np, d.getOpposite())));
@@ -82,6 +85,12 @@ public class PowerCableBlockEntity extends BlockEntity {
                 }
             }
             return net;
+        }
+
+        @Nullable
+        static UUID ownerAt(tor_tik96.create_em.grid.GridMarks marks, ServerLevel level, BlockPos pos) {
+            tor_tik96.create_em.grid.GridMarks.Mark m = marks.at(level, pos);
+            return m == null ? null : m.owner();
         }
 
         /** Делим поровну, остаток — кто сколько возьмёт. */

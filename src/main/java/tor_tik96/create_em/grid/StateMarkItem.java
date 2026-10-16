@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import tor_tik96.create_em.gov.Gov;
 import tor_tik96.create_em.registry.EMRegistry;
 
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Госмаркировка. ПКМ по своему энергоблоку — изолировать: он будет принимать и отдавать FE
@@ -24,6 +24,33 @@ import java.util.UUID;
 public class StateMarkItem extends Item {
     public StateMarkItem(Properties props) {
         super(props);
+    }
+
+    /**
+     * Для силового кабеля — все соединённые кабели с той же маркировкой ({@code owner}, null — без маркировки),
+     * которыми игрок может распоряжаться. Для остального — только сам блок.
+     */
+    private static List<BlockPos> cableRun(ServerLevel level, GridMarks marks, BlockPos start, UUID owner, Player player) {
+        if (!(level.getBlockState(start).getBlock() instanceof tor_tik96.create_em.power.PowerCableBlock)) return List.of(start);
+        List<BlockPos> run = new ArrayList<>();
+        Set<BlockPos> seen = new HashSet<>(Set.of(start));
+        Deque<BlockPos> queue = new ArrayDeque<>(List.of(start));
+        while (!queue.isEmpty() && run.size() < 4096) {
+            BlockPos p = queue.poll();
+            run.add(p);
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                BlockPos np = p.relative(d);
+                if (!seen.add(np) || !level.isLoaded(np)
+                        || !(level.getBlockState(np).getBlock() instanceof tor_tik96.create_em.power.PowerCableBlock)) continue;
+                GridMarks.Mark m = marks.at(level, np);
+                if (!Objects.equals(owner, m == null ? null : m.owner())) continue;
+                UUID placer = marks.placer(np);
+                boolean mine = owner == null ? player.getUUID().equals(placer) || Gov.isOperator(player)
+                        : GridIsolation.canManage(player, owner, placer);
+                if (mine) queue.add(np);
+            }
+        }
+        return run;
     }
 
     @Override
@@ -39,8 +66,10 @@ public class StateMarkItem extends Item {
 
         if (mark != null) {
             if (player.isShiftKeyDown() && GridIsolation.canManage(player, mark.owner(), placer)) {
-                marks.unmark(pos);
-                GridIsolation.invalidate(level, pos);
+                for (BlockPos p : cableRun(level, marks, pos, mark.owner(), player)) {
+                    marks.unmark(p);
+                    GridIsolation.invalidate(level, p);
+                }
                 if (!player.isCreative()) player.getInventory().placeItemBackInInventory(new ItemStack(this));
                 level.playSound(null, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1f, 0.8f);
                 player.displayClientMessage(Component.translatable("create_em.mark.removed"), true);
@@ -64,8 +93,11 @@ public class StateMarkItem extends Item {
             return InteractionResult.FAIL;
         }
 
-        marks.mark(pos, state, player.getUUID(), player.getGameProfile().getName());
-        GridIsolation.invalidate(level, pos);
+        // силовой кабель маркируется целиком — весь соединённый пролёт ваших кабелей одной маркировкой
+        for (BlockPos p : cableRun(level, marks, pos, null, player)) {
+            marks.mark(p, level.getBlockState(p), player.getUUID(), player.getGameProfile().getName());
+            GridIsolation.invalidate(level, p);
+        }
         if (!player.isCreative()) ctx.getItemInHand().shrink(1);
         level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 1f, 0.7f);
         level.playSound(null, pos, SoundEvents.CHAIN_PLACE, SoundSource.BLOCKS, 0.6f, 1.3f);
