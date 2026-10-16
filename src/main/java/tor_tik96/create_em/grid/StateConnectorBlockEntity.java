@@ -30,7 +30,8 @@ import java.util.*;
  * </ul>
  * Работает только с госблоками своего хозяина. Госпровод подключает только хозяин.
  */
-public class StateConnectorBlockEntity extends SmartBlockEntity implements LineNode {
+public class StateConnectorBlockEntity extends SmartBlockEntity implements LineNode,
+        com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation {
     private static final int MAX = Integer.MAX_VALUE / 2;
     private static final int MAX_NET = 256;
 
@@ -129,7 +130,7 @@ public class StateConnectorBlockEntity extends SmartBlockEntity implements LineN
             StateConnectorBlockEntity c = queue.poll();
             if (c != this && !c.isOut() && c.allowed()) {
                 IEnergyStorage t = c.front();
-                if (t != null && t.canReceive()) sinks.add(t);
+                if (t != null && t.canReceive()) sinks.add(new Sink(c, t));
             }
             for (BlockPos p : c.links.get()) {
                 if (!seen.add(p) || !sl.isLoaded(p)) continue;
@@ -137,6 +138,21 @@ public class StateConnectorBlockEntity extends SmartBlockEntity implements LineN
             }
         }
         return sinks.isEmpty() ? null : new Split(sinks);
+    }
+
+    /** Приёмник в сети: его устройство и сам коннектор (для счёта в очках). */
+    private record Sink(StateConnectorBlockEntity conn, IEnergyStorage device) implements IEnergyStorage {
+        @Override
+        public int receiveEnergy(int amount, boolean simulate) {
+            int got = device.receiveEnergy(amount, simulate);
+            if (!simulate) conn.receivedFe += got;
+            return got;
+        }
+        @Override public int extractEnergy(int amount, boolean simulate) { return 0; }
+        @Override public int getEnergyStored() { return device.getEnergyStored(); }
+        @Override public int getMaxEnergyStored() { return device.getMaxEnergyStored(); }
+        @Override public boolean canExtract() { return false; }
+        @Override public boolean canReceive() { return device.canReceive(); }
     }
 
     /** Несколько потребителей как один: поровну, недобор одних — остальным. */
@@ -181,15 +197,82 @@ public class StateConnectorBlockEntity extends SmartBlockEntity implements LineN
         if (level != null) GridIsolation.invalidate(level, worldPosition);
     }
 
+    // ---------- диагностика для очков ----------
+    /** Что мешает работать (синхронизируется). */
+    public enum Status { OK, NO_OWNER, FRONT_NONE, FRONT_UNMARKED, FRONT_FOREIGN, BACK_BAD, NO_RECEIVERS, NO_SUPPLY }
+
+    private Status status = Status.OK;
+    private int receivers;     // сколько приёмников в сети (для «из устройства» с проводом)
+    private long windowFe;
+    private int windowTicks;
+    private float flow;        // FE/t через этот коннектор
+    /** Сколько отдали в устройство «в устройство» по проводу за окно (засчитывают источники). */
+    private long receivedFe;
+
+    private Status diagnose(ServerLevel sl) {
+        if (owner == null) return Status.NO_OWNER;
+        GridMarks marks = GridMarks.get(sl);
+        BlockPos fp = worldPosition.relative(facing());
+        if (front() == null) return Status.FRONT_NONE;
+        GridMarks.Mark m = marks.at(sl, fp);
+        if (!(sl.getBlockEntity(fp) instanceof StateConnectorBlockEntity)) {
+            if (m == null) return Status.FRONT_UNMARKED;
+            if (!m.owner().equals(owner)) return Status.FRONT_FOREIGN;
+        }
+        if (!wired() && !ok(marks, sl, worldPosition.relative(facing().getOpposite()))) return Status.BACK_BAD;
+        if (wired() && isOut() && receivers == 0) return Status.NO_RECEIVERS;
+        return Status.OK;
+    }
+
     @Override
     public void tick() {
         super.tick();
-        if (!(level instanceof ServerLevel) || !allowed()) return;
-        // с госпроводом коннектор «в устройство» ничего не делает сам — его кормят коннекторы «из устройства»
-        if (wired() && !isOut()) return;
-        IEnergyStorage src = isOut() ? front() : back(), dst = isOut() ? back() : front();
-        relay.pull(src, dst, MAX);
-        relay.push(dst, MAX);
+        if (!(level instanceof ServerLevel sl)) return;
+        int moved = 0;
+        if (allowed()) {
+            if (!(wired() && !isOut())) { // «в устройство» с проводом кормят коннекторы «из устройства»
+                IEnergyStorage src = isOut() ? front() : back(), dst = isOut() ? back() : front();
+                relay.pull(src, dst, MAX);
+                moved = relay.push(dst, MAX);
+            }
+        }
+        windowFe += moved;
+        if (++windowTicks >= 20) {
+            if (wired() && isOut()) {
+                IEnergyStorage net = network();
+                receivers = net instanceof Split s ? s.targets().size() : 0;
+            }
+            long fe = wired() && !isOut() ? receivedFe : windowFe;
+            Status st = diagnose(sl);
+            if (st == Status.OK && wired() && !isOut() && fe == 0) st = Status.NO_SUPPLY;
+            float f = fe / 20f;
+            boolean changed = st != status || f != flow;
+            status = st;
+            flow = f;
+            windowFe = 0;
+            receivedFe = 0;
+            windowTicks = 0;
+            if (changed) sendData();
+        }
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<net.minecraft.network.chat.Component> tooltip, boolean isPlayerSneaking) {
+        tooltip.add(tor_tik96.create_em.meter.EnergyMeterBlockEntity.line(0, net.minecraft.network.chat.Component
+                .translatable(getBlockState().getBlock().getDescriptionId()).withStyle(net.minecraft.ChatFormatting.WHITE)));
+        tooltip.add(tor_tik96.create_em.meter.EnergyMeterBlockEntity.line(1, net.minecraft.network.chat.Component
+                .translatable(isOut() ? "create_em.connector.mode_out" : "create_em.connector.mode_in").withStyle(net.minecraft.ChatFormatting.GRAY)));
+        tooltip.add(tor_tik96.create_em.meter.EnergyMeterBlockEntity.line(1, net.minecraft.network.chat.Component
+                .translatable("create_em.connector.wires", links.size(), ownerName.isEmpty() ? "?" : ownerName).withStyle(net.minecraft.ChatFormatting.GRAY)));
+        if (wired() && isOut())
+            tooltip.add(tor_tik96.create_em.meter.EnergyMeterBlockEntity.line(1, net.minecraft.network.chat.Component
+                    .translatable("create_em.connector.receivers", receivers).withStyle(net.minecraft.ChatFormatting.GRAY)));
+        tooltip.add(tor_tik96.create_em.meter.EnergyMeterBlockEntity.line(1, net.minecraft.network.chat.Component
+                .literal(String.format("%,.0f FE/t", flow)).withStyle(net.minecraft.ChatFormatting.AQUA)));
+        tooltip.add(tor_tik96.create_em.meter.EnergyMeterBlockEntity.line(1, net.minecraft.network.chat.Component
+                .translatable("create_em.connector.status." + status.name().toLowerCase(java.util.Locale.ROOT))
+                .withStyle(status == Status.OK ? net.minecraft.ChatFormatting.GREEN : net.minecraft.ChatFormatting.GOLD)));
+        return true;
     }
 
     @Override
@@ -224,6 +307,11 @@ public class StateConnectorBlockEntity extends SmartBlockEntity implements LineN
         if (owner != null) tag.putUUID("Owner", owner);
         tag.putString("OwnerName", ownerName);
         links.save(tag);
+        if (clientPacket) {
+            tag.putInt("Status", status.ordinal());
+            tag.putFloat("Flow", flow);
+            tag.putInt("Receivers", receivers);
+        }
     }
 
     @Override
@@ -232,5 +320,10 @@ public class StateConnectorBlockEntity extends SmartBlockEntity implements LineN
         owner = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
         ownerName = tag.getString("OwnerName");
         links.load(tag);
+        if (clientPacket) {
+            status = Status.values()[Math.min(Status.values().length - 1, Math.max(0, tag.getInt("Status")))];
+            flow = tag.getFloat("Flow");
+            receivers = tag.getInt("Receivers");
+        }
     }
 }

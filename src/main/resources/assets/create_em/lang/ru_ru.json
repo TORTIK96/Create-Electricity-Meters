@@ -414,5 +414,15 @@
   "item.create_em.state_wire.tooltip.control1": "ПКМ по коннектору",
   "item.create_em.state_wire.tooltip.action1": "Первый — запомнить, второй — соединить. Shift-ПКМ в воздух — сбросить.",
   "block.create_em.state_connector.tooltip.condition2": "С госпроводом",
-  "block.create_em.state_connector.tooltip.behaviour2": "Задняя клемма отключается. «_Из устройства_» отдаёт энергию по проводу всем коннекторам «_в устройство_» сети, поровну."
+  "block.create_em.state_connector.tooltip.behaviour2": "Задняя клемма отключается. «_Из устройства_» отдаёт энергию по проводу всем коннекторам «_в устройство_» сети, поровну.",
+  "create_em.connector.wires": "Госпроводов: %s · хозяин: %s",
+  "create_em.connector.receivers": "Приёмников в сети: %s",
+  "create_em.connector.status.ok": "Работает",
+  "create_em.connector.status.no_owner": "Нет хозяина — переставьте коннектор",
+  "create_em.connector.status.front_none": "У пластины нет клеммы: устройство не принимает/не отдаёт FE с этой стороны (у АВР — входы слева и справа)",
+  "create_em.connector.status.front_unmarked": "Устройство у пластины не промаркировано",
+  "create_em.connector.status.front_foreign": "Устройство у пластины промаркировано другим игроком",
+  "create_em.connector.status.back_bad": "Без госпровода: сзади должен быть ваш госблок",
+  "create_em.connector.status.no_receivers": "На проводе нет коннекторов «в устройство», готовых принять",
+  "create_em.connector.status.no_supply": "По проводу энергия не приходит — проверьте коннектор «из устройства»"
 }
