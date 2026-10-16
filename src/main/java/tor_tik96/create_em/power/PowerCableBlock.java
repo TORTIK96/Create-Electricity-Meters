@@ -99,7 +99,10 @@ public class PowerCableBlock extends Block implements IBE<PowerCableBlockEntity>
         BlockPos np = pos.relative(dir);
         if (level.getBlockState(np).getBlock() instanceof PowerCableBlock) return true;
         if (level instanceof Level l)
-            return l.getCapability(Capabilities.EnergyStorage.BLOCK, np, dir.getOpposite()) != null;
+        {
+            var cap = l.getCapability(Capabilities.EnergyStorage.BLOCK, np, dir.getOpposite());
+            return cap != null && cap != tor_tik96.create_em.grid.GridIsolation.DEAD; // изолированный госблок — не наш
+        }
         return false;
     }
 

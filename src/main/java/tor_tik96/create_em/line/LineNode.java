@@ -23,5 +23,11 @@ public interface LineNode {
 
     @Nullable UUID getOwner();
 
+    /** Госсеть (госконнекторы, госпровод) — отдельная от сервисной линии, провода между ними не смешиваются. */
+    default boolean isStateGrid() { return false; }
+
+    /** Цвет провода (умножается на текстуру). */
+    default int wireColor() { return 0xFFFFFF; }
+
     void setOwner(@Nullable UUID owner);
 }

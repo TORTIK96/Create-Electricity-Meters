@@ -404,5 +404,15 @@
   "create_em.catalyst.mode.universal": "Универсальный",
   "create_em.catalyst.process.universal": "универсальная обработка",
   "block.create_em.electric_catalyst.tooltip.condition4": "Универсальный режим",
-  "block.create_em.electric_catalyst.tooltip.behaviour4": "_Одна линия на всё_: для каждого предмета сам выбирает обработку — еду _коптит_, что промывается — _промывает_, остальное _плавит_. Каждый предмет обрабатывается _один раз_, предметы без рецепта и еда _не сгорают_. Порядок — в конфиге."
+  "block.create_em.electric_catalyst.tooltip.behaviour4": "_Одна линия на всё_: для каждого предмета сам выбирает обработку — еду _коптит_, что промывается — _промывает_, остальное _плавит_. Каждый предмет обрабатывается _один раз_, предметы без рецепта и еда _не сгорают_. Порядок — в конфиге.",
+  "item.create_em.state_wire": "Госпровод",
+  "create_em.wire.state_only": "Госпровод соединяет только госконнекторы",
+  "create_em.wire.no_state": "К госконнектору — только госпровод",
+  "item.create_em.state_wire.tooltip.summary": "Соединяет _госконнекторы_ одного хозяина на расстоянии. Коннекторы «_из устройства_» делят энергию своих устройств поровну между коннекторами «_в устройство_» этой сети.",
+  "item.create_em.state_wire.tooltip.condition1": "Защита",
+  "item.create_em.state_wire.tooltip.behaviour1": "Подключить может только _хозяин_ коннекторов. У коннектора с госпроводом _задняя клемма отключается_ — подцепиться к нему нечем.",
+  "item.create_em.state_wire.tooltip.control1": "ПКМ по коннектору",
+  "item.create_em.state_wire.tooltip.action1": "Первый — запомнить, второй — соединить. Shift-ПКМ в воздух — сбросить.",
+  "block.create_em.state_connector.tooltip.condition2": "С госпроводом",
+  "block.create_em.state_connector.tooltip.behaviour2": "Задняя клемма отключается. «_Из устройства_» отдаёт энергию по проводу всем коннекторам «_в устройство_» сети, поровну."
 }

@@ -21,14 +21,20 @@ import tor_tik96.create_em.line.LineNode;
 public final class LineWireRenderer {
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "textures/entity/line_wire.png");
+    /** Госпровод — синяя изоляция. */
+    private static final ResourceLocation STATE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "textures/entity/state_wire.png");
     private static final float HALF_WIDTH = 0.04f; // ~1.3 px толщины
     private static final int SEGMENTS = 20;
+    /** Цвет текущего провода (рисуется только в потоке рендера). */
+    private static int color = 0xFFFFFF;
 
     public static void render(BlockEntity be, LineNode node, PoseStack pose, MultiBufferSource buffers) {
         Level level = be.getLevel();
         if (level == null || node.getLinks().isEmpty()) return;
         BlockPos origin = be.getBlockPos();
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(node.isStateGrid() ? STATE_TEXTURE : TEXTURE));
+        color = node.wireColor();
 
         Vec3 a = node.getWireAnchor();
         for (BlockPos other : node.getLinks().get()) {
@@ -86,7 +92,7 @@ public final class LineWireRenderer {
 
     private static void vertex(VertexConsumer vc, PoseStack.Pose pose, Vec3 p, float u, float v, int light) {
         vc.addVertex(pose, (float) p.x, (float) p.y, (float) p.z)
-                .setColor(255, 255, 255, 255)
+                .setColor((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 255)
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(light)

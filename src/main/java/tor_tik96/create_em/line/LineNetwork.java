@@ -42,7 +42,8 @@ public final class LineNetwork {
                 o.getLinks().remove(pos);
         }
         node.getLinks().clear();
-        if (wires > 0) Block.popResource(level, pos, new ItemStack(EMRegistry.LINE_WIRE.get(), wires));
+        if (wires > 0) Block.popResource(level, pos, new ItemStack(
+                node.isStateGrid() ? EMRegistry.STATE_WIRE.get() : EMRegistry.LINE_WIRE.get(), wires));
     }
 
     /**

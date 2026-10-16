@@ -32,7 +32,15 @@ import java.util.UUID;
  * </ul>
  */
 public class LineWireItem extends Item {
-    public LineWireItem(Properties props) { super(props); }
+    /** true — госпровод: соединяет только госконнекторы; false — провод сервисной линии. */
+    private final boolean state;
+
+    public LineWireItem(Properties props) { this(props, false); }
+
+    public LineWireItem(Properties props, boolean state) {
+        super(props);
+        this.state = state;
+    }
 
     @Override
     public InteractionResult useOn(UseOnContext ctx) {
@@ -43,6 +51,8 @@ public class LineWireItem extends Item {
         if (level.isClientSide) return InteractionResult.SUCCESS;
 
         ItemStack stack = ctx.getItemInHand();
+        if (node.isStateGrid() != state)
+            return fail(player, stack, state ? "create_em.wire.state_only" : "create_em.wire.no_state", false);
         BlockPos bound = stack.get(EMRegistry.BOUND_TO.get());
 
         String problem = checkNode(node, player);

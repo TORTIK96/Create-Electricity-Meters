@@ -43,6 +43,7 @@ public class Create_em {
                         output.accept(EMRegistry.STATE_SEAL.get());
                         output.accept(EMRegistry.STATE_MARK.get());
                         output.accept(EMRegistry.STATE_CONNECTOR_ITEM.get());
+                        output.accept(EMRegistry.STATE_WIRE.get());
                         output.accept(EMRegistry.BATTERY_ITEM.get());
                         output.accept(EMRegistry.ATS_ITEM.get());
                         output.accept(EMRegistry.KNIFE_SWITCH_ITEM.get());

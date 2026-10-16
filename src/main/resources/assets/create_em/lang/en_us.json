@@ -404,5 +404,15 @@
   "create_em.catalyst.mode.universal": "Universal",
   "create_em.catalyst.process.universal": "universal processing",
   "block.create_em.electric_catalyst.tooltip.condition4": "Universal mode",
-  "block.create_em.electric_catalyst.tooltip.behaviour4": "_One line for everything_: picks the processing per item — food is _smoked_, washable things are _washed_, the rest is _smelted_. Each item is processed _once_; items without a recipe and food _don't burn_. Order is set in the config."
+  "block.create_em.electric_catalyst.tooltip.behaviour4": "_One line for everything_: picks the processing per item — food is _smoked_, washable things are _washed_, the rest is _smelted_. Each item is processed _once_; items without a recipe and food _don't burn_. Order is set in the config.",
+  "item.create_em.state_wire": "State Wire",
+  "create_em.wire.state_only": "State wire only connects state connectors",
+  "create_em.wire.no_state": "Use state wire for state connectors",
+  "item.create_em.state_wire.tooltip.summary": "Connects _state connectors_ of one owner over a distance. Connectors set to _out of the device_ share their devices' energy evenly among the network's _into the device_ connectors.",
+  "item.create_em.state_wire.tooltip.condition1": "Protection",
+  "item.create_em.state_wire.tooltip.behaviour1": "Only the connectors' _owner_ can wire them. A wired connector's _back terminal is disabled_ — nothing to tap into.",
+  "item.create_em.state_wire.tooltip.control1": "R-Click a connector",
+  "item.create_em.state_wire.tooltip.action1": "First click binds, second connects. Shift + R-Click in the air to reset.",
+  "block.create_em.state_connector.tooltip.condition2": "With state wire",
+  "block.create_em.state_connector.tooltip.behaviour2": "The back terminal is disabled. _Out of the device_ sends energy over the wire to all _into the device_ connectors in the network, evenly."
 }

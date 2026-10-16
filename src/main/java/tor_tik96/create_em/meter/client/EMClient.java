@@ -31,6 +31,7 @@ public final class EMClient {
         e.registerBlockEntityRenderer(EMRegistry.TRANSFORMER_BE.get(), LineNodeRenderer::new);
         e.registerBlockEntityRenderer(EMRegistry.LINE_CONNECTOR_BE.get(), LineNodeRenderer::new);
         e.registerBlockEntityRenderer(EMRegistry.LINE_CONVERTER_BE.get(), LineNodeRenderer::new);
+        e.registerBlockEntityRenderer(EMRegistry.STATE_CONNECTOR_BE.get(), LineNodeRenderer::new);
         // предметы частоты на передатчике рисует рендерер Create
         e.registerBlockEntityRenderer(EMRegistry.TUNED_LINK_BE.get(), tor_tik96.create_em.link.client.TunedLinkRenderer::new);
     }

@@ -182,6 +182,8 @@ public final class EMRegistry {
             ITEMS.registerSimpleBlockItem("billing_terminal", TERMINAL, new Item.Properties());
     public static final DeferredItem<LineWireItem> LINE_WIRE =
             ITEMS.register("line_wire", () -> new LineWireItem(new Item.Properties()));
+    public static final DeferredItem<LineWireItem> STATE_WIRE =
+            ITEMS.register("state_wire", () -> new LineWireItem(new Item.Properties(), true));
     public static final DeferredItem<BlockItem> STATE_SUBSTATION_ITEM =
             ITEMS.registerSimpleBlockItem("state_substation", STATE_SUBSTATION, new Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC));
     public static final DeferredItem<tor_tik96.create_em.gov.StateSealItem> STATE_SEAL =
@@ -316,6 +318,7 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, KNIFE_SWITCH_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, STATE_CONNECTOR_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, LINE_CONVERTER_BE.get(), (be, side) -> be.port(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, METER_BE.get(), (be, side) -> be.outputPort(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
     }

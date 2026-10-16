@@ -43,7 +43,7 @@ import java.util.function.Supplier;
 public final class GridIsolation {
     private static final ThreadLocal<int[]> BYPASS = ThreadLocal.withInitial(() -> new int[1]);
     /** Ничего не принимает и не отдаёт. */
-    private static final IEnergyStorage DEAD = new EnergyStorage(0, 0, 0);
+    public static final IEnergyStorage DEAD = new EnergyStorage(0, 0, 0);
 
     public static void init(IEventBus modBus) {
         modBus.addListener(EventPriority.HIGHEST, GridIsolation::registerCaps);
@@ -76,10 +76,19 @@ public final class GridIsolation {
             // госконнектор того же хозяина — тоже свой (он сам решает, пропускать ли)
             if (side != null && sl.getBlockEntity(pos.relative(side)) instanceof StateConnectorBlockEntity c
                     && own.owner().equals(c.getOwner())) return null;
-            return DEAD;
+            return deadIfReal(level, pos, side);
         }
-        if (near != null) return state.is(EMRegistry.STATE_CONNECTOR.get()) ? null : DEAD;
+        if (near != null) return state.is(EMRegistry.STATE_CONNECTOR.get()) ? null : deadIfReal(level, pos, side);
         return null;
+    }
+
+    /**
+     * «Мёртвая» клемма — только там, где у блока есть настоящая. Иначе воздух и любой блок без FE
+     * рядом с маркированным вдруг «обзаводились» клеммой, и кабель тянулся к ним во все стороны.
+     */
+    @Nullable
+    private static IEnergyStorage deadIfReal(Level level, BlockPos pos, @Nullable Direction side) {
+        return bypass(() -> level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, side)) != null ? DEAD : null;
     }
 
     /** Выполнить в обход изоляции (только для госконнектора и проверок). */

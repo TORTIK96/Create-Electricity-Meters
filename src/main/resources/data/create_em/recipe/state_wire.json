@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "K": {
+      "item": "minecraft:dried_kelp"
+    },
+    "L": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "C": {
+      "item": "create:copper_sheet"
+    }
+  },
+  "pattern": [
+    "KLK",
+    "CCC",
+    "KKK"
+  ],
+  "result": {
+    "count": 8,
+    "id": "create_em:state_wire"
+  }
+}

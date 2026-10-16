@@ -124,6 +124,15 @@ public class EnergyMeterBlockEntity extends BlockEntity implements LineNode, tor
         return (int) Math.min(getTier().bufferSize(), Math.max(256L, 2L * lastSent));
     }
 
+    /** Клемма выхода: сама ничего не принимает и не отдаёт — энергию счётчик толкает сам (с учётом и лимитом). */
+    private static final IEnergyStorage OUTPUT_TERMINAL = new net.neoforged.neoforge.energy.EnergyStorage(0, 0, 0);
+
+    /** Клеммы есть только на выходах — сзади и снизу. Нужны, чтобы кабели «видели» счётчик. */
+    @Nullable
+    public IEnergyStorage outputPort(@Nullable Direction side) {
+        return side == Direction.DOWN || side == getBlockState().getValue(FACING).getOpposite() ? OUTPUT_TERMINAL : null;
+    }
+
     /** Приём энергии с линии: сколько влезло в буфер. */
     @Override
     public int acceptFromLine(int amount) {

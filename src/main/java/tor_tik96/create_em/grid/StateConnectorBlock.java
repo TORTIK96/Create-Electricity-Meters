@@ -101,6 +101,7 @@ public class StateConnectorBlock extends Block implements IBE<StateConnectorBloc
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
+        if (!state.is(newState.getBlock())) tor_tik96.create_em.line.LineNetwork.onRemoved(level, pos); // госпровода — на землю
         IBE.onRemove(state, level, pos, newState);
     }
 
