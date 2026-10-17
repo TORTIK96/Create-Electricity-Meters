@@ -114,15 +114,23 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         return level.getBlockEntity(catalyst) instanceof ElectricCatalystBlockEntity c ? c : null;
     }
 
-    /** Грань, от которой уходит лента: сосед — лента, которая едет от диспетчера. */
+    /**
+     * Куда выпускать: сначала лента, которая начинается у диспетчера и едет от него;
+     * если такой нет — лента, проходящая мимо вбок (кладём сбоку, как воронка Create).
+     * Лента, которая едет в сам диспетчер, — это возврат, не выход.
+     */
     @Nullable
     private Direction outputSide() {
         if (level == null) return null;
+        Direction side = null;
         for (Direction d : Direction.Plane.HORIZONTAL) {
-            if (level.getBlockEntity(worldPosition.relative(d)) instanceof BeltBlockEntity b
-                    && b.getDirectionAwareBeltMovementSpeed() != 0 && b.getMovementFacing() == d) return d;
+            if (!(level.getBlockEntity(worldPosition.relative(d)) instanceof BeltBlockEntity b)) continue;
+            if (b.getDirectionAwareBeltMovementSpeed() == 0) continue;
+            Direction move = b.getMovementFacing();
+            if (move == d) return d;                                  // уходит от нас по прямой
+            if (move != d.getOpposite() && side == null) side = d;    // идёт мимо
         }
-        return null;
+        return side;
     }
 
     private static int processable(ProcessGateBlockEntity g, net.minecraft.world.level.Level level) {

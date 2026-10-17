@@ -457,7 +457,7 @@
   "create_em.gate.item_bound": "Dispatcher: %s, %s, %s",
   "create_em.dispatcher.gates": "Gates: %s sources, %s outputs",
   "create_em.dispatcher.active": "Now: ",
-  "create_em.dispatcher.no_belt": "No belt leading away from the dispatcher",
+  "create_em.dispatcher.no_belt": "No belt to output to: needs a moving belt next to it that runs away from or past the dispatcher (not into it)",
   "create_em.dispatcher.no_output": "No output gate — nowhere to put processed items",
   "block.create_em.process_gate.tooltip.summary": "Goes on a _chest, barrel or vault_ and connects it to a _processing dispatcher_ — no belts needed.",
   "block.create_em.process_gate.tooltip.condition1": "Role",

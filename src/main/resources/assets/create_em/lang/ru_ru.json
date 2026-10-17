@@ -457,7 +457,7 @@
   "create_em.gate.item_bound": "Диспетчер: %s, %s, %s",
   "create_em.dispatcher.gates": "Шлюзов: источников %s, выходов %s",
   "create_em.dispatcher.active": "Сейчас: ",
-  "create_em.dispatcher.no_belt": "Нет ленты, которая уходит от диспетчера",
+  "create_em.dispatcher.no_belt": "Нет ленты для выпуска: рядом нужна движущаяся лента, которая едет от диспетчера или мимо него (не в него)",
   "create_em.dispatcher.no_output": "Нет шлюза «выход» — некуда класть готовое",
   "block.create_em.process_gate.tooltip.summary": "Ставится на _сундук, бочку или хранилище_ и подключает его к _диспетчеру обработки_ — без лент.",
   "block.create_em.process_gate.tooltip.condition1": "Роль",
