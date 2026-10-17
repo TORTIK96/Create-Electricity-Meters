@@ -43,7 +43,7 @@ public class ProcessGateBlock extends Block implements IBE<ProcessGateBlockEntit
 
     static {
         for (Direction d : Direction.values())
-            SHAPES.put(d, Shapes.or(box(d, 2, 2, 0, 14, 14, 2), box(d, 4, 4, 2, 12, 12, 5)));
+            SHAPES.put(d, box(d, 0, 0, 0, 16, 16, 6)); // как воронка Create, прижатая к инвентарю
     }
 
     /** Бокс для шлюза, прижатого к инвентарю на севере. */
@@ -93,6 +93,13 @@ public class ProcessGateBlock extends Block implements IBE<ProcessGateBlockEntit
         level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.4f, 1.3f);
         player.displayClientMessage(Component.translatable(next.translationKey()).withStyle(ChatFormatting.AQUA), true);
         return InteractionResult.SUCCESS;
+    }
+
+    /** Событие блока (взмах заслонок) — в BlockEntity. */
+    @Override
+    protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
+        var be = level.getBlockEntity(pos);
+        return be != null && be.triggerEvent(id, param);
     }
 
     @Override

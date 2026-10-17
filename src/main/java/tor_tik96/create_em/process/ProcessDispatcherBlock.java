@@ -42,6 +42,12 @@ public class ProcessDispatcherBlock extends Block implements IBE<ProcessDispatch
     }
 
     @Override
+    protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
+        var be = level.getBlockEntity(pos);
+        return be != null && be.triggerEvent(id, param);
+    }
+
+    @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
         IBE.onRemove(state, level, pos, newState);
     }

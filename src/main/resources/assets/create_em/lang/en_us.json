@@ -461,7 +461,7 @@
   "create_em.dispatcher.no_output": "No output gate — nowhere to put processed items",
   "block.create_em.process_gate.tooltip.summary": "Goes on a _chest, barrel or vault_ and connects it to a _processing dispatcher_ — no belts needed.",
   "block.create_em.process_gate.tooltip.condition1": "Role",
-  "block.create_em.process_gate.tooltip.behaviour1": "_Processing_ (blasting, smoking, washing, haunting, universal) — the dispatcher takes what this mode can process. _Output_ — the dispatcher puts processed items here. The front panel colour shows the role.",
+  "block.create_em.process_gate.tooltip.behaviour1": "_Processing_ (blasting, smoking, washing, haunting, universal) — the dispatcher takes what this mode can process. _Output_ — the dispatcher puts processed items here. The coloured inset on the funnel shows the role.",
   "block.create_em.process_gate.tooltip.control1": "R-Click a dispatcher with the item",
   "block.create_em.process_gate.tooltip.action1": "_Link_ the whole stack, then place on chests.",
   "block.create_em.process_gate.tooltip.control2": "R-Click the gate",

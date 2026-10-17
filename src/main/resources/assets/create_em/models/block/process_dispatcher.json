@@ -1,6 +1,12 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "all": "create_em:block/process_dispatcher"
+    "particle": "create:block/brass_casing",
+    "up": "create_em:block/process_dispatcher",
+    "down": "create:block/brass_casing",
+    "north": "create_em:block/process_dispatcher_side",
+    "south": "create_em:block/process_dispatcher_side",
+    "east": "create_em:block/process_dispatcher_side",
+    "west": "create_em:block/process_dispatcher_side"
   }
 }

@@ -39,6 +39,23 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     private static final int BATCH = 16;
     private static final int MAX_BELTS = 64;
 
+    /** Только клиент: шторки на гранях с лентами, как у туннеля Create (индекс — Direction.ordinal). */
+    public final Flaps flaps = new Flaps(6);
+
+    private void flap(Direction side, boolean inward) {
+        if (level != null && !level.isClientSide)
+            level.blockEvent(worldPosition, getBlockState().getBlock(), side.ordinal(), inward ? 1 : 0);
+    }
+
+    @Override
+    public boolean triggerEvent(int id, int param) {
+        if (id >= 0 && id < 6) {
+            if (level != null && level.isClientSide) flaps.bump(id, param == 1);
+            return true;
+        }
+        return super.triggerEvent(id, param);
+    }
+
     /** Шлюзы, которые отметились (раз в секунду). Проверяются при каждом обращении. */
     private final Set<BlockPos> gates = new LinkedHashSet<>();
     @Nullable private BlockPos active;
@@ -140,7 +157,11 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide) return;
+        if (level != null && level.isClientSide) {
+            flaps.tick();
+            return;
+        }
+        if (level == null) return;
 
         Direction out = outputSide();
         boolean busy = loopHasItems(out);
@@ -211,6 +232,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             int fits = batch.getCount() - rest.getCount();
             if (fits <= 0) return; // лента занята
             toBelt(new TransportedItemStack(h.extractItem(i, fits, false)), out, false);
+            g.flap(false);   // выезжает из сундука
+            flap(out, false); // и из диспетчера на ленту
             return;
         }
     }
@@ -225,15 +248,24 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     /** Лента пришла в диспетчер: готовое — в выходные шлюзы, сырое — снова на ленту. */
     private ItemStack returned(TransportedItemStack t, Direction movement, boolean simulate) {
         if (level == null) return t.stack;
-        if (!ProcessSorterBlockEntity.isDone(t)) return toBelt(t, outputSide(), simulate);
-        ItemStack rest = t.stack.copy();
-        for (ProcessGateBlockEntity g : liveGates()) {
-            if (g.mode() != GateMode.OUTPUT) continue;
-            IItemHandler inv = g.inventory();
-            if (inv == null) continue;
-            rest = ItemHandlerHelper.insertItemStacked(inv, rest, simulate);
-            if (rest.isEmpty()) break;
+        Direction out = outputSide();
+        ItemStack rest;
+        if (!ProcessSorterBlockEntity.isDone(t)) {
+            rest = toBelt(t, out, simulate);
+            if (!simulate && rest.getCount() < t.stack.getCount() && out != null) flap(out, false);
+        } else {
+            rest = t.stack.copy();
+            for (ProcessGateBlockEntity g : liveGates()) {
+                if (g.mode() != GateMode.OUTPUT) continue;
+                IItemHandler inv = g.inventory();
+                if (inv == null) continue;
+                int before = rest.getCount();
+                rest = ItemHandlerHelper.insertItemStacked(inv, rest, simulate);
+                if (!simulate && rest.getCount() < before) g.flap(true); // заезжает в сундук
+                if (rest.isEmpty()) break;
+            }
         }
+        if (!simulate && rest.getCount() < t.stack.getCount()) flap(movement.getOpposite(), true); // въехало в диспетчер
         return rest;
     }
 

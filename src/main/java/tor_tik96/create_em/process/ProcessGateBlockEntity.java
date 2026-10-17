@@ -23,6 +23,8 @@ import static tor_tik96.create_em.meter.EnergyMeterBlockEntity.line;
 /** Шлюз обработки: висит на сундуке/бочке и сообщает диспетчеру о себе раз в секунду. */
 public class ProcessGateBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
     @Nullable private BlockPos dispatcher;
+    /** Только клиент: заслонки как у воронки Create. */
+    public final Flaps flaps = new Flaps(1);
     private boolean linked; // синхронизируется: диспетчер на месте и в пределах дальности
 
     public ProcessGateBlockEntity(BlockPos pos, BlockState state) {
@@ -58,10 +60,29 @@ public class ProcessGateBlockEntity extends SmartBlockEntity implements IHaveGog
         return Config.safe(Config.DISPATCHER_RANGE, 32);
     }
 
+    /** Сервер: предмет прошёл через шлюз — заслонки дёргаются у всех, кто рядом. */
+    void flap(boolean inward) {
+        if (level != null && !level.isClientSide)
+            level.blockEvent(worldPosition, getBlockState().getBlock(), 0, inward ? 1 : 0);
+    }
+
+    @Override
+    public boolean triggerEvent(int id, int param) {
+        if (id == 0) {
+            if (level != null && level.isClientSide) flaps.bump(0, param == 1);
+            return true;
+        }
+        return super.triggerEvent(id, param);
+    }
+
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide || level.getGameTime() % 20 != 0) return;
+        if (level != null && level.isClientSide) {
+            flaps.tick();
+            return;
+        }
+        if (level == null || level.getGameTime() % 20 != 0) return;
         boolean ok = false;
         if (dispatcher != null && level.isLoaded(dispatcher) && dispatcher.closerThan(worldPosition, range())
                 && level.getBlockEntity(dispatcher) instanceof ProcessDispatcherBlockEntity d) {
