@@ -110,6 +110,7 @@ public class ProcessGateBlockEntity extends SmartBlockEntity implements IHaveGog
             net.minecraft.world.item.ItemStack real = h.extractItem(i, fits, false).copy();
             real.set(EMRegistry.RAW_BATCH.get(), m.ordinal());
             belt.handleInsertion(new com.simibubi.create.content.kinetics.belt.transport.TransportedItemStack(real), Direction.DOWN, false);
+            d.released();
             flap(false);
             return;
         }

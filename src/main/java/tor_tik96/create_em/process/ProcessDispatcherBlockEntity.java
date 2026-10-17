@@ -94,9 +94,21 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         setChanged();
     }
 
+    /** Сколько партий может быть на петле сразу: не больше трети её длины, иначе замкнутая петля забивается насмерть. */
+    private int stacksOnBelts, beltSegments;
+
+    private int maxStacks() {
+        return Math.max(1, beltSegments / 3);
+    }
+
     /** Может ли этот шлюз сейчас выкладывать партию. */
     boolean mayRelease(ProcessGateBlockEntity g) {
-        return ready && g.getBlockPos().equals(active);
+        return ready && g.getBlockPos().equals(active) && stacksOnBelts < maxStacks();
+    }
+
+    /** Шлюз выложил партию — учитываем сразу, не дожидаясь следующего обхода лент. */
+    void released() {
+        stacksOnBelts++;
     }
 
     @Nullable
@@ -148,8 +160,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
      * стоит другой блок (сортировщик, депо…), смотрим ленты вокруг него. Возвращает {всего, сырых}.
      */
     private int[] itemsOnBelts(List<ProcessGateBlockEntity> live) {
-        int total = 0, raw = 0;
-        if (level == null) return new int[]{0, 0};
+        int total = 0, raw = 0, segments = 0;
+        if (level == null) return new int[]{0, 0, 0};
         Set<BlockPos> seen = new HashSet<>();
         Set<BlockPos> visitedJoints = new HashSet<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
@@ -158,6 +170,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             BlockPos p = queue.poll();
             BeltBlockEntity belt = BeltHelper.getControllerBE(level, p);
             if (belt == null || !seen.add(belt.getBlockPos())) continue;
+            segments += belt.beltLength;
             for (TransportedItemStack t : belt.getInventory().getTransportedItems()) {
                 total++;
                 if (t.stack.has(EMRegistry.RAW_BATCH.get())) raw++;
@@ -170,7 +183,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
                     for (Direction d : Direction.values()) queue.add(n.relative(d));
             }
         }
-        return new int[]{total, raw};
+        return new int[]{total, raw, segments};
     }
 
     @Override
@@ -183,6 +196,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             int[] items = itemsOnBelts(live);
             busy = items[0] > 0;
             rawOnBelts = items[1];
+            stacksOnBelts = items[0];
+            beltSegments = items[2];
         }
 
         ProcessGateBlockEntity act = active == null ? null : gate(active);
