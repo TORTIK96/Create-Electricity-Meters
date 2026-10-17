@@ -74,7 +74,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         behaviours.add(new DirectBeltInputBehaviour(this)
-                .onlyInsertWhen(movement -> movement.getOpposite() != outputSide()) // с выхода не принимаем
+                .onlyInsertWhen(movement -> movement.getOpposite() != outputSide() && movement != Direction.UP) // с выхода не принимаем
                 .setInsertionHandler(this::returned));
     }
 
@@ -124,14 +124,30 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         if (level == null) return null;
         Direction side = null;
         for (Direction d : Direction.Plane.HORIZONTAL) {
-            if (!(level.getBlockEntity(worldPosition.relative(d)) instanceof BeltBlockEntity b)) continue;
-            if (b.getDirectionAwareBeltMovementSpeed() == 0) continue;
-            Direction move = b.getMovementFacing();
-            if (move == d) return d;                                  // уходит от нас по прямой
-            if (move != d.getOpposite() && side == null) side = d;    // идёт мимо
+            int k = beltKind(d);
+            if (k == BELT_AWAY) return d;                 // уходит от нас по прямой
+            if (k == BELT_PAST && side == null) side = d; // идёт мимо
         }
+        if (side == null && beltKind(Direction.DOWN) == BELT_UNDER) side = Direction.DOWN; // лента под диспетчером
         return side;
     }
+
+    static final int BELT_NONE = 0, BELT_INTO = 1, BELT_AWAY = 2, BELT_PAST = 3, BELT_STOPPED = 4, BELT_UNDER = 5;
+    private static final Direction[] BELT_SIDES = {Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.DOWN};
+
+    /** Что за лента с этой стороны. */
+    private int beltKind(Direction d) {
+        if (level == null || !(level.getBlockEntity(worldPosition.relative(d)) instanceof BeltBlockEntity b)) return BELT_NONE;
+        if (b.getDirectionAwareBeltMovementSpeed() == 0) return BELT_STOPPED;
+        if (d == Direction.DOWN) return BELT_UNDER;
+        Direction move = b.getMovementFacing();
+        if (move == d) return BELT_AWAY;
+        if (move == d.getOpposite()) return BELT_INTO;
+        return BELT_PAST;
+    }
+
+    /** Для очков: ленты вокруг (синхронизируется). */
+    private final int[] belts = new int[BELT_SIDES.length];
 
     private static int processable(ProcessGateBlockEntity g, net.minecraft.world.level.Level level) {
         CatalystProcess m = g.mode().process;
@@ -203,6 +219,11 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             catalystFound = cat != null;
             hasBelt = out != null;
             activeMode = am;
+            for (int i = 0; i < BELT_SIDES.length; i++) {
+                int k = beltKind(BELT_SIDES[i]);
+                if (k != belts[i]) changed = true;
+                belts[i] = k;
+            }
             if (changed) sendData();
         }
     }
@@ -291,6 +312,21 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
                 : outputGates == 0 ? "create_em.dispatcher.no_output"
                 : activeMode >= 0 ? (loopBusy ? "create_em.dispatcher.working" : "create_em.dispatcher.starting")
                 : loopBusy ? "create_em.dispatcher.draining" : "create_em.dispatcher.idle";
+        var beltLine = Component.translatable("create_em.dispatcher.belts").withStyle(ChatFormatting.GRAY);
+        boolean any = false;
+        String[] sideKeys = {"north", "south", "west", "east", "down"};
+        for (int i = 0; i < BELT_SIDES.length; i++) {
+            if (belts[i] == BELT_NONE) continue;
+            if (any) beltLine.append(Component.literal(", "));
+            beltLine.append(Component.translatable("create_em.dispatcher.side." + sideKeys[i]))
+                    .append(Component.literal(" — "))
+                    .append(Component.translatable("create_em.dispatcher.belt." + belts[i])
+                            .withStyle(belts[i] == BELT_AWAY || belts[i] == BELT_PAST || belts[i] == BELT_UNDER ? ChatFormatting.GREEN
+                                    : belts[i] == BELT_INTO ? ChatFormatting.AQUA : ChatFormatting.RED));
+            any = true;
+        }
+        if (!any) beltLine.append(Component.translatable("create_em.dispatcher.belt.0").withStyle(ChatFormatting.RED));
+        tooltip.add(line(1, beltLine));
         boolean good = catalystFound && hasBelt && outputGates > 0;
         tooltip.add(line(1, Component.translatable(status).withStyle(good ? ChatFormatting.GREEN : ChatFormatting.GOLD)));
         return true;
@@ -315,6 +351,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             tag.putBoolean("CatOk", catalystFound);
             tag.putBoolean("Belt", hasBelt);
             tag.putInt("ActiveMode", activeMode);
+            tag.putIntArray("Belts", belts);
         }
     }
 
@@ -334,6 +371,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             catalystFound = tag.getBoolean("CatOk");
             hasBelt = tag.getBoolean("Belt");
             activeMode = tag.contains("ActiveMode") ? tag.getInt("ActiveMode") : -1;
+            int[] b = tag.getIntArray("Belts");
+            for (int i = 0; i < belts.length && i < b.length; i++) belts[i] = b[i];
         }
     }
 }

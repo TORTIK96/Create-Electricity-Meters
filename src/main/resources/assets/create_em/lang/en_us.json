@@ -457,7 +457,7 @@
   "create_em.gate.item_bound": "Dispatcher: %s, %s, %s",
   "create_em.dispatcher.gates": "Gates: %s sources, %s outputs",
   "create_em.dispatcher.active": "Now: ",
-  "create_em.dispatcher.no_belt": "No belt to output to: needs a moving belt next to it that runs away from or past the dispatcher (not into it)",
+  "create_em.dispatcher.no_belt": "No belt to output to: needs a moving belt right next to it (away or passing) or directly below",
   "create_em.dispatcher.no_output": "No output gate — nowhere to put processed items",
   "block.create_em.process_gate.tooltip.summary": "Goes on a _chest, barrel or vault_ and connects it to a _processing dispatcher_ — no belts needed.",
   "block.create_em.process_gate.tooltip.condition1": "Role",
@@ -465,5 +465,17 @@
   "block.create_em.process_gate.tooltip.control1": "R-Click a dispatcher with the item",
   "block.create_em.process_gate.tooltip.action1": "_Link_ the whole stack, then place on chests.",
   "block.create_em.process_gate.tooltip.control2": "R-Click the gate",
-  "block.create_em.process_gate.tooltip.action2": "Change its _role_."
+  "block.create_em.process_gate.tooltip.action2": "Change its _role_.",
+  "create_em.dispatcher.belts": "Belts: ",
+  "create_em.dispatcher.side.north": "north",
+  "create_em.dispatcher.side.south": "south",
+  "create_em.dispatcher.side.west": "west",
+  "create_em.dispatcher.side.east": "east",
+  "create_em.dispatcher.side.down": "below",
+  "create_em.dispatcher.belt.0": "none nearby",
+  "create_em.dispatcher.belt.1": "into the dispatcher (return)",
+  "create_em.dispatcher.belt.2": "away from it (output)",
+  "create_em.dispatcher.belt.3": "passing by (side output)",
+  "create_em.dispatcher.belt.4": "not moving",
+  "create_em.dispatcher.belt.5": "underneath (output)"
 }

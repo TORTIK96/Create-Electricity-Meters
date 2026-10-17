@@ -457,7 +457,7 @@
   "create_em.gate.item_bound": "Диспетчер: %s, %s, %s",
   "create_em.dispatcher.gates": "Шлюзов: источников %s, выходов %s",
   "create_em.dispatcher.active": "Сейчас: ",
-  "create_em.dispatcher.no_belt": "Нет ленты для выпуска: рядом нужна движущаяся лента, которая едет от диспетчера или мимо него (не в него)",
+  "create_em.dispatcher.no_belt": "Нет ленты для выпуска: нужна движущаяся лента вплотную сбоку (от диспетчера или мимо) или прямо под ним",
   "create_em.dispatcher.no_output": "Нет шлюза «выход» — некуда класть готовое",
   "block.create_em.process_gate.tooltip.summary": "Ставится на _сундук, бочку или хранилище_ и подключает его к _диспетчеру обработки_ — без лент.",
   "block.create_em.process_gate.tooltip.condition1": "Роль",
@@ -465,5 +465,17 @@
   "block.create_em.process_gate.tooltip.control1": "ПКМ предметом по диспетчеру",
   "block.create_em.process_gate.tooltip.action1": "_Привязать_ всю стопку, потом ставить на сундуки.",
   "block.create_em.process_gate.tooltip.control2": "ПКМ по шлюзу",
-  "block.create_em.process_gate.tooltip.action2": "Сменить _роль_."
+  "block.create_em.process_gate.tooltip.action2": "Сменить _роль_.",
+  "create_em.dispatcher.belts": "Ленты: ",
+  "create_em.dispatcher.side.north": "север",
+  "create_em.dispatcher.side.south": "юг",
+  "create_em.dispatcher.side.west": "запад",
+  "create_em.dispatcher.side.east": "восток",
+  "create_em.dispatcher.side.down": "снизу",
+  "create_em.dispatcher.belt.0": "рядом нет",
+  "create_em.dispatcher.belt.1": "в диспетчер (возврат)",
+  "create_em.dispatcher.belt.2": "от диспетчера (выход)",
+  "create_em.dispatcher.belt.3": "мимо (выход сбоку)",
+  "create_em.dispatcher.belt.4": "стоит",
+  "create_em.dispatcher.belt.5": "под диспетчером (выход)"
 }
