@@ -46,6 +46,14 @@ public final class EMRegistry {
             COMPONENTS.registerComponentType("bound_to",
                     b -> b.persistent(BlockPos.CODEC).networkSynchronized(BlockPos.STREAM_CODEC));
 
+    /**
+     * Метка партии диспетчера: «сырое, ещё не обработано своим режимом» (значение — режим, CatalystProcess.ordinal).
+     * Create при обработке создаёт новый предмет — метка с ним не переходит, так готовое и отличается от сырого.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> RAW_BATCH =
+            COMPONENTS.registerComponentType("raw_batch",
+                    b -> b.persistent(com.mojang.serialization.Codec.INT).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+
     /** Заряд аккумулятора в предмете. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> STORED_ENERGY =
             COMPONENTS.registerComponentType("stored_energy",

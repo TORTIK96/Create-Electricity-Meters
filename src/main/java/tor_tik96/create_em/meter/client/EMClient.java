@@ -24,8 +24,6 @@ public final class EMClient {
         e.register(EnergyMeterRenderer.NEEDLE);
         e.register(tor_tik96.create_em.process.client.ProcessGateRenderer.FLAP);
         e.register(tor_tik96.create_em.process.client.ProcessGateRenderer.BELT_FLAP);
-        e.register(tor_tik96.create_em.process.client.ProcessDispatcherRenderer.FLAP);
-        e.register(tor_tik96.create_em.process.client.ProcessDispatcherRenderer.FLAP_LOW);
     }
 
     @SubscribeEvent
@@ -37,7 +35,6 @@ public final class EMClient {
         e.registerBlockEntityRenderer(EMRegistry.LINE_CONVERTER_BE.get(), LineNodeRenderer::new);
         e.registerBlockEntityRenderer(EMRegistry.STATE_CONNECTOR_BE.get(), LineNodeRenderer::new);
         e.registerBlockEntityRenderer(EMRegistry.PROCESS_GATE_BE.get(), tor_tik96.create_em.process.client.ProcessGateRenderer::new);
-        e.registerBlockEntityRenderer(EMRegistry.PROCESS_DISPATCHER_BE.get(), tor_tik96.create_em.process.client.ProcessDispatcherRenderer::new);
         // предметы частоты на передатчике рисует рендерер Create
         e.registerBlockEntityRenderer(EMRegistry.TUNED_LINK_BE.get(), tor_tik96.create_em.link.client.TunedLinkRenderer::new);
     }

@@ -20,7 +20,11 @@ import java.util.List;
 
 import static tor_tik96.create_em.meter.EnergyMeterBlockEntity.line;
 
-/** Шлюз обработки: висит на сундуке/бочке и сообщает диспетчеру о себе раз в секунду. */
+/**
+ * Шлюз обработки — воронка над лентой на сундуке/бочке.
+ * Источник выкладывает партию на ленту под собой (когда диспетчер даёт очередь), помечая предметы «сырое».
+ * «Выход» снимает с ленты под собой только готовое — обработанное и без метки.
+ */
 public class ProcessGateBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
     @Nullable private BlockPos dispatcher;
     /** Только клиент: заслонки как у воронки Create. */
@@ -75,6 +79,63 @@ public class ProcessGateBlockEntity extends SmartBlockEntity implements IHaveGog
         return super.triggerEvent(id, param);
     }
 
+    public boolean hasBelt() {
+        return getBlockState().getValue(ProcessGateBlock.BELT) != GateBelt.NONE;
+    }
+
+    @Nullable
+    private ProcessDispatcherBlockEntity dispatcherBE() {
+        if (level == null || dispatcher == null || !level.isLoaded(dispatcher) || !dispatcher.closerThan(worldPosition, range())) return null;
+        return level.getBlockEntity(dispatcher) instanceof ProcessDispatcherBlockEntity d ? d : null;
+    }
+
+    /** Источник: выложить партию на ленту под собой. */
+    private void release(ProcessDispatcherBlockEntity d) {
+        CatalystProcess m = mode().process;
+        IItemHandler h = inventory();
+        if (m == null || h == null || level == null) return;
+        var belt = com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour.get(level, worldPosition.below(),
+                com.simibubi.create.content.kinetics.belt.behaviour.DirectBeltInputBehaviour.TYPE);
+        if (belt == null || !belt.canInsertFromSide(Direction.DOWN)) return;
+        for (int i = 0; i < h.getSlots(); i++) {
+            net.minecraft.world.item.ItemStack s = h.getStackInSlot(i);
+            if (s.isEmpty() || !m.canProcess(s, level)) continue;
+            net.minecraft.world.item.ItemStack batch = h.extractItem(i, 16, true);
+            if (batch.isEmpty()) continue;
+            batch = batch.copy();
+            batch.set(EMRegistry.RAW_BATCH.get(), m.ordinal()); // «сырое»: снимет только своя обработка
+            var rest = belt.handleInsertion(new com.simibubi.create.content.kinetics.belt.transport.TransportedItemStack(batch), Direction.DOWN, true);
+            int fits = batch.getCount() - rest.getCount();
+            if (fits <= 0) return; // лента под шлюзом занята
+            net.minecraft.world.item.ItemStack real = h.extractItem(i, fits, false).copy();
+            real.set(EMRegistry.RAW_BATCH.get(), m.ordinal());
+            belt.handleInsertion(new com.simibubi.create.content.kinetics.belt.transport.TransportedItemStack(real), Direction.DOWN, false);
+            flap(false);
+            return;
+        }
+    }
+
+    /** Выход: снять с ленты под собой готовое (обработано и без метки «сырое»). */
+    private void collect() {
+        IItemHandler inv = inventory();
+        if (inv == null || level == null) return;
+        var handler = com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour.get(level, worldPosition.below(),
+                com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour.TYPE);
+        if (handler == null) return;
+        handler.handleCenteredProcessingOnAllItems(.5f, t -> {
+            var R = com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour.TransportedResult.doNothing();
+            if (t.processedBy == null || t.stack.has(EMRegistry.RAW_BATCH.get())) return R; // сырое — пусть едет по кругу
+            var rest = net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(inv, t.stack.copy(), false);
+            if (rest.getCount() == t.stack.getCount()) return R;
+            flap(true);
+            if (rest.isEmpty())
+                return com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour.TransportedResult.removeItem();
+            var left = t.copy();
+            left.stack = rest;
+            return com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour.TransportedResult.convertTo(left);
+        });
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -82,7 +143,15 @@ public class ProcessGateBlockEntity extends SmartBlockEntity implements IHaveGog
             flaps.tick();
             return;
         }
-        if (level == null || level.getGameTime() % 20 != 0) return;
+        if (level == null) return;
+        if (hasBelt()) {
+            if (mode() == GateMode.OUTPUT) collect();
+            else {
+                ProcessDispatcherBlockEntity d = dispatcherBE();
+                if (d != null && d.mayRelease(this)) release(d);
+            }
+        }
+        if (level.getGameTime() % 20 != 0) return;
         boolean ok = false;
         if (dispatcher != null && level.isLoaded(dispatcher) && dispatcher.closerThan(worldPosition, range())
                 && level.getBlockEntity(dispatcher) instanceof ProcessDispatcherBlockEntity d) {
@@ -99,6 +168,8 @@ public class ProcessGateBlockEntity extends SmartBlockEntity implements IHaveGog
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         tooltip.add(line(0, Component.translatable(getBlockState().getBlock().getDescriptionId()).withStyle(ChatFormatting.WHITE)));
         tooltip.add(line(1, Component.translatable(mode().translationKey()).withStyle(ChatFormatting.AQUA)));
+        if (!hasBelt())
+            tooltip.add(line(1, Component.translatable("create_em.gate.no_belt").withStyle(ChatFormatting.GOLD)));
         tooltip.add(line(1, Component.translatable(linked ? "create_em.gate.linked" : dispatcher == null ? "create_em.gate.not_linked"
                 : "create_em.gate.lost").withStyle(linked ? ChatFormatting.GREEN : ChatFormatting.GOLD)));
         return true;

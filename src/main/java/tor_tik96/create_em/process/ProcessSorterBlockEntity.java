@@ -43,8 +43,13 @@ public class ProcessSorterBlockEntity extends SmartBlockEntity {
         return from != ProcessSorterBlock.doneSide(getBlockState()) && from != ProcessSorterBlock.rawSide(getBlockState());
     }
 
+    /**
+     * Готово: Create пометил, что вентилятор с ним закончил, и это не сырая партия диспетчера
+     * (метку «сырое» Create при обработке не переносит, а вот «этим потоком не обрабатывается» выглядит как готово).
+     */
     public static boolean isDone(TransportedItemStack t) {
-        return t.processedBy != null && t.processingTime == -1;
+        return t.processedBy != null && t.processingTime == -1
+                && !t.stack.has(tor_tik96.create_em.registry.EMRegistry.RAW_BATCH.get());
     }
 
     private ItemStack sort(TransportedItemStack t, Direction movement, boolean simulate) {
