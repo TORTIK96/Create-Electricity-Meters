@@ -82,6 +82,10 @@ public final class Config {
             .defineListAllowEmpty("catalystUniversalPriority", java.util.List.of("smoking", "blasting", "splashing", "haunting"),
                     () -> "smoking", o -> o instanceof String str && java.util.Set.of("smoking", "splashing", "haunting", "blasting").contains(str));
 
+    public static final ModConfigSpec.IntValue DISPATCHER_RANGE = BUILDER
+            .comment("Диспетчер обработки: на каком расстоянии (блоков) работают привязанные шлюзы")
+            .defineInRange("dispatcherRange", 32, 4, 256);
+
     // ---------- аккумулятор и АВР ----------
     public static final ModConfigSpec.IntValue BATTERY_CAPACITY = BUILDER
             .comment("Аккумулятор: ёмкость, FE")

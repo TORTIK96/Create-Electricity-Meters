@@ -18,6 +18,7 @@
     "create_em:public_meter",
     "create_em:state_connector",
     "create_em:line_converter",
-    "create_em:process_dispatcher"
+    "create_em:process_dispatcher",
+    "create_em:process_gate"
   ]
 }

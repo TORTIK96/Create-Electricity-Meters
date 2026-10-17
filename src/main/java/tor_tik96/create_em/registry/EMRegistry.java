@@ -153,6 +153,12 @@ public final class EMRegistry {
     public static final DeferredItem<tor_tik96.create_em.process.ProcessDispatcherItem> PROCESS_DISPATCHER_ITEM =
             ITEMS.register("process_dispatcher", () -> new tor_tik96.create_em.process.ProcessDispatcherItem(PROCESS_DISPATCHER.get(), new Item.Properties()));
 
+    public static final DeferredBlock<tor_tik96.create_em.process.ProcessGateBlock> PROCESS_GATE = BLOCKS.register("process_gate",
+            () -> new tor_tik96.create_em.process.ProcessGateBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(1.5f).sound(SoundType.COPPER).noOcclusion()));
+    public static final DeferredItem<tor_tik96.create_em.process.ProcessGateItem> PROCESS_GATE_ITEM =
+            ITEMS.register("process_gate", () -> new tor_tik96.create_em.process.ProcessGateItem(PROCESS_GATE.get(), new Item.Properties()));
+
     public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
             ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
     public static final DeferredItem<BlockItem> POWER_CABLE_ITEM =
@@ -286,6 +292,11 @@ public final class EMRegistry {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.process.ProcessDispatcherBlockEntity>> PROCESS_DISPATCHER_BE =
             BE_TYPES.register("process_dispatcher", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.process.ProcessDispatcherBlockEntity::new, PROCESS_DISPATCHER.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.process.ProcessGateBlockEntity>> PROCESS_GATE_BE =
+            BE_TYPES.register("process_gate", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.process.ProcessGateBlockEntity::new, PROCESS_GATE.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));

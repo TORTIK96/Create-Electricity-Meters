@@ -1,0 +1,142 @@
+{
+  "variants": {
+    "facing=north,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting"
+    },
+    "facing=north,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking"
+    },
+    "facing=north,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing"
+    },
+    "facing=north,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting"
+    },
+    "facing=north,mode=universal": {
+      "model": "create_em:block/process_gate_universal"
+    },
+    "facing=north,mode=output": {
+      "model": "create_em:block/process_gate_output"
+    },
+    "facing=south,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting",
+      "y": 180
+    },
+    "facing=south,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking",
+      "y": 180
+    },
+    "facing=south,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing",
+      "y": 180
+    },
+    "facing=south,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting",
+      "y": 180
+    },
+    "facing=south,mode=universal": {
+      "model": "create_em:block/process_gate_universal",
+      "y": 180
+    },
+    "facing=south,mode=output": {
+      "model": "create_em:block/process_gate_output",
+      "y": 180
+    },
+    "facing=east,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting",
+      "y": 90
+    },
+    "facing=east,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking",
+      "y": 90
+    },
+    "facing=east,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing",
+      "y": 90
+    },
+    "facing=east,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting",
+      "y": 90
+    },
+    "facing=east,mode=universal": {
+      "model": "create_em:block/process_gate_universal",
+      "y": 90
+    },
+    "facing=east,mode=output": {
+      "model": "create_em:block/process_gate_output",
+      "y": 90
+    },
+    "facing=west,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting",
+      "y": 270
+    },
+    "facing=west,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking",
+      "y": 270
+    },
+    "facing=west,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing",
+      "y": 270
+    },
+    "facing=west,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting",
+      "y": 270
+    },
+    "facing=west,mode=universal": {
+      "model": "create_em:block/process_gate_universal",
+      "y": 270
+    },
+    "facing=west,mode=output": {
+      "model": "create_em:block/process_gate_output",
+      "y": 270
+    },
+    "facing=up,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting",
+      "x": 270
+    },
+    "facing=up,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking",
+      "x": 270
+    },
+    "facing=up,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing",
+      "x": 270
+    },
+    "facing=up,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting",
+      "x": 270
+    },
+    "facing=up,mode=universal": {
+      "model": "create_em:block/process_gate_universal",
+      "x": 270
+    },
+    "facing=up,mode=output": {
+      "model": "create_em:block/process_gate_output",
+      "x": 270
+    },
+    "facing=down,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting",
+      "x": 90
+    },
+    "facing=down,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking",
+      "x": 90
+    },
+    "facing=down,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing",
+      "x": 90
+    },
+    "facing=down,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting",
+      "x": 90
+    },
+    "facing=down,mode=universal": {
+      "model": "create_em:block/process_gate_universal",
+      "x": 90
+    },
+    "facing=down,mode=output": {
+      "model": "create_em:block/process_gate_output",
+      "x": 90
+    }
+  }
+}
