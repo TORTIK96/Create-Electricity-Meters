@@ -366,6 +366,8 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CHUNK_LOADER_BE.get(), (be, side) -> be.getEnergy());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
+        // горелка вспыхача Create: лава по трубам как топливо
+        tor_tik96.create_em.compat.BurnerLava.register(event);
     }
 
     private EMRegistry() {}

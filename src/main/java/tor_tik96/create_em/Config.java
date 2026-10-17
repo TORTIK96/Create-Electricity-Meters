@@ -102,6 +102,11 @@ public final class Config {
             .comment("Диспетчер обработки: на каком расстоянии (блоков) работают привязанные шлюзы")
             .defineInRange("dispatcherRange", 32, 4, 256);
 
+    public static final ModConfigSpec.IntValue BURNER_LAVA_TICKS_PER_MB = BUILDER
+            .comment("Горелка вспыхача Create принимает лаву из труб: сколько тиков обычного нагрева даёт 1 мВ лавы",
+                    "(20 — как ведро лавы в печи: 1000 мВ = 20000 тиков). 0 — выключить приём лавы")
+            .defineInRange("burnerLavaTicksPerMb", 20, 0, 10000);
+
     // ---------- аккумулятор и АВР ----------
     public static final ModConfigSpec.IntValue BATTERY_CAPACITY = BUILDER
             .comment("Аккумулятор: ёмкость, FE")
