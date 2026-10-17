@@ -83,6 +83,10 @@ public class StateMarkItem extends Item {
             player.displayClientMessage(Component.translatable("create_em.mark.connector").withStyle(ChatFormatting.RED), true);
             return InteractionResult.FAIL;
         }
+        if (GridIsolation.isNewAge(level.getBlockEntity(pos))) {
+            player.displayClientMessage(Component.translatable("create_em.mark.new_age").withStyle(ChatFormatting.RED), false);
+            return InteractionResult.FAIL;
+        }
         if (!GridIsolation.hasEnergy(level, pos)) {
             player.displayClientMessage(Component.translatable("create_em.mark.no_energy").withStyle(ChatFormatting.RED), true);
             return InteractionResult.FAIL;

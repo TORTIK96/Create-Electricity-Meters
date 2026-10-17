@@ -119,6 +119,35 @@ public final class GridIsolation {
         tor_tik96.create_em.power.PowerCableBlockEntity.invalidateNetworks();
         level.invalidateCapabilities(pos);
         for (Direction d : Direction.values()) level.invalidateCapabilities(pos.relative(d));
+        refreshNewAge(level, pos);
+    }
+
+    // ---------- Create: New Age ----------
+    private static final String NA_CONNECTOR = "org.antarcticgardens.cna.content.electricity.connector.ElectricalConnectorBlockEntity";
+
+    /**
+     * Сеть New Age запоминает хранилища блоков, к которым прицеплены её коннекторы, и не спрашивает заново.
+     * После смены маркировки просим соседние коннекторы NA перестроить список (через рефлексию — NA может и не быть).
+     */
+    private static void refreshNewAge(Level level, BlockPos pos) {
+        for (Direction d : Direction.values()) {
+            BlockEntity be = level.getBlockEntity(pos.relative(d));
+            if (be == null || !be.getClass().getName().equals(NA_CONNECTOR)) continue;
+            try {
+                Object network = be.getClass().getMethod("getNetwork").invoke(be);
+                if (network != null) network.getClass().getMethod("updateConsumersAndSources").invoke(network);
+            } catch (ReflectiveOperationException | RuntimeException ignored) {
+                // другая версия New Age — ничего страшного, сеть перестроится сама при следующем изменении
+            }
+        }
+    }
+
+    /**
+     * Блоки New Age обмениваются энергией через свою библиотеку ESL напрямую, мимо FE NeoForge, —
+     * изоляция на них не действует. Маркировать их бессмысленно.
+     */
+    public static boolean isNewAge(@Nullable BlockEntity be) {
+        return be != null && be.getClass().getName().startsWith("org.antarcticgardens.");
     }
 
     private static boolean isProtected(ServerLevel level, BlockPos pos, BlockState state) {

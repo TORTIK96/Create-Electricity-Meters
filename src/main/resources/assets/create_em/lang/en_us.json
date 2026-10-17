@@ -487,5 +487,6 @@
   "create_em.dispatcher.power": "Usage: ",
   "create_em.dispatcher.no_power": "No power — supply FE",
   "block.create_em.process_dispatcher.tooltip.condition3": "Power",
-  "block.create_em.process_dispatcher.tooltip.behaviour3": "Runs on _FE_ (any side): a little while idle, more during a batch. Without power the catalyst goes dark and gates release nothing."
+  "block.create_em.process_dispatcher.tooltip.behaviour3": "Runs on _FE_ (any side): a little while idle, more during a batch. Without power the catalyst goes dark and gates release nothing.",
+  "create_em.mark.new_age": "Create: New Age blocks pass energy to each other directly, bypassing FE — a tag has no effect on them. Tag your own block that the New Age connector is attached to (it will stop giving and taking energy), and use state wire between state blocks."
 }
