@@ -147,6 +147,12 @@ public final class EMRegistry {
     public static final DeferredItem<BlockItem> PROCESS_SORTER_ITEM =
             ITEMS.registerSimpleBlockItem("process_sorter", PROCESS_SORTER, new Item.Properties());
 
+    public static final DeferredBlock<tor_tik96.create_em.process.ProcessDispatcherBlock> PROCESS_DISPATCHER = BLOCKS.register("process_dispatcher",
+            () -> new tor_tik96.create_em.process.ProcessDispatcherBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_YELLOW).strength(2.5f).sound(SoundType.COPPER)));
+    public static final DeferredItem<tor_tik96.create_em.process.ProcessDispatcherItem> PROCESS_DISPATCHER_ITEM =
+            ITEMS.register("process_dispatcher", () -> new tor_tik96.create_em.process.ProcessDispatcherItem(PROCESS_DISPATCHER.get(), new Item.Properties()));
+
     public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
             ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
     public static final DeferredItem<BlockItem> POWER_CABLE_ITEM =
@@ -275,6 +281,11 @@ public final class EMRegistry {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.process.ProcessSorterBlockEntity>> PROCESS_SORTER_BE =
             BE_TYPES.register("process_sorter", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.process.ProcessSorterBlockEntity::new, PROCESS_SORTER.get()).build(null));
+
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.process.ProcessDispatcherBlockEntity>> PROCESS_DISPATCHER_BE =
+            BE_TYPES.register("process_dispatcher", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.process.ProcessDispatcherBlockEntity::new, PROCESS_DISPATCHER.get()).build(null));
 
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));

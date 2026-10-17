@@ -38,6 +38,29 @@ public enum CatalystProcess implements StringRepresentable {
         };
     }
 
+    /** Тип обработки Create для этого режима (для проверки «можно ли обработать предмет»). */
+    @org.jetbrains.annotations.Nullable
+    public com.simibubi.create.content.kinetics.fan.processing.FanProcessingType fanType() {
+        return switch (this) {
+            case NONE -> null;
+            case SPLASHING -> com.simibubi.create.content.kinetics.fan.processing.AllFanProcessingTypes.SPLASHING;
+            case SMOKING -> com.simibubi.create.content.kinetics.fan.processing.AllFanProcessingTypes.SMOKING;
+            case BLASTING -> com.simibubi.create.content.kinetics.fan.processing.AllFanProcessingTypes.BLASTING;
+            case HAUNTING -> com.simibubi.create.content.kinetics.fan.processing.AllFanProcessingTypes.HAUNTING;
+            case UNIVERSAL -> tor_tik96.create_em.registry.EMRegistry.UNIVERSAL_FAN.get();
+        };
+    }
+
+    /**
+     * Обработает ли этот режим предмет. Плавка Create «может» почти всё — но сжигает то, на что нет рецепта,
+     * поэтому для неё проверяем настоящий рецепт.
+     */
+    public boolean canProcess(net.minecraft.world.item.ItemStack stack, net.minecraft.world.level.Level level) {
+        if (this == BLASTING) return UniversalFanType.canBlast(stack, level);
+        var t = fanType();
+        return t != null && t.canProcess(stack, level);
+    }
+
     public String translationKey() {
         return "create_em.catalyst.process." + name;
     }

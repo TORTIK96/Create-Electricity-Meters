@@ -52,6 +52,7 @@ public class Create_em {
                         output.accept(EMRegistry.ELECTRIFIER_ITEM.get());
                         output.accept(EMRegistry.CATALYST_ITEM.get());
                         output.accept(EMRegistry.PROCESS_SORTER_ITEM.get());
+                        output.accept(EMRegistry.PROCESS_DISPATCHER_ITEM.get());
                         output.accept(EMRegistry.TUNED_LINK_ITEM.get());
                     })
                     .build());

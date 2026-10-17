@@ -83,7 +83,7 @@ public final class UniversalFanType implements FanProcessingType {
      * Плавка Create «может» обработать почти всё — и сжигает то, на что нет рецепта, а еду сжигает
      * намеренно. Здесь берём только то, что действительно плавится и не является едой для копчения.
      */
-    private static boolean canBlast(ItemStack stack, Level level) {
+    public static boolean canBlast(ItemStack stack, Level level) {
         SingleRecipeInput in = new SingleRecipeInput(stack);
         var rm = level.getRecipeManager();
         if (rm.getRecipeFor(RecipeType.SMOKING, in, level).isPresent()) return false;

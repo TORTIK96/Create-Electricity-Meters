@@ -104,8 +104,24 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
                 0.9f + level.random.nextFloat() * 0.2f);
     }
 
+    /** Режим от диспетчера обработки — действует, пока диспетчер его обновляет (каждый тик). */
+    private CatalystProcess dispatched = CatalystProcess.NONE;
+    private long dispatchedUntil = -1;
+
+    /** Диспетчер обработки управляет катализатором: пока он жив, переключатель на корпусе не действует. */
+    public void dispatch(CatalystProcess p) {
+        if (level == null) return;
+        dispatched = p;
+        dispatchedUntil = level.getGameTime() + 5;
+    }
+
+    public boolean isDispatched() {
+        return level != null && level.getGameTime() <= dispatchedUntil;
+    }
+
     /** Режим, который выбран переключателем или сигналом (без учёта энергии). */
     public CatalystProcess wanted() {
+        if (isDispatched()) return dispatched;
         CatalystMode m = mode.get();
         if (m.fixed != null) return m.fixed;
         return level == null ? CatalystProcess.NONE : CatalystProcess.fromSignal(level.getBestNeighborSignal(worldPosition));
@@ -154,7 +170,8 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
 
         CatalystMode m = mode.get();
         tooltip.add(line(1, Component.translatable("create_em.catalyst.tooltip.switch").withStyle(LABEL)
-                .append(Component.translatable(m.getTranslationKey()).withStyle(ChatFormatting.AQUA))));
+                .append(isDispatched() ? Component.translatable("create_em.catalyst.tooltip.dispatched").withStyle(ChatFormatting.GOLD)
+                        : Component.translatable(m.getTranslationKey()).withStyle(ChatFormatting.AQUA))));
 
         CatalystProcess current = getBlockState().getValue(ElectricCatalystBlock.PROCESS);
         MutableComponent state;
