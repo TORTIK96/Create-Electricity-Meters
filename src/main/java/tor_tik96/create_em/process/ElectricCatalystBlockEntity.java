@@ -193,9 +193,16 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
             setChanged();
         }
 
+        /**
+         * Запас — только на секунду работы в выбранном режиме, а выключенный не берёт ничего.
+         * Раньше буфер был на 20 000 FE: энергия, оплаченная через счётчик одним игроком,
+         * оставалась в катализаторе, и ею потом бесплатно пользовался следующий.
+         */
         @Override
         public int getMaxEnergyStored() {
-            return Config.CATALYST_CAPACITY.get();
+            int max = Config.CATALYST_CAPACITY.get();
+            if (level == null || mode == null) return max;
+            return (int) Math.min(max, (long) wanted().cost() * START_RESERVE_TICKS);
         }
 
         @Override

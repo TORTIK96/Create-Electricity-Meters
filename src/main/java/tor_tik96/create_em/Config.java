@@ -52,7 +52,7 @@ public final class Config {
 
     // ---------- электрокатализатор ----------
     public static final ModConfigSpec.IntValue CATALYST_CAPACITY = BUILDER
-            .comment("Электрокатализатор: ёмкость буфера, FE")
+            .comment("Электрокатализатор: наибольшая ёмкость буфера, FE (фактически он держит запас только на секунду работы в выбранном режиме)")
             .defineInRange("catalystCapacity", 20000, 100, Integer.MAX_VALUE);
 
     public static final ModConfigSpec.IntValue CATALYST_SPLASHING = BUILDER

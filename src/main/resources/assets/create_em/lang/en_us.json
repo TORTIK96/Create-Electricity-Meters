@@ -163,7 +163,7 @@
   "block.create_em.electric_catalyst.tooltip.condition2": "By redstone signal",
   "block.create_em.electric_catalyst.tooltip.behaviour2": "_0_ - off, _1-4_ - washing, _5-8_ - smoking, _9-12_ - blasting, _13-15_ - haunting.",
   "block.create_em.electric_catalyst.tooltip.condition3": "Without energy",
-  "block.create_em.electric_catalyst.tooltip.behaviour3": "Goes dark. _Hotter_ modes use _more_ FE; to restart it stores a second of work first.",
+  "block.create_em.electric_catalyst.tooltip.behaviour3": "Goes dark. _Hotter_ modes _cost more_. Keeps only _one second_ of energy in reserve and takes _nothing_ while off — no energy piles up.",
   "block.create_em.tuned_link.tooltip.summary": "A _Redstone Link_ that sends a _set strength_ instead of its input. Any regular Create _receiver_ picks it up.",
   "block.create_em.tuned_link.tooltip.condition1": "When the input is powered",
   "block.create_em.tuned_link.tooltip.behaviour1": "Sends the set strength _0-15_ on its frequency, even if the input is only _1_.",

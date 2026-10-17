@@ -163,7 +163,7 @@
   "block.create_em.electric_catalyst.tooltip.condition2": "По сигналу редстоуна",
   "block.create_em.electric_catalyst.tooltip.behaviour2": "_0_ — выкл., _1–4_ — промывка, _5–8_ — копчение, _9–12_ — плавка, _13–15_ — призрачный огонь.",
   "block.create_em.electric_catalyst.tooltip.condition3": "Без энергии",
-  "block.create_em.electric_catalyst.tooltip.behaviour3": "Гаснет. Чем _жарче_ режим, тем больше _расход_; чтобы снова запуститься, копит запас на секунду работы.",
+  "block.create_em.electric_catalyst.tooltip.behaviour3": "Гаснет. Чем _жарче_ режим, тем больше _расход_. Держит запас только на _секунду работы_, выключенный энергию _не берёт_ — ничего не копится впрок.",
   "block.create_em.tuned_link.tooltip.summary": "_Редстоун-связь_, которая передаёт не входной сигнал, а _выставленную силу_. Принимает его обычное _звено-приёмник_ Create.",
   "block.create_em.tuned_link.tooltip.condition1": "При сигнале на входе",
   "block.create_em.tuned_link.tooltip.behaviour1": "Передаёт по частоте выставленную силу _0–15_, даже если на вход пришла _1_.",
