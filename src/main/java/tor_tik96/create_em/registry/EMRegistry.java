@@ -46,6 +46,11 @@ public final class EMRegistry {
             COMPONENTS.registerComponentType("bound_to",
                     b -> b.persistent(BlockPos.CODEC).networkSynchronized(BlockPos.STREAM_CODEC));
 
+    /** Межпространственный узел, с которым свяжется поставленный узел. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.core.GlobalPos>> LINK_TARGET =
+            COMPONENTS.registerComponentType("link_target",
+                    b -> b.persistent(net.minecraft.core.GlobalPos.CODEC).networkSynchronized(net.minecraft.core.GlobalPos.STREAM_CODEC));
+
     /**
      * Метка партии диспетчера: «сырое, ещё не обработано своим режимом» (значение — режим, CatalystProcess.ordinal).
      * Create при обработке создаёт новый предмет — метка с ним не переходит, так готовое и отличается от сырого.
@@ -173,6 +178,13 @@ public final class EMRegistry {
                     .lightLevel(s -> 7)));
     public static final DeferredItem<BlockItem> CHUNK_LOADER_ITEM =
             ITEMS.registerSimpleBlockItem("chunk_loader", CHUNK_LOADER, new Item.Properties());
+
+    public static final DeferredBlock<tor_tik96.create_em.dimlink.DimLinkBlock> DIM_LINK = BLOCKS.register("dim_link",
+            () -> new tor_tik96.create_em.dimlink.DimLinkBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE).strength(3f, 1200f).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()
+                    .lightLevel(s -> 9)));
+    public static final DeferredItem<tor_tik96.create_em.dimlink.DimLinkItem> DIM_LINK_ITEM =
+            ITEMS.register("dim_link", () -> new tor_tik96.create_em.dimlink.DimLinkItem(DIM_LINK.get(), new Item.Properties()));
 
     public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
             ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
@@ -318,6 +330,11 @@ public final class EMRegistry {
             BE_TYPES.register("chunk_loader", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.chunk.ChunkLoaderBlockEntity::new, CHUNK_LOADER.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.dimlink.DimLinkBlockEntity>> DIM_LINK_BE =
+            BE_TYPES.register("dim_link", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.dimlink.DimLinkBlockEntity::new, DIM_LINK.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -364,6 +381,7 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, METER_BE.get(), (be, side) -> be.outputPort(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PROCESS_DISPATCHER_BE.get(), (be, side) -> be.getEnergy());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CHUNK_LOADER_BE.get(), (be, side) -> be.getEnergy());
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, DIM_LINK_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
         // горелка вспыхача Create: лава по трубам как топливо

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "create:block/brass_casing",
+    "up": "create:block/brass_casing",
+    "down": "create:block/brass_casing",
+    "north": "create_em:block/dim_link_side_in",
+    "south": "create_em:block/dim_link_side_in",
+    "east": "create_em:block/dim_link_side_in",
+    "west": "create_em:block/dim_link_side_in"
+  }
+}

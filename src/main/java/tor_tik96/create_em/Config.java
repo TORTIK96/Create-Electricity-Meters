@@ -102,6 +102,23 @@ public final class Config {
             .comment("Диспетчер обработки: на каком расстоянии (блоков) работают привязанные шлюзы")
             .defineInRange("dispatcherRange", 32, 4, 256);
 
+    // ---------- межпространственный узел ----------
+    public static final ModConfigSpec.IntValue DIM_LINK_MAX_TRANSFER = BUILDER
+            .comment("Межпространственный узел: сколько FE/t пара может передать")
+            .defineInRange("dimLinkMaxTransfer", 2048, 1, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue DIM_LINK_LOSS_PERCENT = BUILDER
+            .comment("Межпространственный узел: потери при передаче, % (из 100 FE до второго конца доходит 100 - потери)")
+            .defineInRange("dimLinkLossPercent", 10, 0, 90);
+
+    public static final ModConfigSpec.IntValue DIM_LINK_UPKEEP = BUILDER
+            .comment("Межпространственный узел: плата за держание канала, FE/t — берётся с передающего конца, пока канал открыт")
+            .defineInRange("dimLinkUpkeepFe", 32, 0, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.BooleanValue DIM_LINK_SAME_DIMENSION = BUILDER
+            .comment("Межпространственный узел: работает ли пара внутри одного измерения (по умолчанию нет — для этого есть провода и линии)")
+            .define("dimLinkSameDimension", false);
+
     public static final ModConfigSpec.IntValue BURNER_LAVA_TICKS_PER_MB = BUILDER
             .comment("Горелка вспыхача Create принимает лаву из труб: сколько тиков обычного нагрева даёт 1 мВ лавы",
                     "(20 — как ведро лавы в печи: 1000 мВ = 20000 тиков). 0 — выключить приём лавы")

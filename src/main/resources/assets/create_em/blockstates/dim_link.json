@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "out=false": {
+      "model": "create_em:block/dim_link_in"
+    },
+    "out=true": {
+      "model": "create_em:block/dim_link_out"
+    }
+  }
+}

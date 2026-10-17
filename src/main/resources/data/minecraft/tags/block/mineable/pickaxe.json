@@ -20,6 +20,7 @@
     "create_em:line_converter",
     "create_em:process_dispatcher",
     "create_em:process_gate",
-    "create_em:chunk_loader"
+    "create_em:chunk_loader",
+    "create_em:dim_link"
   ]
 }
