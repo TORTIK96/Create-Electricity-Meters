@@ -68,7 +68,7 @@ public final class UniversalFanType implements FanProcessingType {
         return null;
     }
 
-    private static final List<String> DEFAULT_ORDER = List.of("smoking", "splashing", "haunting", "blasting");
+    private static final List<String> DEFAULT_ORDER = List.of("smoking", "blasting", "splashing", "haunting");
 
     /** Конфиг сервера; на клиенте до синхронизации его может не быть — тогда порядок по умолчанию. */
     private static List<? extends String> order() {

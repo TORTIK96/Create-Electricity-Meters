@@ -78,8 +78,8 @@ public final class Config {
     public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> CATALYST_UNIVERSAL_ORDER = BUILDER
             .comment("Электрокатализатор, универсальный режим: в каком порядке пробовать обработки для предмета.",
                     "smoking — копчение, splashing — промывка, haunting — призрачный огонь, blasting — плавка.",
-                    "Например, чтобы дроблёную руду плавить, а не промывать, поставьте blasting раньше splashing.")
-            .defineListAllowEmpty("catalystUniversalOrder", java.util.List.of("smoking", "splashing", "haunting", "blasting"),
+                    "Если у предмета несколько рецептов, побеждает первый: например, булыжник плавится в камень, а не становится чернитом.")
+            .defineListAllowEmpty("catalystUniversalPriority", java.util.List.of("smoking", "blasting", "splashing", "haunting"),
                     () -> "smoking", o -> o instanceof String str && java.util.Set.of("smoking", "splashing", "haunting", "blasting").contains(str));
 
     // ---------- аккумулятор и АВР ----------
