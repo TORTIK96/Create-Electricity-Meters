@@ -167,6 +167,13 @@ public final class EMRegistry {
     public static final DeferredItem<tor_tik96.create_em.process.ProcessGateItem> PROCESS_GATE_ITEM =
             ITEMS.register("process_gate", () -> new tor_tik96.create_em.process.ProcessGateItem(PROCESS_GATE.get(), new Item.Properties()));
 
+    public static final DeferredBlock<tor_tik96.create_em.chunk.ChunkLoaderBlock> CHUNK_LOADER = BLOCKS.register("chunk_loader",
+            () -> new tor_tik96.create_em.chunk.ChunkLoaderBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE).strength(3f, 1200f).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()
+                    .lightLevel(s -> 7)));
+    public static final DeferredItem<BlockItem> CHUNK_LOADER_ITEM =
+            ITEMS.registerSimpleBlockItem("chunk_loader", CHUNK_LOADER, new Item.Properties());
+
     public static final DeferredItem<BlockItem> CAPACITOR_ITEM =
             ITEMS.registerSimpleBlockItem("capacitor", CAPACITOR, new Item.Properties());
     public static final DeferredItem<BlockItem> POWER_CABLE_ITEM =
@@ -306,6 +313,11 @@ public final class EMRegistry {
             BE_TYPES.register("process_gate", () -> BlockEntityType.Builder
                     .of(tor_tik96.create_em.process.ProcessGateBlockEntity::new, PROCESS_GATE.get()).build(null));
 
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<tor_tik96.create_em.chunk.ChunkLoaderBlockEntity>> CHUNK_LOADER_BE =
+            BE_TYPES.register("chunk_loader", () -> BlockEntityType.Builder
+                    .of(tor_tik96.create_em.chunk.ChunkLoaderBlockEntity::new, CHUNK_LOADER.get()).build(null));
+
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU =
             MENUS.register("billing_terminal", () -> new MenuType<>(TerminalMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
@@ -328,6 +340,7 @@ public final class EMRegistry {
         FAN_TYPES.register(modBus);
         modBus.addListener(EMRegistry::registerCaps);
         tor_tik96.create_em.grid.GridIsolation.init(modBus);
+        tor_tik96.create_em.chunk.ChunkLoading.init(modBus);
     }
 
     /**
@@ -350,6 +363,7 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, LINE_CONVERTER_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, METER_BE.get(), (be, side) -> be.outputPort(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PROCESS_DISPATCHER_BE.get(), (be, side) -> be.getEnergy());
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CHUNK_LOADER_BE.get(), (be, side) -> be.getEnergy());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
     }

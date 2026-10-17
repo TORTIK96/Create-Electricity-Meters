@@ -51,6 +51,7 @@ public class Create_em {
                         output.accept(EMRegistry.POWER_CABLE_ITEM.get());
                         output.accept(EMRegistry.ELECTRIFIER_ITEM.get());
                         output.accept(EMRegistry.CATALYST_ITEM.get());
+                        output.accept(EMRegistry.CHUNK_LOADER_ITEM.get());
                         output.accept(EMRegistry.PROCESS_SORTER_ITEM.get());
                         output.accept(EMRegistry.PROCESS_DISPATCHER_ITEM.get());
                         output.accept(EMRegistry.PROCESS_GATE_ITEM.get());

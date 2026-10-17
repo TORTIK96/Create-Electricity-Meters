@@ -90,6 +90,14 @@ public final class Config {
             .comment("Диспетчер обработки: расход, пока идёт партия, FE/t")
             .defineInRange("dispatcherWorkFe", 16, 0, Integer.MAX_VALUE);
 
+    public static final ModConfigSpec.IntValue CHUNK_LOADER_FE_PER_CHUNK = BUILDER
+            .comment("Загрузчик чанков: расход за каждый загруженный чанк, FE/t")
+            .defineInRange("chunkLoaderFePerChunk", 32, 0, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue CHUNK_LOADER_MAX_RADIUS = BUILDER
+            .comment("Загрузчик чанков: наибольший радиус (0 — только свой чанк, 1 — 3×3, 2 — 5×5, ...)")
+            .defineInRange("chunkLoaderMaxRadius", 2, 0, 8);
+
     public static final ModConfigSpec.IntValue DISPATCHER_RANGE = BUILDER
             .comment("Диспетчер обработки: на каком расстоянии (блоков) работают привязанные шлюзы")
             .defineInRange("dispatcherRange", 32, 4, 256);

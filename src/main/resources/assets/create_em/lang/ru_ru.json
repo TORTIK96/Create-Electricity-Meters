@@ -488,5 +488,17 @@
   "create_em.dispatcher.no_power": "Нет питания — подведите FE",
   "block.create_em.process_dispatcher.tooltip.condition3": "Питание",
   "block.create_em.process_dispatcher.tooltip.behaviour3": "Работает от _FE_ (с любой стороны): немного в ожидании, больше во время партии. Без энергии катализатор гаснет, шлюзы ничего не выкладывают.",
-  "create_em.mark.new_age": "Блоки Create: New Age передают энергию друг другу напрямую, мимо FE, — маркировка на них не действует. Маркируйте свой блок, к которому подключён коннектор New Age (он перестанет отдавать и принимать), а между госблоками тяните госпровод."
+  "create_em.mark.new_age": "Блоки Create: New Age передают энергию друг другу напрямую, мимо FE, — маркировка на них не действует. Маркируйте свой блок, к которому подключён коннектор New Age (он перестанет отдавать и принимать), а между госблоками тяните госпровод.",
+  "block.create_em.chunk_loader": "Загрузчик чанков",
+  "create_em.chunk_loader.area": "Область",
+  "create_em.chunk_loader.area_row": "Чанков вокруг",
+  "create_em.chunk_loader.tooltip.area": "Область: ",
+  "create_em.chunk_loader.tooltip.usage": "Расход: ",
+  "create_em.chunk_loader.on": "Держит чанки загруженными",
+  "create_em.chunk_loader.off": "Нет питания — чанки не держит",
+  "block.create_em.chunk_loader.tooltip.summary": "Держит чанки вокруг себя загруженными, пока на него подаётся _FE_: фермы и механизмы работают, когда рядом никого нет.",
+  "block.create_em.chunk_loader.tooltip.condition1": "Область",
+  "block.create_em.chunk_loader.tooltip.behaviour1": "_1×1_, _3×3_ или _5×5_ чанков — колёсиком на боковой грани. Расход — за _каждый_ чанк.",
+  "block.create_em.chunk_loader.tooltip.condition2": "Без энергии",
+  "block.create_em.chunk_loader.tooltip.behaviour2": "Отпускает все чанки, включая _свой_. Источник энергии должен быть в загруженной области, иначе загрузчик сам себя «выключит»."
 }

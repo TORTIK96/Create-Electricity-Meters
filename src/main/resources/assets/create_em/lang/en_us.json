@@ -488,5 +488,17 @@
   "create_em.dispatcher.no_power": "No power — supply FE",
   "block.create_em.process_dispatcher.tooltip.condition3": "Power",
   "block.create_em.process_dispatcher.tooltip.behaviour3": "Runs on _FE_ (any side): a little while idle, more during a batch. Without power the catalyst goes dark and gates release nothing.",
-  "create_em.mark.new_age": "Create: New Age blocks pass energy to each other directly, bypassing FE — a tag has no effect on them. Tag your own block that the New Age connector is attached to (it will stop giving and taking energy), and use state wire between state blocks."
+  "create_em.mark.new_age": "Create: New Age blocks pass energy to each other directly, bypassing FE — a tag has no effect on them. Tag your own block that the New Age connector is attached to (it will stop giving and taking energy), and use state wire between state blocks.",
+  "block.create_em.chunk_loader": "Chunk Loader",
+  "create_em.chunk_loader.area": "Area",
+  "create_em.chunk_loader.area_row": "Chunks around",
+  "create_em.chunk_loader.tooltip.area": "Area: ",
+  "create_em.chunk_loader.tooltip.usage": "Usage: ",
+  "create_em.chunk_loader.on": "Keeping chunks loaded",
+  "create_em.chunk_loader.off": "No power — not keeping chunks",
+  "block.create_em.chunk_loader.tooltip.summary": "Keeps the chunks around it loaded while it gets _FE_: farms and machines keep working with nobody nearby.",
+  "block.create_em.chunk_loader.tooltip.condition1": "Area",
+  "block.create_em.chunk_loader.tooltip.behaviour1": "_1×1_, _3×3_ or _5×5_ chunks — use the value box on a side face. Costs FE for _each_ chunk.",
+  "block.create_em.chunk_loader.tooltip.condition2": "Without power",
+  "block.create_em.chunk_loader.tooltip.behaviour2": "Releases every chunk, _its own_ included. Keep the power source inside the loaded area, or the loader will switch itself off."
 }
