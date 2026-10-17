@@ -483,5 +483,9 @@
   "create_em.dispatcher.side.west_low": "west, below",
   "create_em.dispatcher.side.east_low": "east, below",
   "create_em.gate.no_belt": "No belt under the gate — place the chest so the gate hangs over a belt",
-  "create_em.dispatcher.raw": "Unprocessed on belts: %s"
+  "create_em.dispatcher.raw": "Unprocessed on belts: %s",
+  "create_em.dispatcher.power": "Usage: ",
+  "create_em.dispatcher.no_power": "No power — supply FE",
+  "block.create_em.process_dispatcher.tooltip.condition3": "Power",
+  "block.create_em.process_dispatcher.tooltip.behaviour3": "Runs on _FE_ (any side): a little while idle, more during a batch. Without power the catalyst goes dark and gates release nothing."
 }

@@ -483,5 +483,9 @@
   "create_em.dispatcher.side.west_low": "запад ниже",
   "create_em.dispatcher.side.east_low": "восток ниже",
   "create_em.gate.no_belt": "Под шлюзом нет ленты — поставьте сундук так, чтобы шлюз висел над лентой",
-  "create_em.dispatcher.raw": "Сырого на лентах: %s"
+  "create_em.dispatcher.raw": "Сырого на лентах: %s",
+  "create_em.dispatcher.power": "Расход: ",
+  "create_em.dispatcher.no_power": "Нет питания — подведите FE",
+  "block.create_em.process_dispatcher.tooltip.condition3": "Питание",
+  "block.create_em.process_dispatcher.tooltip.behaviour3": "Работает от _FE_ (с любой стороны): немного в ожидании, больше во время партии. Без энергии катализатор гаснет, шлюзы ничего не выкладывают."
 }

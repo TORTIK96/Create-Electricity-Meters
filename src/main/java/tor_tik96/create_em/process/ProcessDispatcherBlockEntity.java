@@ -46,6 +46,33 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     private boolean busy;
     private boolean ready;
 
+    // ---------- питание: диспетчер — считай компьютер ----------
+    private int energy;
+    private boolean powered = true; // синхронизируется
+
+    private static int idleCost() { return tor_tik96.create_em.Config.safe(tor_tik96.create_em.Config.DISPATCHER_IDLE_FE, 2); }
+    private static int workCost() { return tor_tik96.create_em.Config.safe(tor_tik96.create_em.Config.DISPATCHER_WORK_FE, 16); }
+
+    /** Запас — на секунду работы, как у катализатора: впрок оплаченное не копится. */
+    private static int capacity() { return workCost() * 20; }
+
+    private final net.neoforged.neoforge.energy.IEnergyStorage input = new net.neoforged.neoforge.energy.IEnergyStorage() {
+        @Override public int receiveEnergy(int max, boolean simulate) {
+            int got = Math.max(0, Math.min(max, capacity() - energy));
+            if (!simulate && got > 0) { energy += got; setChanged(); }
+            return got;
+        }
+        @Override public int extractEnergy(int max, boolean simulate) { return 0; }
+        @Override public int getEnergyStored() { return energy; }
+        @Override public int getMaxEnergyStored() { return capacity(); }
+        @Override public boolean canExtract() { return false; }
+        @Override public boolean canReceive() { return true; }
+    };
+
+    public net.neoforged.neoforge.energy.IEnergyStorage getEnergy() {
+        return input;
+    }
+
     // синхронизируется для очков
     private int sourceGates, outputGates, pending, rawOnBelts;
     private boolean catalystFound, loopBusy;
@@ -162,11 +189,17 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         if (act != null && act.mode().process == null) act = null; // шлюз переключили в «выход»
         if ((act == null || processable(act, level) == 0) && !busy) act = pickNext(live);
         active = act == null ? null : act.getBlockPos();
-        CatalystProcess mode = act == null ? CatalystProcess.NONE : act.mode().process;
+
+        // без питания диспетчер «завис»: катализатор гаснет, шлюзы ничего не выкладывают
+        int cost = act != null || busy ? workCost() : idleCost();
+        boolean nowPowered = energy >= cost;
+        if (nowPowered) { energy -= cost; setChanged(); }
+        if (nowPowered != powered) { powered = nowPowered; sendData(); }
+        CatalystProcess mode = act == null || !powered ? CatalystProcess.NONE : act.mode().process;
 
         ElectricCatalystBlockEntity cat = catalystBE();
         if (cat != null) cat.dispatch(mode);
-        ready = act != null && cat != null && cat.getBlockState().getValue(ElectricCatalystBlock.PROCESS) == mode;
+        ready = powered && act != null && cat != null && cat.getBlockState().getValue(ElectricCatalystBlock.PROCESS) == mode;
 
         if (level.getGameTime() % 10 == 0) {
             int src = 0, outs = 0;
@@ -215,11 +248,15 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
                     .append(Component.literal(" · " + pending)).withStyle(ChatFormatting.GRAY)));
         if (rawOnBelts > 0)
             tooltip.add(line(1, Component.translatable("create_em.dispatcher.raw", rawOnBelts).withStyle(ChatFormatting.GRAY)));
-        String status = !catalystFound ? "create_em.dispatcher.no_catalyst"
+        tooltip.add(line(1, Component.translatable("create_em.dispatcher.power")
+                .append(Component.literal(tor_tik96.create_em.EMFormat.fe(activeMode >= 0 || loopBusy ? workCost() : idleCost()) + "/t"))
+                .withStyle(ChatFormatting.GRAY)));
+        String status = !powered ? "create_em.dispatcher.no_power"
+                : !catalystFound ? "create_em.dispatcher.no_catalyst"
                 : outputGates == 0 ? "create_em.dispatcher.no_output"
                 : activeMode >= 0 ? (loopBusy ? "create_em.dispatcher.working" : "create_em.dispatcher.starting")
                 : loopBusy ? "create_em.dispatcher.draining" : "create_em.dispatcher.idle";
-        boolean good = catalystFound && outputGates > 0;
+        boolean good = powered && catalystFound && outputGates > 0;
         tooltip.add(line(1, Component.translatable(status).withStyle(good ? ChatFormatting.GREEN : ChatFormatting.GOLD)));
         return true;
     }
@@ -235,7 +272,9 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         int i = 0;
         for (BlockPos p : gates) g[i++] = p.asLong();
         tag.putLongArray("Gates", g);
+        tag.putInt("Energy", energy);
         if (clientPacket) {
+            tag.putBoolean("Powered", powered);
             tag.putInt("Src", sourceGates);
             tag.putInt("Outs", outputGates);
             tag.putInt("Pending", pending);
@@ -254,7 +293,9 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         lastActive = tag.contains("LastActive") ? BlockPos.of(tag.getLong("LastActive")) : null;
         gates.clear();
         for (long l : tag.getLongArray("Gates")) gates.add(BlockPos.of(l));
+        energy = Math.min(tag.getInt("Energy"), capacity());
         if (clientPacket) {
+            powered = tag.getBoolean("Powered");
             sourceGates = tag.getInt("Src");
             outputGates = tag.getInt("Outs");
             pending = tag.getInt("Pending");

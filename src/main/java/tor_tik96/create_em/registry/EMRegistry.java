@@ -349,6 +349,7 @@ public final class EMRegistry {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, STATE_CONNECTOR_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, LINE_CONVERTER_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, METER_BE.get(), (be, side) -> be.outputPort(side));
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PROCESS_DISPATCHER_BE.get(), (be, side) -> be.getEnergy());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, POWER_CABLE_BE.get(), (be, side) -> be.port(side));
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ELECTRIFIER_BE.get(), (be, side) -> be.port(side));
     }

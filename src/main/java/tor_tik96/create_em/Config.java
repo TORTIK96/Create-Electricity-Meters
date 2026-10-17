@@ -82,6 +82,14 @@ public final class Config {
             .defineListAllowEmpty("catalystUniversalPriority", java.util.List.of("smoking", "blasting", "splashing", "haunting"),
                     () -> "smoking", o -> o instanceof String str && java.util.Set.of("smoking", "splashing", "haunting", "blasting").contains(str));
 
+    public static final ModConfigSpec.IntValue DISPATCHER_IDLE_FE = BUILDER
+            .comment("Диспетчер обработки: расход в ожидании, FE/t")
+            .defineInRange("dispatcherIdleFe", 2, 0, Integer.MAX_VALUE);
+
+    public static final ModConfigSpec.IntValue DISPATCHER_WORK_FE = BUILDER
+            .comment("Диспетчер обработки: расход, пока идёт партия, FE/t")
+            .defineInRange("dispatcherWorkFe", 16, 0, Integer.MAX_VALUE);
+
     public static final ModConfigSpec.IntValue DISPATCHER_RANGE = BUILDER
             .comment("Диспетчер обработки: на каком расстоянии (блоков) работают привязанные шлюзы")
             .defineInRange("dispatcherRange", 32, 4, 256);
