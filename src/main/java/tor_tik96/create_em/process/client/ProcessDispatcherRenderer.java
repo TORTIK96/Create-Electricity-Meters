@@ -17,12 +17,23 @@ public class ProcessDispatcherRenderer implements BlockEntityRenderer<ProcessDis
     public static final ModelResourceLocation FLAP = ModelResourceLocation.standalone(
             ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "block/dispatcher_flap"));
 
+    /** Шторки, свисающие с нижнего края — когда диспетчер стоит над лентой. */
+    public static final ModelResourceLocation FLAP_LOW = ModelResourceLocation.standalone(
+            ResourceLocation.fromNamespaceAndPath(Create_em.MODID, "block/dispatcher_flap_low"));
+
     public ProcessDispatcherRenderer(BlockEntityRendererProvider.Context ctx) {}
 
     @Override
     public void render(ProcessDispatcherBlockEntity be, float pt, PoseStack ms, MultiBufferSource buffers, int light, int overlay) {
         if (be.getLevel() == null) return;
         var model = Minecraft.getInstance().getModelManager().getModel(FLAP);
+        if (be.getLevel().getBlockEntity(be.getBlockPos().below()) instanceof BeltBlockEntity below) {
+            var low = Minecraft.getInstance().getModelManager().getModel(FLAP_LOW);
+            Direction move = below.getMovementFacing();
+            for (Direction d : new Direction[]{move, move.getOpposite()})
+                FlapRenderer.render(ms, buffers, be.getBlockState(), low, 2 / 16f, -0.55f / 16f,
+                        FlapRenderer.horizontalAngle(d.getOpposite()), 0, be.flaps.get(d.ordinal(), pt), light, overlay);
+        }
         for (Direction d : Direction.Plane.HORIZONTAL) {
             if (!(be.getLevel().getBlockEntity(be.getBlockPos().relative(d)) instanceof BeltBlockEntity)) continue;
             FlapRenderer.render(ms, buffers, be.getBlockState(), model, 15 / 16f, -0.55f / 16f,

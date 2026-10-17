@@ -24,6 +24,7 @@ public final class EMClient {
         e.register(EnergyMeterRenderer.NEEDLE);
         e.register(tor_tik96.create_em.process.client.ProcessGateRenderer.FLAP);
         e.register(tor_tik96.create_em.process.client.ProcessDispatcherRenderer.FLAP);
+        e.register(tor_tik96.create_em.process.client.ProcessDispatcherRenderer.FLAP_LOW);
     }
 
     @SubscribeEvent

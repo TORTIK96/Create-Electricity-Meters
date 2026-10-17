@@ -5,6 +5,7 @@ import com.simibubi.create.content.kinetics.belt.BeltBlockEntity;
 import com.simibubi.create.content.kinetics.belt.BeltHelper;
 import com.simibubi.create.content.kinetics.belt.behaviour.DirectBeltInputBehaviour;
 import com.simibubi.create.content.kinetics.belt.transport.TransportedItemStack;
+import com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour.TransportedResult;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.ChatFormatting;
@@ -122,13 +123,13 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     @Nullable
     private Direction outputSide() {
         if (level == null) return null;
+        if (beltKind(Direction.DOWN) == BELT_UNDER) return Direction.DOWN; // как механизмы Create: стоит над лентой
         Direction side = null;
         for (Direction d : Direction.Plane.HORIZONTAL) {
             int k = beltKind(d);
             if (k == BELT_AWAY) return d;                 // уходит от нас по прямой
             if (k == BELT_PAST && side == null) side = d; // идёт мимо
         }
-        if (side == null && beltKind(Direction.DOWN) == BELT_UNDER) side = Direction.DOWN; // лента под диспетчером
         return side;
     }
 
@@ -200,6 +201,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         ElectricCatalystBlockEntity cat = catalystBE();
         if (cat != null) cat.dispatch(mode);
 
+        if (out == Direction.DOWN) collectBelow();
+
         // партия — только когда катализатор уже работает в нужном режиме
         if (act != null && out != null && cat != null && cat.getBlockState().getValue(ElectricCatalystBlock.PROCESS) == mode)
             feed(act, out);
@@ -226,6 +229,52 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             }
             if (changed) sendData();
         }
+    }
+
+    /**
+     * Диспетчер над лентой: снимаем с ленты под собой то, что уже обработано, и кладём в выходные шлюзы.
+     * Недоделанное просто едет дальше — на следующий круг петли.
+     */
+    private void collectBelow() {
+        if (level == null) return;
+        var handler = BlockEntityBehaviour.get(level, worldPosition.below(),
+                com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour.TYPE);
+        if (handler == null) return;
+        handler.handleCenteredProcessingOnAllItems(.5f, t -> {
+            if (!ProcessSorterBlockEntity.isDone(t))
+                return TransportedResult.doNothing();
+            ItemStack rest = toOutputs(t.stack, false);
+            if (rest.getCount() == t.stack.getCount())
+                return TransportedResult.doNothing();
+            beltFlap(true);
+            if (rest.isEmpty())
+                return TransportedResult.removeItem();
+            TransportedItemStack left = t.copy();
+            left.stack = rest;
+            return TransportedResult.convertTo(left);
+        });
+    }
+
+    /** Шторка над лентой: въезд (inward) — со стороны, откуда едет лента, выезд — куда. */
+    private void beltFlap(boolean inward) {
+        if (level == null || !(level.getBlockEntity(worldPosition.below()) instanceof BeltBlockEntity b)) return;
+        Direction move = b.getMovementFacing();
+        flap(inward ? move.getOpposite() : move, inward);
+    }
+
+    /** В выходные шлюзы; возвращает то, что не влезло. */
+    private ItemStack toOutputs(ItemStack stack, boolean simulate) {
+        ItemStack rest = stack.copy();
+        for (ProcessGateBlockEntity g : liveGates()) {
+            if (g.mode() != GateMode.OUTPUT) continue;
+            IItemHandler inv = g.inventory();
+            if (inv == null) continue;
+            int before = rest.getCount();
+            rest = ItemHandlerHelper.insertItemStacked(inv, rest, simulate);
+            if (!simulate && rest.getCount() < before) g.flap(true);
+            if (rest.isEmpty()) break;
+        }
+        return rest;
     }
 
     /** Следующий по кругу шлюз-источник, в котором есть что обработать. */
@@ -262,7 +311,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             if (fits <= 0) return; // лента занята
             toBelt(new TransportedItemStack(h.extractItem(i, fits, false)), out, false);
             g.flap(false);   // выезжает из сундука
-            flap(out, false); // и из диспетчера на ленту
+            if (out == Direction.DOWN) beltFlap(false);
+            else flap(out, false); // и из диспетчера на ленту
             return;
         }
     }
@@ -281,18 +331,9 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         ItemStack rest;
         if (!ProcessSorterBlockEntity.isDone(t)) {
             rest = toBelt(t, out, simulate);
-            if (!simulate && rest.getCount() < t.stack.getCount() && out != null) flap(out, false);
+            if (!simulate && rest.getCount() < t.stack.getCount() && out != null && out != Direction.DOWN) flap(out, false);
         } else {
-            rest = t.stack.copy();
-            for (ProcessGateBlockEntity g : liveGates()) {
-                if (g.mode() != GateMode.OUTPUT) continue;
-                IItemHandler inv = g.inventory();
-                if (inv == null) continue;
-                int before = rest.getCount();
-                rest = ItemHandlerHelper.insertItemStacked(inv, rest, simulate);
-                if (!simulate && rest.getCount() < before) g.flap(true); // заезжает в сундук
-                if (rest.isEmpty()) break;
-            }
+            rest = toOutputs(t.stack, simulate);
         }
         if (!simulate && rest.getCount() < t.stack.getCount()) flap(movement.getOpposite(), true); // въехало в диспетчер
         return rest;
