@@ -75,7 +75,11 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         behaviours.add(new DirectBeltInputBehaviour(this)
-                .onlyInsertWhen(movement -> movement.getOpposite() != outputSide() && movement != Direction.UP) // с выхода не принимаем
+                .onlyInsertWhen(movement -> {
+                    if (movement == Direction.UP) return false;
+                    Out o = output(); // с выхода не принимаем
+                    return o == null || !o.pos().equals(worldPosition.relative(movement.getOpposite()));
+                })
                 .setInsertionHandler(this::returned));
     }
 
@@ -115,30 +119,51 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         return level.getBlockEntity(catalyst) instanceof ElectricCatalystBlockEntity c ? c : null;
     }
 
+    /** Куда выпускать: лента, сторона вставки и грань диспетчера для шторки (null — лента под ним). */
+    record Out(BlockPos pos, Direction side, @Nullable Direction face) {}
+
     /**
-     * Куда выпускать: сначала лента, которая начинается у диспетчера и едет от него;
-     * если такой нет — лента, проходящая мимо вбок (кладём сбоку, как воронка Create).
-     * Лента, которая едет в сам диспетчер, — это возврат, не выход.
+     * Куда выпускать, по порядку:
+     * <ol>
+     *   <li>лента прямо под диспетчером (он стоит на ней, как механизмы Create);</li>
+     *   <li>лента вплотную сбоку или <b>на блок ниже сбоку</b> (как ленточная воронка Create), которая едет от него;</li>
+     *   <li>такая же лента, идущая мимо, — кладём сбоку.</li>
+     * </ol>
+     * Ленты, которые едут к диспетчеру, — возвраты.
      */
     @Nullable
-    private Direction outputSide() {
+    Out output() {
         if (level == null) return null;
-        if (beltKind(Direction.DOWN) == BELT_UNDER) return Direction.DOWN; // как механизмы Create: стоит над лентой
-        Direction side = null;
-        for (Direction d : Direction.Plane.HORIZONTAL) {
-            int k = beltKind(d);
-            if (k == BELT_AWAY) return d;                 // уходит от нас по прямой
-            if (k == BELT_PAST && side == null) side = d; // идёт мимо
-        }
-        return side;
+        BlockPos below = worldPosition.below();
+        if (beltKindAt(below, Direction.DOWN) == BELT_UNDER) return new Out(below, Direction.DOWN, null);
+        Out past = null;
+        for (int lower = 0; lower <= 1; lower++)
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                BlockPos p = worldPosition.relative(d).below(lower);
+                int k = beltKindAt(p, d);
+                if (k == BELT_AWAY) return new Out(p, d, d);
+                if (k == BELT_PAST && past == null) past = new Out(p, d, d);
+            }
+        return past;
     }
 
     static final int BELT_NONE = 0, BELT_INTO = 1, BELT_AWAY = 2, BELT_PAST = 3, BELT_STOPPED = 4, BELT_UNDER = 5;
-    private static final Direction[] BELT_SIDES = {Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.DOWN};
+    /** Для очков: 4 стороны на своём уровне, снизу и 4 стороны на блок ниже. */
+    private static final int SIDES = 9;
 
-    /** Что за лента с этой стороны. */
-    private int beltKind(Direction d) {
-        if (level == null || !(level.getBlockEntity(worldPosition.relative(d)) instanceof BeltBlockEntity b)) return BELT_NONE;
+    private BlockPos sidePos(int i) {
+        if (i < 4) return worldPosition.relative(Direction.from2DDataValue(i));
+        if (i == 4) return worldPosition.below();
+        return worldPosition.relative(Direction.from2DDataValue(i - 5)).below();
+    }
+
+    private static Direction sideDir(int i) {
+        return i == 4 ? Direction.DOWN : Direction.from2DDataValue(i < 4 ? i : i - 5);
+    }
+
+    /** Что за лента в этой точке, если смотреть от диспетчера в сторону d. */
+    private int beltKindAt(BlockPos p, Direction d) {
+        if (level == null || !(level.getBlockEntity(p) instanceof BeltBlockEntity b)) return BELT_NONE;
         if (b.getDirectionAwareBeltMovementSpeed() == 0) return BELT_STOPPED;
         if (d == Direction.DOWN) return BELT_UNDER;
         Direction move = b.getMovementFacing();
@@ -148,7 +173,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     }
 
     /** Для очков: ленты вокруг (синхронизируется). */
-    private final int[] belts = new int[BELT_SIDES.length];
+    private final int[] belts = new int[SIDES];
 
     private static int processable(ProcessGateBlockEntity g, net.minecraft.world.level.Level level) {
         CatalystProcess m = g.mode().process;
@@ -163,9 +188,9 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     }
 
     /** Есть ли что-нибудь на лентах: от выхода по цепочке, пока ленты не кончатся или не вернутся в диспетчер. */
-    private boolean loopHasItems(@Nullable Direction out) {
+    private boolean loopHasItems(@Nullable Out out) {
         if (level == null || out == null) return false;
-        BlockPos pos = worldPosition.relative(out);
+        BlockPos pos = out.pos();
         Set<BlockPos> seen = new HashSet<>();
         for (int i = 0; i < MAX_BELTS; i++) {
             BeltBlockEntity belt = BeltHelper.getControllerBE(level, pos);
@@ -188,8 +213,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         }
         if (level == null) return;
 
-        Direction out = outputSide();
-        boolean busy = loopHasItems(out);
+        Out out = output();
+        boolean busy = loopHasItems(out) || lowerReturnsBusy();
         ProcessGateBlockEntity act = active == null ? null : gate(active);
         if (act != null && act.mode().process == null) act = null; // шлюз переключили в «выход»
         if (act == null || (processable(act, level) == 0 && !busy)) {
@@ -201,7 +226,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         ElectricCatalystBlockEntity cat = catalystBE();
         if (cat != null) cat.dispatch(mode);
 
-        if (out == Direction.DOWN) collectBelow();
+        if (out != null && out.face() == null) collectBelow();
+        collectLowerReturns(out);
 
         // партия — только когда катализатор уже работает в нужном режиме
         if (act != null && out != null && cat != null && cat.getBlockState().getValue(ElectricCatalystBlock.PROCESS) == mode)
@@ -222,8 +248,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             catalystFound = cat != null;
             hasBelt = out != null;
             activeMode = am;
-            for (int i = 0; i < BELT_SIDES.length; i++) {
-                int k = beltKind(BELT_SIDES[i]);
+            for (int i = 0; i < SIDES; i++) {
+                int k = beltKindAt(sidePos(i), sideDir(i));
                 if (k != belts[i]) changed = true;
                 belts[i] = k;
             }
@@ -297,7 +323,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         return null;
     }
 
-    private void feed(ProcessGateBlockEntity g, Direction out) {
+    private void feed(ProcessGateBlockEntity g, Out out) {
         IItemHandler h = g.inventory();
         CatalystProcess m = g.mode().process;
         if (h == null || m == null) return;
@@ -311,27 +337,72 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             if (fits <= 0) return; // лента занята
             toBelt(new TransportedItemStack(h.extractItem(i, fits, false)), out, false);
             g.flap(false);   // выезжает из сундука
-            if (out == Direction.DOWN) beltFlap(false);
-            else flap(out, false); // и из диспетчера на ленту
+            if (out.face() == null) beltFlap(false);
+            else flap(out.face(), false); // и из диспетчера на ленту
             return;
         }
     }
 
-    private ItemStack toBelt(TransportedItemStack t, @Nullable Direction out, boolean simulate) {
+    private ItemStack toBelt(TransportedItemStack t, @Nullable Out out, boolean simulate) {
         if (level == null || out == null) return t.stack;
-        DirectBeltInputBehaviour belt = BlockEntityBehaviour.get(level, worldPosition.relative(out), DirectBeltInputBehaviour.TYPE);
-        if (belt == null || !belt.canInsertFromSide(out)) return t.stack;
-        return belt.handleInsertion(t.copy(), out, simulate);
+        DirectBeltInputBehaviour belt = BlockEntityBehaviour.get(level, out.pos(), DirectBeltInputBehaviour.TYPE);
+        if (belt == null || !belt.canInsertFromSide(out.side())) return t.stack;
+        return belt.handleInsertion(t.copy(), out.side(), simulate);
+    }
+
+    /** Возвраты на блок ниже (лента упирается в блок под диспетчером): есть ли на их концах предметы. */
+    private boolean lowerReturnsBusy() {
+        if (level == null) return false;
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            BlockPos p = worldPosition.relative(d).below();
+            if (beltKindAt(p, d) == BELT_INTO && level.getBlockEntity(p) instanceof BeltBlockEntity b
+                    && !b.getInventory().getTransportedItems().isEmpty()) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Возвраты на блок ниже: лента упирается в блок под диспетчером, предметы стоят у её конца —
+     * диспетчер забирает их «шторкой», как ленточная воронка Create: готовое — в выход, сырое — снова на выпуск.
+     */
+    private void collectLowerReturns(@Nullable Out out) {
+        if (level == null) return;
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            BlockPos p = worldPosition.relative(d).below();
+            if (beltKindAt(p, d) != BELT_INTO) continue;
+            var handler = BlockEntityBehaviour.get(level, p,
+                    com.simibubi.create.content.kinetics.belt.behaviour.TransportedItemStackHandlerBehaviour.TYPE);
+            if (handler == null) continue;
+            handler.handleCenteredProcessingOnAllItems(.5f, t -> {
+                ItemStack rest;
+                if (ProcessSorterBlockEntity.isDone(t)) {
+                    rest = toOutputs(t.stack, false);
+                } else {
+                    if (out == null || out.pos().equals(p)) return TransportedResult.doNothing();
+                    rest = toBelt(t, out, false);
+                    if (rest.getCount() < t.stack.getCount()) {
+                        if (out.face() == null) beltFlap(false);
+                        else flap(out.face(), false);
+                    }
+                }
+                if (rest.getCount() == t.stack.getCount()) return TransportedResult.doNothing();
+                flap(d, true);
+                if (rest.isEmpty()) return TransportedResult.removeItem();
+                TransportedItemStack left = t.copy();
+                left.stack = rest;
+                return TransportedResult.convertTo(left);
+            });
+        }
     }
 
     /** Лента пришла в диспетчер: готовое — в выходные шлюзы, сырое — снова на ленту. */
     private ItemStack returned(TransportedItemStack t, Direction movement, boolean simulate) {
         if (level == null) return t.stack;
-        Direction out = outputSide();
+        Out out = output();
         ItemStack rest;
         if (!ProcessSorterBlockEntity.isDone(t)) {
             rest = toBelt(t, out, simulate);
-            if (!simulate && rest.getCount() < t.stack.getCount() && out != null && out != Direction.DOWN) flap(out, false);
+            if (!simulate && rest.getCount() < t.stack.getCount() && out != null && out.face() != null) flap(out.face(), false);
         } else {
             rest = toOutputs(t.stack, simulate);
         }
@@ -355,8 +426,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
                 : loopBusy ? "create_em.dispatcher.draining" : "create_em.dispatcher.idle";
         var beltLine = Component.translatable("create_em.dispatcher.belts").withStyle(ChatFormatting.GRAY);
         boolean any = false;
-        String[] sideKeys = {"north", "south", "west", "east", "down"};
-        for (int i = 0; i < BELT_SIDES.length; i++) {
+        String[] sideKeys = {"south", "west", "north", "east", "down", "south_low", "west_low", "north_low", "east_low"};
+        for (int i = 0; i < SIDES; i++) {
             if (belts[i] == BELT_NONE) continue;
             if (any) beltLine.append(Component.literal(", "));
             beltLine.append(Component.translatable("create_em.dispatcher.side." + sideKeys[i]))

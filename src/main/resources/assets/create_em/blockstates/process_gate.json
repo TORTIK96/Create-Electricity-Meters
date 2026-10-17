@@ -1,146 +1,434 @@
 {
   "variants": {
-    "facing=north,mode=blasting": {
-      "model": "create_em:block/process_gate_blasting",
+    "belt=none,facing=north,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_wall",
       "y": 180
     },
-    "facing=north,mode=smoking": {
-      "model": "create_em:block/process_gate_smoking",
-      "y": 180
+    "belt=none,facing=south,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_wall"
     },
-    "facing=north,mode=splashing": {
-      "model": "create_em:block/process_gate_splashing",
-      "y": 180
-    },
-    "facing=north,mode=haunting": {
-      "model": "create_em:block/process_gate_haunting",
-      "y": 180
-    },
-    "facing=north,mode=universal": {
-      "model": "create_em:block/process_gate_universal",
-      "y": 180
-    },
-    "facing=north,mode=output": {
-      "model": "create_em:block/process_gate_output",
-      "y": 180
-    },
-    "facing=south,mode=blasting": {
-      "model": "create_em:block/process_gate_blasting"
-    },
-    "facing=south,mode=smoking": {
-      "model": "create_em:block/process_gate_smoking"
-    },
-    "facing=south,mode=splashing": {
-      "model": "create_em:block/process_gate_splashing"
-    },
-    "facing=south,mode=haunting": {
-      "model": "create_em:block/process_gate_haunting"
-    },
-    "facing=south,mode=universal": {
-      "model": "create_em:block/process_gate_universal"
-    },
-    "facing=south,mode=output": {
-      "model": "create_em:block/process_gate_output"
-    },
-    "facing=east,mode=blasting": {
-      "model": "create_em:block/process_gate_blasting",
+    "belt=none,facing=east,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_wall",
       "y": 270
     },
-    "facing=east,mode=smoking": {
-      "model": "create_em:block/process_gate_smoking",
-      "y": 270
-    },
-    "facing=east,mode=splashing": {
-      "model": "create_em:block/process_gate_splashing",
-      "y": 270
-    },
-    "facing=east,mode=haunting": {
-      "model": "create_em:block/process_gate_haunting",
-      "y": 270
-    },
-    "facing=east,mode=universal": {
-      "model": "create_em:block/process_gate_universal",
-      "y": 270
-    },
-    "facing=east,mode=output": {
-      "model": "create_em:block/process_gate_output",
-      "y": 270
-    },
-    "facing=west,mode=blasting": {
-      "model": "create_em:block/process_gate_blasting",
+    "belt=none,facing=west,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_wall",
       "y": 90
     },
-    "facing=west,mode=smoking": {
-      "model": "create_em:block/process_gate_smoking",
-      "y": 90
-    },
-    "facing=west,mode=splashing": {
-      "model": "create_em:block/process_gate_splashing",
-      "y": 90
-    },
-    "facing=west,mode=haunting": {
-      "model": "create_em:block/process_gate_haunting",
-      "y": 90
-    },
-    "facing=west,mode=universal": {
-      "model": "create_em:block/process_gate_universal",
-      "y": 90
-    },
-    "facing=west,mode=output": {
-      "model": "create_em:block/process_gate_output",
-      "y": 90
-    },
-    "facing=up,mode=blasting": {
+    "belt=none,facing=up,mode=blasting": {
       "model": "create_em:block/process_gate_blasting_vertical",
       "x": 180,
       "y": 180
     },
-    "facing=up,mode=smoking": {
+    "belt=none,facing=down,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_vertical",
+      "y": 180
+    },
+    "belt=retracted,facing=north,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_retracted",
+      "y": 180
+    },
+    "belt=retracted,facing=south,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_retracted"
+    },
+    "belt=retracted,facing=east,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_retracted",
+      "y": 270
+    },
+    "belt=retracted,facing=west,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_retracted",
+      "y": 90
+    },
+    "belt=retracted,facing=up,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=retracted,facing=down,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_vertical",
+      "y": 180
+    },
+    "belt=perpendicular,facing=north,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_perpendicular",
+      "y": 180
+    },
+    "belt=perpendicular,facing=south,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_perpendicular"
+    },
+    "belt=perpendicular,facing=east,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_perpendicular",
+      "y": 270
+    },
+    "belt=perpendicular,facing=west,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_perpendicular",
+      "y": 90
+    },
+    "belt=perpendicular,facing=up,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=perpendicular,facing=down,mode=blasting": {
+      "model": "create_em:block/process_gate_blasting_vertical",
+      "y": 180
+    },
+    "belt=none,facing=north,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_wall",
+      "y": 180
+    },
+    "belt=none,facing=south,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_wall"
+    },
+    "belt=none,facing=east,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_wall",
+      "y": 270
+    },
+    "belt=none,facing=west,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_wall",
+      "y": 90
+    },
+    "belt=none,facing=up,mode=smoking": {
       "model": "create_em:block/process_gate_smoking_vertical",
       "x": 180,
       "y": 180
     },
-    "facing=up,mode=splashing": {
+    "belt=none,facing=down,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_vertical",
+      "y": 180
+    },
+    "belt=retracted,facing=north,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_retracted",
+      "y": 180
+    },
+    "belt=retracted,facing=south,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_retracted"
+    },
+    "belt=retracted,facing=east,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_retracted",
+      "y": 270
+    },
+    "belt=retracted,facing=west,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_retracted",
+      "y": 90
+    },
+    "belt=retracted,facing=up,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=retracted,facing=down,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_vertical",
+      "y": 180
+    },
+    "belt=perpendicular,facing=north,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_perpendicular",
+      "y": 180
+    },
+    "belt=perpendicular,facing=south,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_perpendicular"
+    },
+    "belt=perpendicular,facing=east,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_perpendicular",
+      "y": 270
+    },
+    "belt=perpendicular,facing=west,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_perpendicular",
+      "y": 90
+    },
+    "belt=perpendicular,facing=up,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=perpendicular,facing=down,mode=smoking": {
+      "model": "create_em:block/process_gate_smoking_vertical",
+      "y": 180
+    },
+    "belt=none,facing=north,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_wall",
+      "y": 180
+    },
+    "belt=none,facing=south,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_wall"
+    },
+    "belt=none,facing=east,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_wall",
+      "y": 270
+    },
+    "belt=none,facing=west,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_wall",
+      "y": 90
+    },
+    "belt=none,facing=up,mode=splashing": {
       "model": "create_em:block/process_gate_splashing_vertical",
       "x": 180,
       "y": 180
     },
-    "facing=up,mode=haunting": {
+    "belt=none,facing=down,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_vertical",
+      "y": 180
+    },
+    "belt=retracted,facing=north,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_retracted",
+      "y": 180
+    },
+    "belt=retracted,facing=south,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_retracted"
+    },
+    "belt=retracted,facing=east,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_retracted",
+      "y": 270
+    },
+    "belt=retracted,facing=west,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_retracted",
+      "y": 90
+    },
+    "belt=retracted,facing=up,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=retracted,facing=down,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_vertical",
+      "y": 180
+    },
+    "belt=perpendicular,facing=north,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_perpendicular",
+      "y": 180
+    },
+    "belt=perpendicular,facing=south,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_perpendicular"
+    },
+    "belt=perpendicular,facing=east,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_perpendicular",
+      "y": 270
+    },
+    "belt=perpendicular,facing=west,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_perpendicular",
+      "y": 90
+    },
+    "belt=perpendicular,facing=up,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=perpendicular,facing=down,mode=splashing": {
+      "model": "create_em:block/process_gate_splashing_vertical",
+      "y": 180
+    },
+    "belt=none,facing=north,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_wall",
+      "y": 180
+    },
+    "belt=none,facing=south,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_wall"
+    },
+    "belt=none,facing=east,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_wall",
+      "y": 270
+    },
+    "belt=none,facing=west,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_wall",
+      "y": 90
+    },
+    "belt=none,facing=up,mode=haunting": {
       "model": "create_em:block/process_gate_haunting_vertical",
       "x": 180,
       "y": 180
     },
-    "facing=up,mode=universal": {
+    "belt=none,facing=down,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_vertical",
+      "y": 180
+    },
+    "belt=retracted,facing=north,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_retracted",
+      "y": 180
+    },
+    "belt=retracted,facing=south,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_retracted"
+    },
+    "belt=retracted,facing=east,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_retracted",
+      "y": 270
+    },
+    "belt=retracted,facing=west,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_retracted",
+      "y": 90
+    },
+    "belt=retracted,facing=up,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=retracted,facing=down,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_vertical",
+      "y": 180
+    },
+    "belt=perpendicular,facing=north,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_perpendicular",
+      "y": 180
+    },
+    "belt=perpendicular,facing=south,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_perpendicular"
+    },
+    "belt=perpendicular,facing=east,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_perpendicular",
+      "y": 270
+    },
+    "belt=perpendicular,facing=west,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_perpendicular",
+      "y": 90
+    },
+    "belt=perpendicular,facing=up,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=perpendicular,facing=down,mode=haunting": {
+      "model": "create_em:block/process_gate_haunting_vertical",
+      "y": 180
+    },
+    "belt=none,facing=north,mode=universal": {
+      "model": "create_em:block/process_gate_universal_wall",
+      "y": 180
+    },
+    "belt=none,facing=south,mode=universal": {
+      "model": "create_em:block/process_gate_universal_wall"
+    },
+    "belt=none,facing=east,mode=universal": {
+      "model": "create_em:block/process_gate_universal_wall",
+      "y": 270
+    },
+    "belt=none,facing=west,mode=universal": {
+      "model": "create_em:block/process_gate_universal_wall",
+      "y": 90
+    },
+    "belt=none,facing=up,mode=universal": {
       "model": "create_em:block/process_gate_universal_vertical",
       "x": 180,
       "y": 180
     },
-    "facing=up,mode=output": {
+    "belt=none,facing=down,mode=universal": {
+      "model": "create_em:block/process_gate_universal_vertical",
+      "y": 180
+    },
+    "belt=retracted,facing=north,mode=universal": {
+      "model": "create_em:block/process_gate_universal_retracted",
+      "y": 180
+    },
+    "belt=retracted,facing=south,mode=universal": {
+      "model": "create_em:block/process_gate_universal_retracted"
+    },
+    "belt=retracted,facing=east,mode=universal": {
+      "model": "create_em:block/process_gate_universal_retracted",
+      "y": 270
+    },
+    "belt=retracted,facing=west,mode=universal": {
+      "model": "create_em:block/process_gate_universal_retracted",
+      "y": 90
+    },
+    "belt=retracted,facing=up,mode=universal": {
+      "model": "create_em:block/process_gate_universal_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=retracted,facing=down,mode=universal": {
+      "model": "create_em:block/process_gate_universal_vertical",
+      "y": 180
+    },
+    "belt=perpendicular,facing=north,mode=universal": {
+      "model": "create_em:block/process_gate_universal_perpendicular",
+      "y": 180
+    },
+    "belt=perpendicular,facing=south,mode=universal": {
+      "model": "create_em:block/process_gate_universal_perpendicular"
+    },
+    "belt=perpendicular,facing=east,mode=universal": {
+      "model": "create_em:block/process_gate_universal_perpendicular",
+      "y": 270
+    },
+    "belt=perpendicular,facing=west,mode=universal": {
+      "model": "create_em:block/process_gate_universal_perpendicular",
+      "y": 90
+    },
+    "belt=perpendicular,facing=up,mode=universal": {
+      "model": "create_em:block/process_gate_universal_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=perpendicular,facing=down,mode=universal": {
+      "model": "create_em:block/process_gate_universal_vertical",
+      "y": 180
+    },
+    "belt=none,facing=north,mode=output": {
+      "model": "create_em:block/process_gate_output_wall",
+      "y": 180
+    },
+    "belt=none,facing=south,mode=output": {
+      "model": "create_em:block/process_gate_output_wall"
+    },
+    "belt=none,facing=east,mode=output": {
+      "model": "create_em:block/process_gate_output_wall",
+      "y": 270
+    },
+    "belt=none,facing=west,mode=output": {
+      "model": "create_em:block/process_gate_output_wall",
+      "y": 90
+    },
+    "belt=none,facing=up,mode=output": {
       "model": "create_em:block/process_gate_output_vertical",
       "x": 180,
       "y": 180
     },
-    "facing=down,mode=blasting": {
-      "model": "create_em:block/process_gate_blasting_vertical",
+    "belt=none,facing=down,mode=output": {
+      "model": "create_em:block/process_gate_output_vertical",
       "y": 180
     },
-    "facing=down,mode=smoking": {
-      "model": "create_em:block/process_gate_smoking_vertical",
+    "belt=retracted,facing=north,mode=output": {
+      "model": "create_em:block/process_gate_output_retracted",
       "y": 180
     },
-    "facing=down,mode=splashing": {
-      "model": "create_em:block/process_gate_splashing_vertical",
+    "belt=retracted,facing=south,mode=output": {
+      "model": "create_em:block/process_gate_output_retracted"
+    },
+    "belt=retracted,facing=east,mode=output": {
+      "model": "create_em:block/process_gate_output_retracted",
+      "y": 270
+    },
+    "belt=retracted,facing=west,mode=output": {
+      "model": "create_em:block/process_gate_output_retracted",
+      "y": 90
+    },
+    "belt=retracted,facing=up,mode=output": {
+      "model": "create_em:block/process_gate_output_vertical",
+      "x": 180,
       "y": 180
     },
-    "facing=down,mode=haunting": {
-      "model": "create_em:block/process_gate_haunting_vertical",
+    "belt=retracted,facing=down,mode=output": {
+      "model": "create_em:block/process_gate_output_vertical",
       "y": 180
     },
-    "facing=down,mode=universal": {
-      "model": "create_em:block/process_gate_universal_vertical",
+    "belt=perpendicular,facing=north,mode=output": {
+      "model": "create_em:block/process_gate_output_perpendicular",
       "y": 180
     },
-    "facing=down,mode=output": {
+    "belt=perpendicular,facing=south,mode=output": {
+      "model": "create_em:block/process_gate_output_perpendicular"
+    },
+    "belt=perpendicular,facing=east,mode=output": {
+      "model": "create_em:block/process_gate_output_perpendicular",
+      "y": 270
+    },
+    "belt=perpendicular,facing=west,mode=output": {
+      "model": "create_em:block/process_gate_output_perpendicular",
+      "y": 90
+    },
+    "belt=perpendicular,facing=up,mode=output": {
+      "model": "create_em:block/process_gate_output_vertical",
+      "x": 180,
+      "y": 180
+    },
+    "belt=perpendicular,facing=down,mode=output": {
       "model": "create_em:block/process_gate_output_vertical",
       "y": 180
     }

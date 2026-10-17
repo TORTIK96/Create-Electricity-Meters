@@ -34,10 +34,17 @@ public class ProcessDispatcherRenderer implements BlockEntityRenderer<ProcessDis
                 FlapRenderer.render(ms, buffers, be.getBlockState(), low, 2 / 16f, -0.55f / 16f,
                         FlapRenderer.horizontalAngle(d.getOpposite()), 0, be.flaps.get(d.ordinal(), pt), light, overlay);
         }
+        var lowModel = Minecraft.getInstance().getModelManager().getModel(FLAP_LOW);
         for (Direction d : Direction.Plane.HORIZONTAL) {
-            if (!(be.getLevel().getBlockEntity(be.getBlockPos().relative(d)) instanceof BeltBlockEntity)) continue;
-            FlapRenderer.render(ms, buffers, be.getBlockState(), model, 15 / 16f, -0.55f / 16f,
-                    FlapRenderer.horizontalAngle(d.getOpposite()), 0, be.flaps.get(d.ordinal(), pt), light, overlay);
+            var pos = be.getBlockPos().relative(d);
+            if (be.getLevel().getBlockEntity(pos) instanceof BeltBlockEntity) {
+                FlapRenderer.render(ms, buffers, be.getBlockState(), model, 15 / 16f, -0.55f / 16f,
+                        FlapRenderer.horizontalAngle(d.getOpposite()), 0, be.flaps.get(d.ordinal(), pt), light, overlay);
+            } else if (be.getLevel().getBlockEntity(pos.below()) instanceof BeltBlockEntity) {
+                // лента на блок ниже: шторка свисает с нижнего края грани к ленте, как у ленточной воронки
+                FlapRenderer.render(ms, buffers, be.getBlockState(), lowModel, 2 / 16f, -0.55f / 16f,
+                        FlapRenderer.horizontalAngle(d.getOpposite()), 0, be.flaps.get(d.ordinal(), pt), light, overlay);
+            }
         }
     }
 }

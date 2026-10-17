@@ -477,5 +477,9 @@
   "create_em.dispatcher.belt.2": "away from it (output)",
   "create_em.dispatcher.belt.3": "passing by (side output)",
   "create_em.dispatcher.belt.4": "not moving",
-  "create_em.dispatcher.belt.5": "underneath (output)"
+  "create_em.dispatcher.belt.5": "underneath (output)",
+  "create_em.dispatcher.side.north_low": "north, below",
+  "create_em.dispatcher.side.south_low": "south, below",
+  "create_em.dispatcher.side.west_low": "west, below",
+  "create_em.dispatcher.side.east_low": "east, below"
 }

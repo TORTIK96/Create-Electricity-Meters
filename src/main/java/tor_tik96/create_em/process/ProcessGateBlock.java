@@ -38,6 +38,24 @@ import java.util.Map;
 public class ProcessGateBlock extends Block implements IBE<ProcessGateBlockEntity>, IWrenchable {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final EnumProperty<GateMode> MODE = EnumProperty.create("mode", GateMode.class);
+    public static final EnumProperty<GateBelt> BELT = EnumProperty.create("belt", GateBelt.class);
+
+    /** Лента под шлюзом — как у ленточной воронки Create: вдоль — «втянутая», поперёк — прямая. */
+    static GateBelt beltFor(net.minecraft.world.level.LevelReader level, BlockPos pos, Direction toInventory) {
+        if (toInventory.getAxis().isVertical()) return GateBelt.NONE;
+        BlockState below = level.getBlockState(pos.below());
+        if (!net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(below.getBlock()).toString().equals("create:belt")
+                || !below.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) return GateBelt.NONE;
+        return below.getValue(BlockStateProperties.HORIZONTAL_FACING).getAxis() == toInventory.getAxis()
+                ? GateBelt.RETRACTED : GateBelt.PERPENDICULAR;
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor,
+                                     net.minecraft.world.level.LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        if (dir == Direction.DOWN) return state.setValue(BELT, beltFor(level, pos, state.getValue(FACING)));
+        return state;
+    }
 
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
@@ -60,12 +78,12 @@ public class ProcessGateBlock extends Block implements IBE<ProcessGateBlockEntit
 
     public ProcessGateBlock(Properties props) {
         super(props);
-        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(MODE, GateMode.BLASTING));
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(MODE, GateMode.BLASTING).setValue(BELT, GateBelt.NONE));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-        b.add(FACING, MODE);
+        b.add(FACING, MODE, BELT);
     }
 
     @Override
@@ -75,7 +93,8 @@ public class ProcessGateBlock extends Block implements IBE<ProcessGateBlockEntit
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return defaultBlockState().setValue(FACING, ctx.getClickedFace().getOpposite());
+        Direction toInventory = ctx.getClickedFace().getOpposite();
+        return defaultBlockState().setValue(FACING, toInventory).setValue(BELT, beltFor(ctx.getLevel(), ctx.getClickedPos(), toInventory));
     }
 
     @Override

@@ -477,5 +477,9 @@
   "create_em.dispatcher.belt.2": "от диспетчера (выход)",
   "create_em.dispatcher.belt.3": "мимо (выход сбоку)",
   "create_em.dispatcher.belt.4": "стоит",
-  "create_em.dispatcher.belt.5": "под диспетчером (выход)"
+  "create_em.dispatcher.belt.5": "под диспетчером (выход)",
+  "create_em.dispatcher.side.north_low": "север ниже",
+  "create_em.dispatcher.side.south_low": "юг ниже",
+  "create_em.dispatcher.side.west_low": "запад ниже",
+  "create_em.dispatcher.side.east_low": "восток ниже"
 }

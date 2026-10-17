@@ -1,11 +1,11 @@
 {
-  "parent": "create:block/funnel/block_horizontal",
+  "parent": "create:block/belt_funnel/block_pushing",
+  "render_type": "minecraft:cutout",
   "textures": {
     "base": "create:block/funnel/brass_funnel",
     "block": "create:block/brass_block",
     "direction": "create:block/funnel/brass_funnel_push",
     "particle": "create:block/brass_block",
     "redstone": "minecraft:block/cyan_concrete"
-  },
-  "render_type": "minecraft:cutout"
+  }
 }

@@ -1,0 +1,11 @@
+{
+  "parent": "create:block/belt_funnel/block_pulling",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "base": "create:block/funnel/brass_funnel",
+    "block": "create:block/brass_block",
+    "direction": "create:block/funnel/brass_funnel_pull",
+    "particle": "create:block/brass_block",
+    "redstone": "minecraft:block/lime_concrete"
+  }
+}

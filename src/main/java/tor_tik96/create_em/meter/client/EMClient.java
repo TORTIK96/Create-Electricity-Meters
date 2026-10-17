@@ -23,6 +23,7 @@ public final class EMClient {
     static void registerModels(ModelEvent.RegisterAdditional e) {
         e.register(EnergyMeterRenderer.NEEDLE);
         e.register(tor_tik96.create_em.process.client.ProcessGateRenderer.FLAP);
+        e.register(tor_tik96.create_em.process.client.ProcessGateRenderer.BELT_FLAP);
         e.register(tor_tik96.create_em.process.client.ProcessDispatcherRenderer.FLAP);
         e.register(tor_tik96.create_em.process.client.ProcessDispatcherRenderer.FLAP_LOW);
     }
