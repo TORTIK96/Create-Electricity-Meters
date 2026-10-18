@@ -70,6 +70,7 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         super.tick();
         if (level == null || level.isClientSide) return;
 
+        if (isDispatched() != lastSyncedDispatch) syncDispatch(); // диспетчер пропал — очки должны это увидеть
         CatalystProcess wanted = wanted();
         CatalystProcess current = getBlockState().getValue(ElectricCatalystBlock.PROCESS);
         int cost = wanted.cost();
@@ -77,7 +78,9 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         boolean run;
         if (wanted == CatalystProcess.NONE) run = false;
         else if (wanted == current) run = energy.stored() >= cost;
-        else run = energy.stored() >= Math.min(energy.getMaxEnergyStored(), (long) cost * START_RESERVE_TICKS);
+        // для запуска — три четверти секундного запаса, а не ровно полный буфер:
+        // иначе поставщик, который доливает «под горлышко» кусками, мог держать его на шаг ниже порога
+        else run = energy.stored() >= Math.min(energy.getMaxEnergyStored(), (long) cost * START_RESERVE_TICKS) * 3 / 4;
 
         if (run) energy.drain(cost);
         boolean nowStarving = wanted != CatalystProcess.NONE && !run;
@@ -125,12 +128,26 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
     /** Диспетчер обработки управляет катализатором: пока он жив, переключатель на корпусе не действует. */
     public void dispatch(CatalystProcess p) {
         if (level == null) return;
+        boolean changed = p != dispatched || !isDispatched();
         dispatched = p;
         dispatchedUntil = level.getGameTime() + 5;
+        if (changed) syncDispatch();
     }
 
+    /** На клиенте — то, что прислал сервер (время диспетчера клиент не знает). */
+    private boolean dispatchedClient;
+
     public boolean isDispatched() {
-        return level != null && level.getGameTime() <= dispatchedUntil;
+        if (level == null) return false;
+        if (level.isClientSide) return dispatchedClient;
+        return level.getGameTime() <= dispatchedUntil;
+    }
+
+    private boolean lastSyncedDispatch;
+
+    private void syncDispatch() {
+        lastSyncedDispatch = isDispatched();
+        sendData();
     }
 
     /** Режим, который выбран переключателем или сигналом (без учёта энергии). */
@@ -162,6 +179,10 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         tag.putInt("Energy", energy.stored());
         tag.putBoolean("Starving", starving);
         tag.putFloat("In", inRate);
+        if (clientPacket) {
+            tag.putBoolean("Disp", isDispatched());
+            tag.putInt("DispMode", dispatched.ordinal());
+        }
     }
 
     @Override
@@ -170,6 +191,11 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         energy.set(tag.getInt("Energy"));
         starving = tag.getBoolean("Starving");
         inRate = tag.getFloat("In");
+        if (clientPacket) {
+            dispatchedClient = tag.getBoolean("Disp");
+            int m = tag.getInt("DispMode");
+            dispatched = m >= 0 && m < CatalystProcess.values().length ? CatalystProcess.values()[m] : CatalystProcess.NONE;
+        }
     }
 
     // ---------- очки инженера ----------
@@ -199,6 +225,8 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         int cost = current != CatalystProcess.NONE ? current.cost() : 0;
         tooltip.add(line(1, Component.translatable("create_em.catalyst.tooltip.usage").withStyle(LABEL)
                 .append(Component.literal(EMFormat.fe(cost) + "/t").withStyle(ChatFormatting.AQUA))));
+        if (isDispatched() && dispatched == CatalystProcess.NONE)
+            tooltip.add(line(1, Component.translatable("create_em.catalyst.tooltip.dispatcher_off").withStyle(ChatFormatting.GOLD)));
         CatalystProcess want = wanted();
         MutableComponent in = Component.translatable("create_em.catalyst.tooltip.incoming").withStyle(LABEL)
                 .append(Component.literal(EMFormat.fe(Math.round(inRate)) + "/t").withStyle(ChatFormatting.AQUA));

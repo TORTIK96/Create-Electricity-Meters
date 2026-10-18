@@ -531,5 +531,6 @@
   "block.create_em.dim_link.tooltip.condition2": "Cost",
   "block.create_em.dim_link.tooltip.behaviour2": "Part of the energy is _lost_, an open channel has an _upkeep_, power is capped. Both ends must be _loaded_ — the link keeps no chunks loaded itself.",
   "create_em.catalyst.tooltip.incoming": "Incoming: ",
-  "create_em.catalyst.tooltip.needs": " (needs %s/t)"
+  "create_em.catalyst.tooltip.needs": " (needs %s/t)",
+  "create_em.catalyst.tooltip.dispatcher_off": "Held off by the dispatcher — see the dispatcher's goggles for why"
 }
