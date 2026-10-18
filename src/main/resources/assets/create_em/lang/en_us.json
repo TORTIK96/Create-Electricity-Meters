@@ -532,5 +532,10 @@
   "block.create_em.dim_link.tooltip.behaviour2": "Part of the energy is _lost_, an open channel has an _upkeep_, power is capped. Both ends must be _loaded_ — the link keeps no chunks loaded itself.",
   "create_em.catalyst.tooltip.incoming": "Incoming: ",
   "create_em.catalyst.tooltip.needs": " (needs %s/t)",
-  "create_em.catalyst.tooltip.dispatcher_off": "Held off by the dispatcher — see the dispatcher's goggles for why"
+  "create_em.catalyst.tooltip.dispatcher_off": "Held off by the dispatcher — see the dispatcher's goggles for why",
+  "create_em.dispatcher.gate.no_inv": "can't see a container (the gate must face it)",
+  "create_em.dispatcher.gate.no_belt": "no belt right under the gate",
+  "create_em.dispatcher.gate.empty": "empty",
+  "create_em.dispatcher.gate.unsuitable": "%s items, none fit this mode",
+  "create_em.dispatcher.gate.ready": "%s of %s ready to process"
 }

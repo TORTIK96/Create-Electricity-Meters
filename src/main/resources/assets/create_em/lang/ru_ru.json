@@ -532,5 +532,10 @@
   "block.create_em.dim_link.tooltip.behaviour2": "Часть энергии _теряется_, за открытый канал берётся _плата_, мощность ограничена. Оба конца должны быть _загружены_ — сам узел чанки не держит.",
   "create_em.catalyst.tooltip.incoming": "Приходит: ",
   "create_em.catalyst.tooltip.needs": " (нужно %s/t)",
-  "create_em.catalyst.tooltip.dispatcher_off": "Диспетчер держит выключенным — причина в очках диспетчера"
+  "create_em.catalyst.tooltip.dispatcher_off": "Диспетчер держит выключенным — причина в очках диспетчера",
+  "create_em.dispatcher.gate.no_inv": "не видит сундук (шлюз должен смотреть в него)",
+  "create_em.dispatcher.gate.no_belt": "нет ленты прямо под шлюзом",
+  "create_em.dispatcher.gate.empty": "пусто",
+  "create_em.dispatcher.gate.unsuitable": "%s предм., но этим режимом их не обработать",
+  "create_em.dispatcher.gate.ready": "готово к обработке %s из %s"
 }

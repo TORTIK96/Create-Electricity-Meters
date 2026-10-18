@@ -77,6 +77,10 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
     private int sourceGates, outputGates, pending, rawOnBelts;
     private boolean catalystFound, loopBusy;
     private int activeMode = -1;
+    /** Режим сырого на лентах (CatalystProcess.ordinal), -1 — нет. */
+    private int rawMode = -1;
+    /** По каждому шлюзу-источнику: {режим шлюза, подходящих, всего, флаги (1 — лента, 2 — инвентарь)}. */
+    private int[] gateInfo = new int[0];
 
     public ProcessDispatcherBlockEntity(BlockPos pos, BlockState state) {
         super(EMRegistry.PROCESS_DISPATCHER_BE.get(), pos, state);
@@ -161,7 +165,8 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
      */
     private int[] itemsOnBelts(List<ProcessGateBlockEntity> live) {
         int total = 0, raw = 0, segments = 0;
-        if (level == null) return new int[]{0, 0, 0};
+        int[] rawModes = new int[CatalystProcess.values().length];
+        if (level == null) return new int[]{0, 0, 0, -1};
         Set<BlockPos> seen = new HashSet<>();
         Set<BlockPos> visitedJoints = new HashSet<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
@@ -173,7 +178,11 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             segments += belt.beltLength;
             for (TransportedItemStack t : belt.getInventory().getTransportedItems()) {
                 total++;
-                if (t.stack.has(EMRegistry.RAW_BATCH.get())) raw++;
+                Integer rm = t.stack.get(EMRegistry.RAW_BATCH.get());
+                if (rm != null) {
+                    raw++;
+                    if (rm >= 0 && rm < rawModes.length) rawModes[rm]++;
+                }
             }
             for (int off : new int[]{belt.beltLength, -1}) {
                 BlockPos n = BeltHelper.getPositionForOffset(belt, off);
@@ -183,7 +192,9 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
                     for (Direction d : Direction.values()) queue.add(n.relative(d));
             }
         }
-        return new int[]{total, raw, segments};
+        int best = -1;
+        for (int m = 0; m < rawModes.length; m++) if (rawModes[m] > 0 && (best < 0 || rawModes[m] > rawModes[best])) best = m;
+        return new int[]{total, raw, segments, best};
     }
 
     @Override
@@ -198,6 +209,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             rawOnBelts = items[1];
             stacksOnBelts = items[0];
             beltSegments = items[2];
+            rawMode = items[3];
         }
 
         ProcessGateBlockEntity act = active == null ? null : gate(active);
@@ -211,6 +223,10 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
         if (nowPowered) { energy -= cost; setChanged(); }
         if (nowPowered != powered) { powered = nowPowered; sendData(); }
         CatalystProcess mode = act == null || !powered ? CatalystProcess.NONE : act.mode().process;
+        // на ленте осталось сырое, а шлюза, который его выпустил, уже нет (сломали, переключили на выход…):
+        // включаем режим этого сырого, иначе лента «занята» навсегда и новые партии не начинаются
+        if (act == null && powered && rawOnBelts > 0 && rawMode > 0 && rawMode < CatalystProcess.values().length)
+            mode = CatalystProcess.values()[rawMode];
 
         ElectricCatalystBlockEntity cat = catalystBE();
         if (cat != null) cat.dispatch(mode);
@@ -221,8 +237,12 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             for (ProcessGateBlockEntity g : live) if (g.mode() == GateMode.OUTPUT) outs++; else src++;
             int pend = act == null ? 0 : processable(act, level);
             int am = act == null ? -1 : act.mode().ordinal();
+            int[] info = gateInfo(live);
             boolean changed = src != sourceGates || outs != outputGates || pend != pending || busy != loopBusy
-                    || (cat != null) != catalystFound || am != activeMode;
+                    || (cat != null) != catalystFound || am != activeMode || rawOnBelts != syncedRaw
+                    || !java.util.Arrays.equals(info, gateInfo);
+            gateInfo = info;
+            syncedRaw = rawOnBelts;
             sourceGates = src;
             outputGates = outs;
             pending = pend;
@@ -231,6 +251,27 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             activeMode = am;
             if (changed) sendData();
         }
+    }
+
+    private int syncedRaw;
+
+    private int[] gateInfo(List<ProcessGateBlockEntity> live) {
+        List<ProcessGateBlockEntity> src = new ArrayList<>();
+        for (ProcessGateBlockEntity g : live) if (g.mode().process != null) src.add(g);
+        src.sort(Comparator.comparingLong(g -> g.getBlockPos().asLong()));
+        int n = Math.min(src.size(), 8);
+        int[] out = new int[n * 4];
+        for (int i = 0; i < n; i++) {
+            ProcessGateBlockEntity g = src.get(i);
+            IItemHandler h = g.inventory();
+            int total = 0;
+            if (h != null) for (int k = 0; k < h.getSlots(); k++) total += h.getStackInSlot(k).getCount();
+            out[i * 4] = g.mode().ordinal();
+            out[i * 4 + 1] = processable(g, level);
+            out[i * 4 + 2] = total;
+            out[i * 4 + 3] = (g.hasBelt() ? 1 : 0) | (h != null ? 2 : 0);
+        }
+        return out;
     }
 
     @Nullable
@@ -273,6 +314,17 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
                 : loopBusy ? "create_em.dispatcher.draining" : "create_em.dispatcher.idle";
         boolean good = powered && catalystFound && outputGates > 0;
         tooltip.add(line(1, Component.translatable(status).withStyle(good ? ChatFormatting.GREEN : ChatFormatting.GOLD)));
+        for (int i = 0; i + 3 < gateInfo.length; i += 4) {
+            GateMode gm = GateMode.values()[Math.max(0, Math.min(GateMode.values().length - 1, gateInfo[i]))];
+            int ok = gateInfo[i + 1], total = gateInfo[i + 2], flags = gateInfo[i + 3];
+            Component why = (flags & 2) == 0 ? Component.translatable("create_em.dispatcher.gate.no_inv").withStyle(ChatFormatting.RED)
+                    : (flags & 1) == 0 ? Component.translatable("create_em.dispatcher.gate.no_belt").withStyle(ChatFormatting.RED)
+                    : total == 0 ? Component.translatable("create_em.dispatcher.gate.empty").withStyle(ChatFormatting.DARK_GRAY)
+                    : ok == 0 ? Component.translatable("create_em.dispatcher.gate.unsuitable", total).withStyle(ChatFormatting.GOLD)
+                    : Component.translatable("create_em.dispatcher.gate.ready", ok, total).withStyle(ChatFormatting.AQUA);
+            tooltip.add(line(2, Component.translatable(gm.translationKey()).withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(" — ").withStyle(ChatFormatting.DARK_GRAY)).append(why)));
+        }
         return true;
     }
 
@@ -297,6 +349,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             tag.putBoolean("Busy", loopBusy);
             tag.putBoolean("CatOk", catalystFound);
             tag.putInt("ActiveMode", activeMode);
+            tag.putIntArray("GateInfo", gateInfo);
         }
     }
 
@@ -318,6 +371,7 @@ public class ProcessDispatcherBlockEntity extends SmartBlockEntity implements IH
             loopBusy = tag.getBoolean("Busy");
             catalystFound = tag.getBoolean("CatOk");
             activeMode = tag.contains("ActiveMode") ? tag.getInt("ActiveMode") : -1;
+            gateInfo = tag.getIntArray("GateInfo");
         }
     }
 }
