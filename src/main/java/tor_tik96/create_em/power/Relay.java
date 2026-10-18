@@ -31,10 +31,12 @@ public final class Relay {
     public int cap(@Nullable IEnergyStorage target, int max) {
         if (target == null || !target.canReceive()) return 0;
         long byRate = Math.max(MIN, 2L * lastDelivered);
-        int room = target.getMaxEnergyStored() > 0
-                ? Math.max(0, target.getMaxEnergyStored() - target.getEnergyStored()) + lastDelivered
-                : Integer.MAX_VALUE;
-        return (int) Math.min(Math.min(byRate, room), max);
+        // в long: сеть CNA и другие «бездонные» приёмники сообщают ёмкость Integer.MAX_VALUE,
+        // и в int «свободное место + взятое за тик» переполнялось в минус — поток шёл через тик (256/0 = 128 в среднем)
+        long room = target.getMaxEnergyStored() > 0
+                ? Math.max(0L, (long) target.getMaxEnergyStored() - target.getEnergyStored()) + lastDelivered
+                : Long.MAX_VALUE;
+        return (int) Math.max(0L, Math.min(Math.min(byRate, room), max));
     }
 
     /** Источник толкает в нас. */
