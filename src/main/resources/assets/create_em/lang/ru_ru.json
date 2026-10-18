@@ -529,5 +529,7 @@
   "block.create_em.dim_link.tooltip.condition1": "Как связать",
   "block.create_em.dim_link.tooltip.behaviour1": "Поставь узел, ПКМ по нему вторым узлом в руке, отнеси второй в другое измерение и поставь — он свяжется и встанет на отдачу. Режим — ПКМ пустой рукой.",
   "block.create_em.dim_link.tooltip.condition2": "Цена",
-  "block.create_em.dim_link.tooltip.behaviour2": "Часть энергии _теряется_, за открытый канал берётся _плата_, мощность ограничена. Оба конца должны быть _загружены_ — сам узел чанки не держит."
+  "block.create_em.dim_link.tooltip.behaviour2": "Часть энергии _теряется_, за открытый канал берётся _плата_, мощность ограничена. Оба конца должны быть _загружены_ — сам узел чанки не держит.",
+  "create_em.catalyst.tooltip.incoming": "Приходит: ",
+  "create_em.catalyst.tooltip.needs": " (нужно %s/t)"
 }

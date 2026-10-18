@@ -529,5 +529,7 @@
   "block.create_em.dim_link.tooltip.condition1": "Linking",
   "block.create_em.dim_link.tooltip.behaviour1": "Place a link, right-click it holding a second one, take that one to another dimension and place it — it links up and switches to output. Change mode with an empty hand.",
   "block.create_em.dim_link.tooltip.condition2": "Cost",
-  "block.create_em.dim_link.tooltip.behaviour2": "Part of the energy is _lost_, an open channel has an _upkeep_, power is capped. Both ends must be _loaded_ — the link keeps no chunks loaded itself."
+  "block.create_em.dim_link.tooltip.behaviour2": "Part of the energy is _lost_, an open channel has an _upkeep_, power is capped. Both ends must be _loaded_ — the link keeps no chunks loaded itself.",
+  "create_em.catalyst.tooltip.incoming": "Incoming: ",
+  "create_em.catalyst.tooltip.needs": " (needs %s/t)"
 }

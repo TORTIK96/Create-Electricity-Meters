@@ -38,6 +38,10 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
     private final Buffer energy = new Buffer();
     /** Режим нужен, но энергии не хватает — показываем в очках. */
     private boolean starving;
+    /** Сколько FE пришло за текущее окно и среднее за прошлое (FE/t) — для очков. */
+    private long inWindow;
+    private int inTicks;
+    private float inRate; // синхронизируется
 
     public ElectricCatalystBlockEntity(BlockPos pos, BlockState state) {
         super(tor_tik96.create_em.registry.EMRegistry.CATALYST_BE.get(), pos, state);
@@ -80,6 +84,16 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         if (nowStarving != starving) {
             starving = nowStarving;
             sendData();
+        }
+
+        if (++inTicks >= 20) {
+            float r = inWindow / 20f;
+            inWindow = 0;
+            inTicks = 0;
+            if (Math.abs(r - inRate) >= 0.5f) {
+                inRate = r;
+                sendData();
+            }
         }
 
         CatalystProcess next = run ? wanted : CatalystProcess.NONE;
@@ -147,6 +161,7 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         super.write(tag, registries, clientPacket);
         tag.putInt("Energy", energy.stored());
         tag.putBoolean("Starving", starving);
+        tag.putFloat("In", inRate);
     }
 
     @Override
@@ -154,6 +169,7 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         super.read(tag, registries, clientPacket);
         energy.set(tag.getInt("Energy"));
         starving = tag.getBoolean("Starving");
+        inRate = tag.getFloat("In");
     }
 
     // ---------- очки инженера ----------
@@ -183,6 +199,12 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
         int cost = current != CatalystProcess.NONE ? current.cost() : 0;
         tooltip.add(line(1, Component.translatable("create_em.catalyst.tooltip.usage").withStyle(LABEL)
                 .append(Component.literal(EMFormat.fe(cost) + "/t").withStyle(ChatFormatting.AQUA))));
+        CatalystProcess want = wanted();
+        MutableComponent in = Component.translatable("create_em.catalyst.tooltip.incoming").withStyle(LABEL)
+                .append(Component.literal(EMFormat.fe(Math.round(inRate)) + "/t").withStyle(ChatFormatting.AQUA));
+        if (starving && want != CatalystProcess.NONE)
+            in.append(Component.translatable("create_em.catalyst.tooltip.needs", EMFormat.fe(want.cost())).withStyle(ChatFormatting.RED));
+        tooltip.add(line(1, in));
         tooltip.add(line(1, Component.translatable("create_em.catalyst.tooltip.stored").withStyle(LABEL)
                 .append(Component.literal(EMFormat.fe(energy.stored()) + " / " + EMFormat.fe(energy.getMaxEnergyStored()))
                         .withStyle(ChatFormatting.AQUA))));
@@ -227,6 +249,7 @@ public class ElectricCatalystBlockEntity extends SmartBlockEntity implements IHa
             int accepted = Math.max(0, Math.min(toReceive, getMaxEnergyStored() - energy));
             if (!simulate && accepted > 0) {
                 energy += accepted;
+                inWindow += accepted;
                 setChanged();
             }
             return accepted;
