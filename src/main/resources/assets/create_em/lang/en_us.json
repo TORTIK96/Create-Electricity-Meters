@@ -537,5 +537,7 @@
   "create_em.dispatcher.gate.no_belt": "no belt right under the gate",
   "create_em.dispatcher.gate.empty": "empty",
   "create_em.dispatcher.gate.unsuitable": "%s items, none fit this mode",
-  "create_em.dispatcher.gate.ready": "%s of %s ready to process"
+  "create_em.dispatcher.gate.ready": "%s of %s ready to process",
+  "create_em.ats.tooltip.loop": "Main drops right after switching back — looks like a loop",
+  "create_em.ats.tooltip.loop2": "Output or reserve energy comes back into input 1: separate the wiring; switching back is slowed"
 }

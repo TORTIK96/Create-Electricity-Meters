@@ -537,5 +537,7 @@
   "create_em.dispatcher.gate.no_belt": "нет ленты прямо под шлюзом",
   "create_em.dispatcher.gate.empty": "пусто",
   "create_em.dispatcher.gate.unsuitable": "%s предм., но этим режимом их не обработать",
-  "create_em.dispatcher.gate.ready": "готово к обработке %s из %s"
+  "create_em.dispatcher.gate.ready": "готово к обработке %s из %s",
+  "create_em.ats.tooltip.loop": "Основной пропадает сразу после возврата — похоже на петлю",
+  "create_em.ats.tooltip.loop2": "Энергия с выхода или резерва возвращается на ввод 1: разведи провода, возврат замедлен"
 }

@@ -58,6 +58,14 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
     private float flow;
     private boolean mainAlive, reserveAlive;
 
+    /** Сейчас сами отдаём энергию нагрузке: всё, что в этот момент «приходит» на вводы, — наша же энергия по кругу. */
+    private boolean pushing;
+    /** Когда последний раз вернулись на основной; сколько раз подряд основной пропадал сразу после возврата. */
+    private long mainReturnAt = -1;
+    private int falseReturns;
+    /** Похоже на петлю: основной «появляется» только пока работаем от резерва. Синхронизируется. */
+    private boolean loopSuspect;
+
     @Nullable private BlockCapabilityCache<IEnergyStorage, Direction> mainCache, reserveCache;
     private final List<BlockCapabilityCache<IEnergyStorage, Direction>> outCaches = new ArrayList<>();
 
@@ -114,6 +122,7 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
 
     /** Ввод толкает в нас: отмечаем, что он жив, и принимаем, только если он сейчас активный. */
     private int offer(boolean main, int amount, boolean simulate) {
+        if (pushing) return 0; // эхо: наша же энергия вернулась на ввод — не считаем ввод живым
         if (main) lastMain = now();
         else lastReserve = now();
         if (source != (main ? AtsSource.MAIN : AtsSource.RESERVE)) return 0;
@@ -158,10 +167,25 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
             case AUTO -> {
                 if (source == AtsSource.MAIN) yield mainAlive ? AtsSource.MAIN : AtsSource.RESERVE;
                 if (source == AtsSource.NONE && mainAlive) yield AtsSource.MAIN; // при загрузке — сразу
-                boolean stable = mainAlive && t - mainSince >= Config.safe(Config.ATS_RETURN_DELAY, 60);
+                // после каждого «ложного» возврата ждём вдвое дольше: так петля не дёргает нагрузку каждые 3 секунды
+                long delay = (long) Config.safe(Config.ATS_RETURN_DELAY, 60) << Math.min(falseReturns, 6);
+                boolean stable = mainAlive && t - mainSince >= delay;
                 yield stable ? AtsSource.MAIN : AtsSource.RESERVE;
             }
         };
+        if (mode.get() == AtsMode.AUTO) {
+            if (source == AtsSource.RESERVE && next == AtsSource.MAIN) mainReturnAt = t;
+            if (source == AtsSource.MAIN && next == AtsSource.RESERVE && mainReturnAt >= 0) {
+                boolean instant = t - mainReturnAt < 40; // основной пропал почти сразу после возврата
+                falseReturns = instant ? Math.min(falseReturns + 1, 6) : 0;
+                boolean suspect = falseReturns >= 2;
+                if (suspect != loopSuspect) { loopSuspect = suspect; sendData(); }
+            }
+            if (source == AtsSource.MAIN && next == AtsSource.MAIN && mainReturnAt >= 0 && t - mainReturnAt >= 1200 && falseReturns > 0) {
+                falseReturns = 0; // основной держится минуту — значит, настоящий
+                if (loopSuspect) { loopSuspect = false; sendData(); }
+            }
+        }
         if (next != source) {
             source = next;
             setChanged();
@@ -169,7 +193,12 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
                     net.minecraft.sounds.SoundSource.BLOCKS, 0.9f, 0.95f + level.random.nextFloat() * 0.1f);
         }
 
-        windowFe += relay.push(outTarget(), maxTransfer()); // одно предложение нагрузке за тик
+        pushing = true;
+        try {
+            windowFe += relay.push(outTarget(), maxTransfer()); // одно предложение нагрузке за тик
+        } finally {
+            pushing = false;
+        }
 
         if (++windowTicks >= WINDOW) {
             float f = windowFe / (float) WINDOW;
@@ -234,7 +263,9 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
             tag.putFloat("Flow", flow);
             tag.putBoolean("MainAlive", mainAlive);
             tag.putBoolean("ReserveAlive", reserveAlive);
+            tag.putBoolean("Loop", loopSuspect);
         }
+        if (!clientPacket) tag.putInt("FalseReturns", falseReturns);
     }
 
     @Override
@@ -249,7 +280,9 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
             flow = tag.getFloat("Flow");
             mainAlive = tag.getBoolean("MainAlive");
             reserveAlive = tag.getBoolean("ReserveAlive");
+            loopSuspect = tag.getBoolean("Loop");
         }
+        if (!clientPacket) falseReturns = tag.getInt("FalseReturns");
     }
 
     // ---------- очки ----------
@@ -276,6 +309,10 @@ public class AtsBlockEntity extends SmartBlockEntity implements IHaveGoggleInfor
         tooltip.add(line(1, Component.translatable("create_em.ats.tooltip.reserve").withStyle(ChatFormatting.GRAY).append(yesNo(reserveAlive))));
         tooltip.add(line(1, Component.translatable("create_em.ats.tooltip.flow").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(EMFormat.fe(Math.round(flow)) + "/t").withStyle(ChatFormatting.AQUA))));
+        if (loopSuspect) {
+            tooltip.add(line(1, Component.translatable("create_em.ats.tooltip.loop").withStyle(ChatFormatting.RED)));
+            tooltip.add(line(1, Component.translatable("create_em.ats.tooltip.loop2").withStyle(ChatFormatting.GOLD)));
+        }
         return true;
     }
 }
